@@ -1932,6 +1932,19 @@ void RemoveUnsupportedFeatures(VkPhysicalDevice physicalDevice, PFN_vkGetPhysica
                 }
                 break;
              }
+            case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SWAPCHAIN_MAINTENANCE_1_FEATURES_EXT:
+            {
+                const VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT* currentNext = reinterpret_cast<const VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT*>(next);
+                VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT query = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SWAPCHAIN_MAINTENANCE_1_FEATURES_EXT, nullptr };
+                physicalDeviceFeatures2.pNext = &query;
+                GetPhysicalDeviceFeatures2(physicalDevice, &physicalDeviceFeatures2);
+                if ((currentNext->swapchainMaintenance1 == VK_TRUE) && (query.swapchainMaintenance1 == VK_FALSE))
+                {
+                    GFXRECON_LOG_WARNING("Feature swapchainMaintenance1, which is not supported by the replay device, will not be enabled");
+                    const_cast<VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT*>(currentNext)->swapchainMaintenance1 = VK_FALSE;
+                }
+                break;
+             }
             case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_FEATURES_NV:
             {
                 const VkPhysicalDeviceDeviceGeneratedCommandsFeaturesNV* currentNext = reinterpret_cast<const VkPhysicalDeviceDeviceGeneratedCommandsFeaturesNV*>(next);
@@ -2474,6 +2487,24 @@ void RemoveUnsupportedFeatures(VkPhysicalDevice physicalDevice, PFN_vkGetPhysica
                 {
                     GFXRECON_LOG_WARNING("Feature micromapHostCommands, which is not supported by the replay device, will not be enabled");
                     const_cast<VkPhysicalDeviceOpacityMicromapFeaturesEXT*>(currentNext)->micromapHostCommands = VK_FALSE;
+                }
+                break;
+             }
+            case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_CULLING_SHADER_FEATURES_HUAWEI:
+            {
+                const VkPhysicalDeviceClusterCullingShaderFeaturesHUAWEI* currentNext = reinterpret_cast<const VkPhysicalDeviceClusterCullingShaderFeaturesHUAWEI*>(next);
+                VkPhysicalDeviceClusterCullingShaderFeaturesHUAWEI query = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_CULLING_SHADER_FEATURES_HUAWEI, nullptr };
+                physicalDeviceFeatures2.pNext = &query;
+                GetPhysicalDeviceFeatures2(physicalDevice, &physicalDeviceFeatures2);
+                if ((currentNext->clustercullingShader == VK_TRUE) && (query.clustercullingShader == VK_FALSE))
+                {
+                    GFXRECON_LOG_WARNING("Feature clustercullingShader, which is not supported by the replay device, will not be enabled");
+                    const_cast<VkPhysicalDeviceClusterCullingShaderFeaturesHUAWEI*>(currentNext)->clustercullingShader = VK_FALSE;
+                }
+                if ((currentNext->multiviewClusterCullingShader == VK_TRUE) && (query.multiviewClusterCullingShader == VK_FALSE))
+                {
+                    GFXRECON_LOG_WARNING("Feature multiviewClusterCullingShader, which is not supported by the replay device, will not be enabled");
+                    const_cast<VkPhysicalDeviceClusterCullingShaderFeaturesHUAWEI*>(currentNext)->multiviewClusterCullingShader = VK_FALSE;
                 }
                 break;
              }

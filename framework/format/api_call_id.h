@@ -654,6 +654,9 @@ enum ApiCallId : uint32_t
     ApiCall_vkCmdDrawMeshTasksEXT                                                                 = MakeApiCallId(ApiFamily_Vulkan, 0x12ae),
     ApiCall_vkCmdDrawMeshTasksIndirectEXT                                                         = MakeApiCallId(ApiFamily_Vulkan, 0x12af),
     ApiCall_vkCmdDrawMeshTasksIndirectCountEXT                                                    = MakeApiCallId(ApiFamily_Vulkan, 0x12b0),
+    ApiCall_vkReleaseSwapchainImagesEXT                                                           = MakeApiCallId(ApiFamily_Vulkan, 0x12b1),
+    ApiCall_vkCmdDrawClusterHUAWEI                                                                = MakeApiCallId(ApiFamily_Vulkan, 0x12b2),
+    ApiCall_vkCmdDrawClusterIndirectHUAWEI                                                        = MakeApiCallId(ApiFamily_Vulkan, 0x12b3),
 
     ApiCall_VulkanLast,
 

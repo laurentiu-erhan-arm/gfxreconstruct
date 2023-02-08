@@ -600,6 +600,22 @@ std::string PNextDecodedToString(const decode::PNextNode* pNext, ToStringFlags t
             return ToString(*reinterpret_cast<const decode::Decoded_VkPhysicalDeviceExtendedDynamicStateFeaturesEXT*>(meta), toStringFlags, tabCount, tabSize);
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT_2_FEATURES_EXT:
             return ToString(*reinterpret_cast<const decode::Decoded_VkPhysicalDeviceShaderAtomicFloat2FeaturesEXT*>(meta), toStringFlags, tabCount, tabSize);
+        case VK_STRUCTURE_TYPE_SURFACE_PRESENT_MODE_EXT:
+            return ToString(*reinterpret_cast<const decode::Decoded_VkSurfacePresentModeEXT*>(meta), toStringFlags, tabCount, tabSize);
+        case VK_STRUCTURE_TYPE_SURFACE_PRESENT_SCALING_CAPABILITIES_EXT:
+            return ToString(*reinterpret_cast<const decode::Decoded_VkSurfacePresentScalingCapabilitiesEXT*>(meta), toStringFlags, tabCount, tabSize);
+        case VK_STRUCTURE_TYPE_SURFACE_PRESENT_MODE_COMPATIBILITY_EXT:
+            return ToString(*reinterpret_cast<const decode::Decoded_VkSurfacePresentModeCompatibilityEXT*>(meta), toStringFlags, tabCount, tabSize);
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SWAPCHAIN_MAINTENANCE_1_FEATURES_EXT:
+            return ToString(*reinterpret_cast<const decode::Decoded_VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT*>(meta), toStringFlags, tabCount, tabSize);
+        case VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_FENCE_INFO_EXT:
+            return ToString(*reinterpret_cast<const decode::Decoded_VkSwapchainPresentFenceInfoEXT*>(meta), toStringFlags, tabCount, tabSize);
+        case VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_MODES_CREATE_INFO_EXT:
+            return ToString(*reinterpret_cast<const decode::Decoded_VkSwapchainPresentModesCreateInfoEXT*>(meta), toStringFlags, tabCount, tabSize);
+        case VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_MODE_INFO_EXT:
+            return ToString(*reinterpret_cast<const decode::Decoded_VkSwapchainPresentModeInfoEXT*>(meta), toStringFlags, tabCount, tabSize);
+        case VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_SCALING_CREATE_INFO_EXT:
+            return ToString(*reinterpret_cast<const decode::Decoded_VkSwapchainPresentScalingCreateInfoEXT*>(meta), toStringFlags, tabCount, tabSize);
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_PROPERTIES_NV:
             return ToString(*reinterpret_cast<const decode::Decoded_VkPhysicalDeviceDeviceGeneratedCommandsPropertiesNV*>(meta), toStringFlags, tabCount, tabSize);
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_FEATURES_NV:
@@ -738,6 +754,10 @@ std::string PNextDecodedToString(const decode::PNextNode* pNext, ToStringFlags t
             return ToString(*reinterpret_cast<const decode::Decoded_VkPhysicalDeviceOpacityMicromapPropertiesEXT*>(meta), toStringFlags, tabCount, tabSize);
         case VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_TRIANGLES_OPACITY_MICROMAP_EXT:
             return ToString(*reinterpret_cast<const decode::Decoded_VkAccelerationStructureTrianglesOpacityMicromapEXT*>(meta), toStringFlags, tabCount, tabSize);
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_CULLING_SHADER_FEATURES_HUAWEI:
+            return ToString(*reinterpret_cast<const decode::Decoded_VkPhysicalDeviceClusterCullingShaderFeaturesHUAWEI*>(meta), toStringFlags, tabCount, tabSize);
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_CULLING_SHADER_PROPERTIES_HUAWEI:
+            return ToString(*reinterpret_cast<const decode::Decoded_VkPhysicalDeviceClusterCullingShaderPropertiesHUAWEI*>(meta), toStringFlags, tabCount, tabSize);
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BORDER_COLOR_SWIZZLE_FEATURES_EXT:
             return ToString(*reinterpret_cast<const decode::Decoded_VkPhysicalDeviceBorderColorSwizzleFeaturesEXT*>(meta), toStringFlags, tabCount, tabSize);
         case VK_STRUCTURE_TYPE_SAMPLER_BORDER_COLOR_COMPONENT_MAPPING_CREATE_INFO_EXT:

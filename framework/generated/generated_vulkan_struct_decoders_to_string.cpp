@@ -7477,7 +7477,7 @@ template <> std::string ToString<decode::Decoded_VkDebugMarkerObjectNameInfoEXT>
             FieldToString(strStrm, true, "sType", toStringFlags, tabCount, tabSize, Quote(ToString(obj.sType, toStringFlags, tabCount, tabSize)));
             FieldToString(strStrm, false, "pNext", toStringFlags, tabCount, tabSize, PNextDecodedToString(decoded_obj.pNext, toStringFlags, tabCount, tabSize));
             FieldToString(strStrm, false, "objectType", toStringFlags, tabCount, tabSize, Quote(ToString(obj.objectType, toStringFlags, tabCount, tabSize)));
-            FieldToString(strStrm, false, "object", toStringFlags, tabCount, tabSize, ToString(obj.object, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "object", toStringFlags, tabCount, tabSize, decode::HandleIdToString(decoded_obj.object));
             FieldToString(strStrm, false, "pObjectName", toStringFlags, tabCount, tabSize, CStrToString(obj.pObjectName));
         }
     );
@@ -7496,7 +7496,7 @@ template <> std::string ToString<decode::Decoded_VkDebugMarkerObjectTagInfoEXT>(
             FieldToString(strStrm, true, "sType", toStringFlags, tabCount, tabSize, Quote(ToString(obj.sType, toStringFlags, tabCount, tabSize)));
             FieldToString(strStrm, false, "pNext", toStringFlags, tabCount, tabSize, PNextDecodedToString(decoded_obj.pNext, toStringFlags, tabCount, tabSize));
             FieldToString(strStrm, false, "objectType", toStringFlags, tabCount, tabSize, Quote(ToString(obj.objectType, toStringFlags, tabCount, tabSize)));
-            FieldToString(strStrm, false, "object", toStringFlags, tabCount, tabSize, ToString(obj.object, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "object", toStringFlags, tabCount, tabSize, decode::HandleIdToString(decoded_obj.object));
             FieldToString(strStrm, false, "tagName", toStringFlags, tabCount, tabSize, ToString(obj.tagName, toStringFlags, tabCount, tabSize));
             FieldToString(strStrm, false, "tagSize", toStringFlags, tabCount, tabSize, ToString(obj.tagSize, toStringFlags, tabCount, tabSize));
             FieldToString(strStrm, false, "pTag", toStringFlags, tabCount, tabSize, decode::DataPointerDecoderToString(&decoded_obj.pTag));
@@ -8532,7 +8532,7 @@ template <> std::string ToString<decode::Decoded_VkDebugUtilsObjectNameInfoEXT>(
             FieldToString(strStrm, true, "sType", toStringFlags, tabCount, tabSize, Quote(ToString(obj.sType, toStringFlags, tabCount, tabSize)));
             FieldToString(strStrm, false, "pNext", toStringFlags, tabCount, tabSize, PNextDecodedToString(decoded_obj.pNext, toStringFlags, tabCount, tabSize));
             FieldToString(strStrm, false, "objectType", toStringFlags, tabCount, tabSize, Quote(ToString(obj.objectType, toStringFlags, tabCount, tabSize)));
-            FieldToString(strStrm, false, "objectHandle", toStringFlags, tabCount, tabSize, ToString(obj.objectHandle, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "objectHandle", toStringFlags, tabCount, tabSize, decode::HandleIdToString(decoded_obj.objectHandle));
             FieldToString(strStrm, false, "pObjectName", toStringFlags, tabCount, tabSize, CStrToString(obj.pObjectName));
         }
     );
@@ -8598,7 +8598,7 @@ template <> std::string ToString<decode::Decoded_VkDebugUtilsObjectTagInfoEXT>(c
             FieldToString(strStrm, true, "sType", toStringFlags, tabCount, tabSize, Quote(ToString(obj.sType, toStringFlags, tabCount, tabSize)));
             FieldToString(strStrm, false, "pNext", toStringFlags, tabCount, tabSize, PNextDecodedToString(decoded_obj.pNext, toStringFlags, tabCount, tabSize));
             FieldToString(strStrm, false, "objectType", toStringFlags, tabCount, tabSize, Quote(ToString(obj.objectType, toStringFlags, tabCount, tabSize)));
-            FieldToString(strStrm, false, "objectHandle", toStringFlags, tabCount, tabSize, ToString(obj.objectHandle, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "objectHandle", toStringFlags, tabCount, tabSize, decode::HandleIdToString(decoded_obj.objectHandle));
             FieldToString(strStrm, false, "tagName", toStringFlags, tabCount, tabSize, ToString(obj.tagName, toStringFlags, tabCount, tabSize));
             FieldToString(strStrm, false, "tagSize", toStringFlags, tabCount, tabSize, ToString(obj.tagSize, toStringFlags, tabCount, tabSize));
             FieldToString(strStrm, false, "pTag", toStringFlags, tabCount, tabSize, decode::DataPointerDecoderToString(&decoded_obj.pTag));
@@ -10931,6 +10931,171 @@ template <> std::string ToString<decode::Decoded_VkPhysicalDeviceShaderAtomicFlo
     );
 }
 
+template <> std::string ToString<decode::Decoded_VkSurfacePresentModeEXT>(const decode::Decoded_VkSurfacePresentModeEXT& decoded_obj, ToStringFlags toStringFlags, uint32_t tabCount, uint32_t tabSize)
+{
+    if(decoded_obj.decoded_value == nullptr)
+    {
+        return "null";
+    }
+    const VkSurfacePresentModeEXT& obj = *decoded_obj.decoded_value;
+    return ObjectToString(toStringFlags, tabCount, tabSize,
+        [&](std::stringstream& strStrm)
+        {
+            FieldToString(strStrm, true, "sType", toStringFlags, tabCount, tabSize, Quote(ToString(obj.sType, toStringFlags, tabCount, tabSize)));
+            FieldToString(strStrm, false, "pNext", toStringFlags, tabCount, tabSize, PNextDecodedToString(decoded_obj.pNext, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "presentMode", toStringFlags, tabCount, tabSize, Quote(ToString(obj.presentMode, toStringFlags, tabCount, tabSize)));
+        }
+    );
+}
+
+template <> std::string ToString<decode::Decoded_VkSurfacePresentScalingCapabilitiesEXT>(const decode::Decoded_VkSurfacePresentScalingCapabilitiesEXT& decoded_obj, ToStringFlags toStringFlags, uint32_t tabCount, uint32_t tabSize)
+{
+    if(decoded_obj.decoded_value == nullptr)
+    {
+        return "null";
+    }
+    const VkSurfacePresentScalingCapabilitiesEXT& obj = *decoded_obj.decoded_value;
+    return ObjectToString(toStringFlags, tabCount, tabSize,
+        [&](std::stringstream& strStrm)
+        {
+            FieldToString(strStrm, true, "sType", toStringFlags, tabCount, tabSize, Quote(ToString(obj.sType, toStringFlags, tabCount, tabSize)));
+            FieldToString(strStrm, false, "pNext", toStringFlags, tabCount, tabSize, PNextDecodedToString(decoded_obj.pNext, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "supportedPresentScaling", toStringFlags, tabCount, tabSize, ToString(obj.supportedPresentScaling, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "supportedPresentGravityX", toStringFlags, tabCount, tabSize, ToString(obj.supportedPresentGravityX, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "supportedPresentGravityY", toStringFlags, tabCount, tabSize, ToString(obj.supportedPresentGravityY, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "minScaledImageExtent", toStringFlags, tabCount, tabSize, ToString(*(decoded_obj.minScaledImageExtent), toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "maxScaledImageExtent", toStringFlags, tabCount, tabSize, ToString(*(decoded_obj.maxScaledImageExtent), toStringFlags, tabCount, tabSize));
+        }
+    );
+}
+
+template <> std::string ToString<decode::Decoded_VkSurfacePresentModeCompatibilityEXT>(const decode::Decoded_VkSurfacePresentModeCompatibilityEXT& decoded_obj, ToStringFlags toStringFlags, uint32_t tabCount, uint32_t tabSize)
+{
+    if(decoded_obj.decoded_value == nullptr)
+    {
+        return "null";
+    }
+    const VkSurfacePresentModeCompatibilityEXT& obj = *decoded_obj.decoded_value;
+    return ObjectToString(toStringFlags, tabCount, tabSize,
+        [&](std::stringstream& strStrm)
+        {
+            FieldToString(strStrm, true, "sType", toStringFlags, tabCount, tabSize, Quote(ToString(obj.sType, toStringFlags, tabCount, tabSize)));
+            FieldToString(strStrm, false, "pNext", toStringFlags, tabCount, tabSize, PNextDecodedToString(decoded_obj.pNext, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "presentModeCount", toStringFlags, tabCount, tabSize, ToString(obj.presentModeCount, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "pPresentModes", toStringFlags, tabCount, tabSize, VkEnumArrayToString(obj.presentModeCount, obj.pPresentModes, toStringFlags, tabCount, tabSize));
+        }
+    );
+}
+
+template <> std::string ToString<decode::Decoded_VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT>(const decode::Decoded_VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT& decoded_obj, ToStringFlags toStringFlags, uint32_t tabCount, uint32_t tabSize)
+{
+    if(decoded_obj.decoded_value == nullptr)
+    {
+        return "null";
+    }
+    const VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT& obj = *decoded_obj.decoded_value;
+    return ObjectToString(toStringFlags, tabCount, tabSize,
+        [&](std::stringstream& strStrm)
+        {
+            FieldToString(strStrm, true, "sType", toStringFlags, tabCount, tabSize, Quote(ToString(obj.sType, toStringFlags, tabCount, tabSize)));
+            FieldToString(strStrm, false, "pNext", toStringFlags, tabCount, tabSize, PNextDecodedToString(decoded_obj.pNext, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "swapchainMaintenance1", toStringFlags, tabCount, tabSize, ToString(obj.swapchainMaintenance1, toStringFlags, tabCount, tabSize));
+        }
+    );
+}
+
+template <> std::string ToString<decode::Decoded_VkSwapchainPresentFenceInfoEXT>(const decode::Decoded_VkSwapchainPresentFenceInfoEXT& decoded_obj, ToStringFlags toStringFlags, uint32_t tabCount, uint32_t tabSize)
+{
+    if(decoded_obj.decoded_value == nullptr)
+    {
+        return "null";
+    }
+    const VkSwapchainPresentFenceInfoEXT& obj = *decoded_obj.decoded_value;
+    return ObjectToString(toStringFlags, tabCount, tabSize,
+        [&](std::stringstream& strStrm)
+        {
+            FieldToString(strStrm, true, "sType", toStringFlags, tabCount, tabSize, Quote(ToString(obj.sType, toStringFlags, tabCount, tabSize)));
+            FieldToString(strStrm, false, "pNext", toStringFlags, tabCount, tabSize, PNextDecodedToString(decoded_obj.pNext, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "swapchainCount", toStringFlags, tabCount, tabSize, ToString(obj.swapchainCount, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "pFences", toStringFlags, tabCount, tabSize, decode::HandlePointerDecoderArrayToString(decoded_obj.pFences.GetLength(), &decoded_obj.pFences, toStringFlags, tabCount, tabSize));
+        }
+    );
+}
+
+template <> std::string ToString<decode::Decoded_VkSwapchainPresentModesCreateInfoEXT>(const decode::Decoded_VkSwapchainPresentModesCreateInfoEXT& decoded_obj, ToStringFlags toStringFlags, uint32_t tabCount, uint32_t tabSize)
+{
+    if(decoded_obj.decoded_value == nullptr)
+    {
+        return "null";
+    }
+    const VkSwapchainPresentModesCreateInfoEXT& obj = *decoded_obj.decoded_value;
+    return ObjectToString(toStringFlags, tabCount, tabSize,
+        [&](std::stringstream& strStrm)
+        {
+            FieldToString(strStrm, true, "sType", toStringFlags, tabCount, tabSize, Quote(ToString(obj.sType, toStringFlags, tabCount, tabSize)));
+            FieldToString(strStrm, false, "pNext", toStringFlags, tabCount, tabSize, PNextDecodedToString(decoded_obj.pNext, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "presentModeCount", toStringFlags, tabCount, tabSize, ToString(obj.presentModeCount, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "pPresentModes", toStringFlags, tabCount, tabSize, VkEnumArrayToString(obj.presentModeCount, obj.pPresentModes, toStringFlags, tabCount, tabSize));
+        }
+    );
+}
+
+template <> std::string ToString<decode::Decoded_VkSwapchainPresentModeInfoEXT>(const decode::Decoded_VkSwapchainPresentModeInfoEXT& decoded_obj, ToStringFlags toStringFlags, uint32_t tabCount, uint32_t tabSize)
+{
+    if(decoded_obj.decoded_value == nullptr)
+    {
+        return "null";
+    }
+    const VkSwapchainPresentModeInfoEXT& obj = *decoded_obj.decoded_value;
+    return ObjectToString(toStringFlags, tabCount, tabSize,
+        [&](std::stringstream& strStrm)
+        {
+            FieldToString(strStrm, true, "sType", toStringFlags, tabCount, tabSize, Quote(ToString(obj.sType, toStringFlags, tabCount, tabSize)));
+            FieldToString(strStrm, false, "pNext", toStringFlags, tabCount, tabSize, PNextDecodedToString(decoded_obj.pNext, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "swapchainCount", toStringFlags, tabCount, tabSize, ToString(obj.swapchainCount, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "pPresentModes", toStringFlags, tabCount, tabSize, VkEnumArrayToString(obj.swapchainCount, obj.pPresentModes, toStringFlags, tabCount, tabSize));
+        }
+    );
+}
+
+template <> std::string ToString<decode::Decoded_VkSwapchainPresentScalingCreateInfoEXT>(const decode::Decoded_VkSwapchainPresentScalingCreateInfoEXT& decoded_obj, ToStringFlags toStringFlags, uint32_t tabCount, uint32_t tabSize)
+{
+    if(decoded_obj.decoded_value == nullptr)
+    {
+        return "null";
+    }
+    const VkSwapchainPresentScalingCreateInfoEXT& obj = *decoded_obj.decoded_value;
+    return ObjectToString(toStringFlags, tabCount, tabSize,
+        [&](std::stringstream& strStrm)
+        {
+            FieldToString(strStrm, true, "sType", toStringFlags, tabCount, tabSize, Quote(ToString(obj.sType, toStringFlags, tabCount, tabSize)));
+            FieldToString(strStrm, false, "pNext", toStringFlags, tabCount, tabSize, PNextDecodedToString(decoded_obj.pNext, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "scalingBehavior", toStringFlags, tabCount, tabSize, ToString(obj.scalingBehavior, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "presentGravityX", toStringFlags, tabCount, tabSize, ToString(obj.presentGravityX, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "presentGravityY", toStringFlags, tabCount, tabSize, ToString(obj.presentGravityY, toStringFlags, tabCount, tabSize));
+        }
+    );
+}
+
+template <> std::string ToString<decode::Decoded_VkReleaseSwapchainImagesInfoEXT>(const decode::Decoded_VkReleaseSwapchainImagesInfoEXT& decoded_obj, ToStringFlags toStringFlags, uint32_t tabCount, uint32_t tabSize)
+{
+    if(decoded_obj.decoded_value == nullptr)
+    {
+        return "null";
+    }
+    const VkReleaseSwapchainImagesInfoEXT& obj = *decoded_obj.decoded_value;
+    return ObjectToString(toStringFlags, tabCount, tabSize,
+        [&](std::stringstream& strStrm)
+        {
+            FieldToString(strStrm, true, "sType", toStringFlags, tabCount, tabSize, Quote(ToString(obj.sType, toStringFlags, tabCount, tabSize)));
+            FieldToString(strStrm, false, "pNext", toStringFlags, tabCount, tabSize, PNextDecodedToString(decoded_obj.pNext, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "swapchain", toStringFlags, tabCount, tabSize, decode::HandleIdToString(decoded_obj.swapchain));
+            FieldToString(strStrm, false, "imageIndexCount", toStringFlags, tabCount, tabSize, ToString(obj.imageIndexCount, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "pImageIndices", toStringFlags, tabCount, tabSize, ArrayToString(obj.imageIndexCount, obj.pImageIndices, toStringFlags, tabCount, tabSize));
+        }
+    );
+}
+
 template <> std::string ToString<decode::Decoded_VkPhysicalDeviceDeviceGeneratedCommandsPropertiesNV>(const decode::Decoded_VkPhysicalDeviceDeviceGeneratedCommandsPropertiesNV& decoded_obj, ToStringFlags toStringFlags, uint32_t tabCount, uint32_t tabSize)
 {
     if(decoded_obj.decoded_value == nullptr)
@@ -12985,6 +13150,43 @@ template <> std::string ToString<decode::Decoded_VkMicromapTriangleEXT>(const de
             FieldToString(strStrm, true, "dataOffset", toStringFlags, tabCount, tabSize, ToString(obj.dataOffset, toStringFlags, tabCount, tabSize));
             FieldToString(strStrm, false, "subdivisionLevel", toStringFlags, tabCount, tabSize, ToString(obj.subdivisionLevel, toStringFlags, tabCount, tabSize));
             FieldToString(strStrm, false, "format", toStringFlags, tabCount, tabSize, ToString(obj.format, toStringFlags, tabCount, tabSize));
+        }
+    );
+}
+
+template <> std::string ToString<decode::Decoded_VkPhysicalDeviceClusterCullingShaderFeaturesHUAWEI>(const decode::Decoded_VkPhysicalDeviceClusterCullingShaderFeaturesHUAWEI& decoded_obj, ToStringFlags toStringFlags, uint32_t tabCount, uint32_t tabSize)
+{
+    if(decoded_obj.decoded_value == nullptr)
+    {
+        return "null";
+    }
+    const VkPhysicalDeviceClusterCullingShaderFeaturesHUAWEI& obj = *decoded_obj.decoded_value;
+    return ObjectToString(toStringFlags, tabCount, tabSize,
+        [&](std::stringstream& strStrm)
+        {
+            FieldToString(strStrm, true, "sType", toStringFlags, tabCount, tabSize, Quote(ToString(obj.sType, toStringFlags, tabCount, tabSize)));
+            FieldToString(strStrm, false, "pNext", toStringFlags, tabCount, tabSize, PNextDecodedToString(decoded_obj.pNext, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "clustercullingShader", toStringFlags, tabCount, tabSize, ToString(obj.clustercullingShader, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "multiviewClusterCullingShader", toStringFlags, tabCount, tabSize, ToString(obj.multiviewClusterCullingShader, toStringFlags, tabCount, tabSize));
+        }
+    );
+}
+
+template <> std::string ToString<decode::Decoded_VkPhysicalDeviceClusterCullingShaderPropertiesHUAWEI>(const decode::Decoded_VkPhysicalDeviceClusterCullingShaderPropertiesHUAWEI& decoded_obj, ToStringFlags toStringFlags, uint32_t tabCount, uint32_t tabSize)
+{
+    if(decoded_obj.decoded_value == nullptr)
+    {
+        return "null";
+    }
+    const VkPhysicalDeviceClusterCullingShaderPropertiesHUAWEI& obj = *decoded_obj.decoded_value;
+    return ObjectToString(toStringFlags, tabCount, tabSize,
+        [&](std::stringstream& strStrm)
+        {
+            FieldToString(strStrm, true, "sType", toStringFlags, tabCount, tabSize, Quote(ToString(obj.sType, toStringFlags, tabCount, tabSize)));
+            FieldToString(strStrm, false, "pNext", toStringFlags, tabCount, tabSize, PNextDecodedToString(decoded_obj.pNext, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "maxWorkGroupCount", toStringFlags, tabCount, tabSize, ArrayToString(3, obj.maxWorkGroupCount, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "maxWorkGroupSize", toStringFlags, tabCount, tabSize, ArrayToString(3, obj.maxWorkGroupSize, toStringFlags, tabCount, tabSize));
+            FieldToString(strStrm, false, "maxOutputClusterCount", toStringFlags, tabCount, tabSize, ToString(obj.maxOutputClusterCount, toStringFlags, tabCount, tabSize));
         }
     );
 }

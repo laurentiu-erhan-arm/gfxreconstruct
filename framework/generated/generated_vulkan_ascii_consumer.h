@@ -3170,6 +3170,12 @@ class VulkanAsciiConsumer : public VulkanAsciiConsumerBase
         VkStencilOp                                 depthFailOp,
         VkCompareOp                                 compareOp) override;
 
+    virtual void Process_vkReleaseSwapchainImagesEXT(
+        const ApiCallInfo&                          call_info,
+        VkResult                                    returnValue,
+        format::HandleId                            device,
+        StructPointerDecoder<Decoded_VkReleaseSwapchainImagesInfoEXT>* pReleaseInfo) override;
+
     virtual void Process_vkGetGeneratedCommandsMemoryRequirementsNV(
         const ApiCallInfo&                          call_info,
         format::HandleId                            device,
@@ -3512,6 +3518,19 @@ class VulkanAsciiConsumer : public VulkanAsciiConsumerBase
         VkAccelerationStructureBuildTypeKHR         buildType,
         StructPointerDecoder<Decoded_VkMicromapBuildInfoEXT>* pBuildInfo,
         StructPointerDecoder<Decoded_VkMicromapBuildSizesInfoEXT>* pSizeInfo) override;
+
+    virtual void Process_vkCmdDrawClusterHUAWEI(
+        const ApiCallInfo&                          call_info,
+        format::HandleId                            commandBuffer,
+        uint32_t                                    groupCountX,
+        uint32_t                                    groupCountY,
+        uint32_t                                    groupCountZ) override;
+
+    virtual void Process_vkCmdDrawClusterIndirectHUAWEI(
+        const ApiCallInfo&                          call_info,
+        format::HandleId                            commandBuffer,
+        format::HandleId                            buffer,
+        VkDeviceSize                                offset) override;
 
     virtual void Process_vkSetDeviceMemoryPriorityEXT(
         const ApiCallInfo&                          call_info,

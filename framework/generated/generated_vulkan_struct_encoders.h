@@ -727,6 +727,17 @@ void EncodeStruct(ParameterEncoder* encoder, const VkPhysicalDeviceExtendedDynam
 
 void EncodeStruct(ParameterEncoder* encoder, const VkPhysicalDeviceShaderAtomicFloat2FeaturesEXT& value);
 
+void EncodeStruct(ParameterEncoder* encoder, const VkSurfacePresentModeEXT& value);
+void EncodeStruct(ParameterEncoder* encoder, const VkSurfacePresentScalingCapabilitiesEXT& value);
+void EncodeStruct(ParameterEncoder* encoder, const VkSurfacePresentModeCompatibilityEXT& value);
+
+void EncodeStruct(ParameterEncoder* encoder, const VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT& value);
+void EncodeStruct(ParameterEncoder* encoder, const VkSwapchainPresentFenceInfoEXT& value);
+void EncodeStruct(ParameterEncoder* encoder, const VkSwapchainPresentModesCreateInfoEXT& value);
+void EncodeStruct(ParameterEncoder* encoder, const VkSwapchainPresentModeInfoEXT& value);
+void EncodeStruct(ParameterEncoder* encoder, const VkSwapchainPresentScalingCreateInfoEXT& value);
+void EncodeStruct(ParameterEncoder* encoder, const VkReleaseSwapchainImagesInfoEXT& value);
+
 void EncodeStruct(ParameterEncoder* encoder, const VkPhysicalDeviceDeviceGeneratedCommandsPropertiesNV& value);
 void EncodeStruct(ParameterEncoder* encoder, const VkPhysicalDeviceDeviceGeneratedCommandsFeaturesNV& value);
 void EncodeStruct(ParameterEncoder* encoder, const VkGraphicsShaderGroupCreateInfoNV& value);
@@ -879,6 +890,9 @@ void EncodeStruct(ParameterEncoder* encoder, const VkCopyMicromapInfoEXT& value)
 void EncodeStruct(ParameterEncoder* encoder, const VkMicromapBuildSizesInfoEXT& value);
 void EncodeStruct(ParameterEncoder* encoder, const VkAccelerationStructureTrianglesOpacityMicromapEXT& value);
 void EncodeStruct(ParameterEncoder* encoder, const VkMicromapTriangleEXT& value);
+
+void EncodeStruct(ParameterEncoder* encoder, const VkPhysicalDeviceClusterCullingShaderFeaturesHUAWEI& value);
+void EncodeStruct(ParameterEncoder* encoder, const VkPhysicalDeviceClusterCullingShaderPropertiesHUAWEI& value);
 
 void EncodeStruct(ParameterEncoder* encoder, const VkPhysicalDeviceBorderColorSwizzleFeaturesEXT& value);
 void EncodeStruct(ParameterEncoder* encoder, const VkSamplerBorderColorComponentMappingCreateInfoEXT& value);

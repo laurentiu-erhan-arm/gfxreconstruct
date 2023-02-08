@@ -1408,6 +1408,28 @@ struct Decoded_VkPhysicalDeviceShaderAtomicFloat2FeaturesEXT;
 
 size_t DecodeStruct(const uint8_t* parameter_buffer, size_t buffer_size, Decoded_VkPhysicalDeviceShaderAtomicFloat2FeaturesEXT* wrapper);
 
+struct Decoded_VkSurfacePresentModeEXT;
+struct Decoded_VkSurfacePresentScalingCapabilitiesEXT;
+struct Decoded_VkSurfacePresentModeCompatibilityEXT;
+
+size_t DecodeStruct(const uint8_t* parameter_buffer, size_t buffer_size, Decoded_VkSurfacePresentModeEXT* wrapper);
+size_t DecodeStruct(const uint8_t* parameter_buffer, size_t buffer_size, Decoded_VkSurfacePresentScalingCapabilitiesEXT* wrapper);
+size_t DecodeStruct(const uint8_t* parameter_buffer, size_t buffer_size, Decoded_VkSurfacePresentModeCompatibilityEXT* wrapper);
+
+struct Decoded_VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT;
+struct Decoded_VkSwapchainPresentFenceInfoEXT;
+struct Decoded_VkSwapchainPresentModesCreateInfoEXT;
+struct Decoded_VkSwapchainPresentModeInfoEXT;
+struct Decoded_VkSwapchainPresentScalingCreateInfoEXT;
+struct Decoded_VkReleaseSwapchainImagesInfoEXT;
+
+size_t DecodeStruct(const uint8_t* parameter_buffer, size_t buffer_size, Decoded_VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT* wrapper);
+size_t DecodeStruct(const uint8_t* parameter_buffer, size_t buffer_size, Decoded_VkSwapchainPresentFenceInfoEXT* wrapper);
+size_t DecodeStruct(const uint8_t* parameter_buffer, size_t buffer_size, Decoded_VkSwapchainPresentModesCreateInfoEXT* wrapper);
+size_t DecodeStruct(const uint8_t* parameter_buffer, size_t buffer_size, Decoded_VkSwapchainPresentModeInfoEXT* wrapper);
+size_t DecodeStruct(const uint8_t* parameter_buffer, size_t buffer_size, Decoded_VkSwapchainPresentScalingCreateInfoEXT* wrapper);
+size_t DecodeStruct(const uint8_t* parameter_buffer, size_t buffer_size, Decoded_VkReleaseSwapchainImagesInfoEXT* wrapper);
+
 struct Decoded_VkPhysicalDeviceDeviceGeneratedCommandsPropertiesNV;
 struct Decoded_VkPhysicalDeviceDeviceGeneratedCommandsFeaturesNV;
 struct Decoded_VkGraphicsShaderGroupCreateInfoNV;
@@ -1713,6 +1735,12 @@ size_t DecodeStruct(const uint8_t* parameter_buffer, size_t buffer_size, Decoded
 size_t DecodeStruct(const uint8_t* parameter_buffer, size_t buffer_size, Decoded_VkMicromapBuildSizesInfoEXT* wrapper);
 size_t DecodeStruct(const uint8_t* parameter_buffer, size_t buffer_size, Decoded_VkAccelerationStructureTrianglesOpacityMicromapEXT* wrapper);
 size_t DecodeStruct(const uint8_t* parameter_buffer, size_t buffer_size, Decoded_VkMicromapTriangleEXT* wrapper);
+
+struct Decoded_VkPhysicalDeviceClusterCullingShaderFeaturesHUAWEI;
+struct Decoded_VkPhysicalDeviceClusterCullingShaderPropertiesHUAWEI;
+
+size_t DecodeStruct(const uint8_t* parameter_buffer, size_t buffer_size, Decoded_VkPhysicalDeviceClusterCullingShaderFeaturesHUAWEI* wrapper);
+size_t DecodeStruct(const uint8_t* parameter_buffer, size_t buffer_size, Decoded_VkPhysicalDeviceClusterCullingShaderPropertiesHUAWEI* wrapper);
 
 struct Decoded_VkPhysicalDeviceBorderColorSwizzleFeaturesEXT;
 struct Decoded_VkSamplerBorderColorComponentMappingCreateInfoEXT;

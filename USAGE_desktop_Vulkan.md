@@ -36,6 +36,7 @@ Vulkan API calls on Desktop systems.
     4. [Trimmed File Optimization](#trimmed-file-optimization)
     5. [JSON Lines Conversion](#json-lines-conversion)
     6. [Command Launcher](#command-launcher)
+    7. [Options Common To All Tools](#common-options)
 
 ## Capturing API calls
 
@@ -268,22 +269,22 @@ on November 25, 2018:
 
 ### Capture Script
 
-The `gfxrecon-capture.py` tool is a convenience script that can be used to
+The `gfxrecon-capture-vulkan.py` tool is a convenience script that can be used to
 start a capture and specify the capture options using a single command.
 
 ```text
-usage: gfxrecon-capture.py [-h]
-                           [-w dir]
-                           [-o captureFile]
-                           [-f captureFrames]
-                           [--no-file-timestamp]
-                           [--trigger {F1-F12,TAB,CTRL}]
-                           [--compression-type {LZ4,ZLIB,ZSTD,NONE}]
-                           [--file-flush]
-                           [--log-level {debug,info,warn,error,fatal}]
-                           [--log-file <file>]
-                           [--memory-tracking-mode {page_guard,assisted,unassisted}]
-                           <program> [<programArgs>]
+usage: gfxrecon-capture-vulkan.py [-h]
+                                  [-w dir]
+                                  [-o captureFile]
+                                  [-f captureFrames]
+                                  [--no-file-timestamp]
+                                  [--trigger {F1-F12,TAB,CTRL}]
+                                  [--compression-type {LZ4,ZLIB,ZSTD,NONE}]
+                                  [--file-flush]
+                                  [--log-level {debug,info,warn,error,fatal}]
+                                  [--log-file <file>]
+                                  [--memory-tracking-mode {page_guard,assisted,unassisted}]
+                                  <program> [<programArgs>]
 
 Create a capture of a Vulkan program.
 
@@ -322,18 +323,18 @@ optional arguments:
                                        capture file during VkQueueSubmit and VkUnmapMemory
 ```
 
-Most of the options for `gfxrecon-capture.py` result in the script setting the
-appropriate capture layer environment variable, then invoking the program to
-be captured. Environment variables not set by `gfxrecon-capture.py` can be set
-manually before running `gfxrecon-capture.py` and they will be detected by the
-capture layer.
+Most of the options for `gfxrecon-capture-vulkan.py` result in the script setting
+the appropriate capture layer environment variable, then invoking the program to
+be captured. Environment variables not set by `gfxrecon-capture-vulkan.py` can be
+set manually before running `gfxrecon-capture-vulkan.py` and they will be detected by
+the capture layer.
 
-The `gfxrecon-capture.py` tool is a Python3 script. In order to use it, a
+The `gfxrecon-capture-vulkan.py` tool is a Python3 script. In order to use it, a
 Python3 interpreter must first be installed. Once Python3 is installed, you should
-be able to invoke `gfxrecon-capture.py` by simply typing:
+be able to invoke `gfxrecon-capture-vulkan.py` by simply typing:
 
 ```bash
-gfxrecon-capture.py -o vkcube.gfxr vkcube
+gfxrecon-capture-vulkan.py -o vkcube.gfxr vkcube
 ```
 
 On Windows, after installing Python3, be sure to associate the `.py` file extension with
@@ -658,3 +659,17 @@ gfxrecon.py capture -o vkcube.gfxr vkcube
 
 On Windows, after installing Python3, be sure to associate the `.py` file extension with
 the Python3 interpreter before you run the script.
+
+### Options Common To all Tools
+
+If the environment variable `GFXRECON_NO_DEBUG_POPUP` has any non-zero
+number or non-empty, non-numeric string value when running any of
+of the file processing tools, the tool will attempt to disable the
+'Abort, Retry, Ignore' message box displayed when `assert()` fails on
+Windows in a Debug build.  This behavior is slightly different than
+`--no-debug-popup` in that the message box is disabled before any other
+variable initialization.  This is probably most useful in headless or
+"Continuous Integration" builds when an on-screen message box that
+can't be automatically dismissed may hang scripts or cause directories
+to be locked.  (Note that "FALSE" and "no", as examples, are non-empty,
+non-numeric string values and will be interpreted as enabling the option.)

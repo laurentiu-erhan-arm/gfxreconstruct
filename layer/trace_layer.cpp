@@ -61,6 +61,19 @@ const char* const kUnsupportedDeviceExtensions[] = {
     VK_EXT_SHADER_MODULE_IDENTIFIER_EXTENSION_NAME,
     VK_NVX_BINARY_IMPORT_EXTENSION_NAME,
     VK_VALVE_DESCRIPTOR_SET_HOST_MAPPING_EXTENSION_NAME,
+    VK_KHR_VIDEO_QUEUE_EXTENSION_NAME,
+    VK_KHR_VIDEO_DECODE_QUEUE_EXTENSION_NAME,
+    VK_KHR_VIDEO_ENCODE_QUEUE_EXTENSION_NAME,
+    VK_EXT_VIDEO_ENCODE_H264_EXTENSION_NAME,
+    VK_KHR_VIDEO_DECODE_H264_EXTENSION_NAME,
+    VK_KHR_VIDEO_DECODE_H265_EXTENSION_NAME,
+    VK_EXT_VIDEO_ENCODE_H265_EXTENSION_NAME,
+    VK_NVX_BINARY_IMPORT_EXTENSION_NAME,
+    VK_HUAWEI_SUBPASS_SHADING_EXTENSION_NAME,
+    VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME,
+    VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME,
+    VK_NV_COPY_MEMORY_INDIRECT_EXTENSION_NAME,
+    VK_NV_MEMORY_DECOMPRESSION_EXTENSION_NAME
 };
 
 static void remove_extensions(std::vector<VkExtensionProperties>& extensionProps,
@@ -377,7 +390,7 @@ VKAPI_ATTR VkResult VKAPI_CALL EnumerateDeviceExtensionProperties(VkPhysicalDevi
 
         std::vector<VkExtensionProperties> downstream_properties(downstream_property_count);
         result = instance_table->EnumerateDeviceExtensionProperties(
-            wrapped_device, pLayerName, &downstream_property_count, &downstream_properties[0]);
+            wrapped_device, pLayerName, &downstream_property_count, downstream_properties.data());
         if (result != VK_SUCCESS)
         {
             return result;

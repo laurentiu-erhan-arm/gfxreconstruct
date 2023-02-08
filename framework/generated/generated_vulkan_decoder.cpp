@@ -9884,6 +9884,26 @@ size_t VulkanDecoder::Decode_vkCmdSetStencilOpEXT(const ApiCallInfo& call_info, 
     return bytes_read;
 }
 
+size_t VulkanDecoder::Decode_vkReleaseSwapchainImagesEXT(const ApiCallInfo& call_info, const uint8_t* parameter_buffer, size_t buffer_size)
+{
+    size_t bytes_read = 0;
+
+    format::HandleId device;
+    StructPointerDecoder<Decoded_VkReleaseSwapchainImagesInfoEXT> pReleaseInfo;
+    VkResult return_value;
+
+    bytes_read += ValueDecoder::DecodeHandleIdValue((parameter_buffer + bytes_read), (buffer_size - bytes_read), &device);
+    bytes_read += pReleaseInfo.Decode((parameter_buffer + bytes_read), (buffer_size - bytes_read));
+    bytes_read += ValueDecoder::DecodeEnumValue((parameter_buffer + bytes_read), (buffer_size - bytes_read), &return_value);
+
+    for (auto consumer : GetConsumers())
+    {
+        consumer->Process_vkReleaseSwapchainImagesEXT(call_info, return_value, device, &pReleaseInfo);
+    }
+
+    return bytes_read;
+}
+
 size_t VulkanDecoder::Decode_vkGetGeneratedCommandsMemoryRequirementsNV(const ApiCallInfo& call_info, const uint8_t* parameter_buffer, size_t buffer_size)
 {
     size_t bytes_read = 0;
@@ -10965,6 +10985,48 @@ size_t VulkanDecoder::Decode_vkGetMicromapBuildSizesEXT(const ApiCallInfo& call_
     for (auto consumer : GetConsumers())
     {
         consumer->Process_vkGetMicromapBuildSizesEXT(call_info, device, buildType, &pBuildInfo, &pSizeInfo);
+    }
+
+    return bytes_read;
+}
+
+size_t VulkanDecoder::Decode_vkCmdDrawClusterHUAWEI(const ApiCallInfo& call_info, const uint8_t* parameter_buffer, size_t buffer_size)
+{
+    size_t bytes_read = 0;
+
+    format::HandleId commandBuffer;
+    uint32_t groupCountX;
+    uint32_t groupCountY;
+    uint32_t groupCountZ;
+
+    bytes_read += ValueDecoder::DecodeHandleIdValue((parameter_buffer + bytes_read), (buffer_size - bytes_read), &commandBuffer);
+    bytes_read += ValueDecoder::DecodeUInt32Value((parameter_buffer + bytes_read), (buffer_size - bytes_read), &groupCountX);
+    bytes_read += ValueDecoder::DecodeUInt32Value((parameter_buffer + bytes_read), (buffer_size - bytes_read), &groupCountY);
+    bytes_read += ValueDecoder::DecodeUInt32Value((parameter_buffer + bytes_read), (buffer_size - bytes_read), &groupCountZ);
+
+    for (auto consumer : GetConsumers())
+    {
+        consumer->Process_vkCmdDrawClusterHUAWEI(call_info, commandBuffer, groupCountX, groupCountY, groupCountZ);
+    }
+
+    return bytes_read;
+}
+
+size_t VulkanDecoder::Decode_vkCmdDrawClusterIndirectHUAWEI(const ApiCallInfo& call_info, const uint8_t* parameter_buffer, size_t buffer_size)
+{
+    size_t bytes_read = 0;
+
+    format::HandleId commandBuffer;
+    format::HandleId buffer;
+    VkDeviceSize offset;
+
+    bytes_read += ValueDecoder::DecodeHandleIdValue((parameter_buffer + bytes_read), (buffer_size - bytes_read), &commandBuffer);
+    bytes_read += ValueDecoder::DecodeHandleIdValue((parameter_buffer + bytes_read), (buffer_size - bytes_read), &buffer);
+    bytes_read += ValueDecoder::DecodeVkDeviceSizeValue((parameter_buffer + bytes_read), (buffer_size - bytes_read), &offset);
+
+    for (auto consumer : GetConsumers())
+    {
+        consumer->Process_vkCmdDrawClusterIndirectHUAWEI(call_info, commandBuffer, buffer, offset);
     }
 
     return bytes_read;
@@ -13682,6 +13744,9 @@ void VulkanDecoder::DecodeFunctionCall(format::ApiCallId             call_id,
     case format::ApiCallId::ApiCall_vkCmdSetStencilOpEXT:
         Decode_vkCmdSetStencilOpEXT(call_info, parameter_buffer, buffer_size);
         break;
+    case format::ApiCallId::ApiCall_vkReleaseSwapchainImagesEXT:
+        Decode_vkReleaseSwapchainImagesEXT(call_info, parameter_buffer, buffer_size);
+        break;
     case format::ApiCallId::ApiCall_vkGetGeneratedCommandsMemoryRequirementsNV:
         Decode_vkGetGeneratedCommandsMemoryRequirementsNV(call_info, parameter_buffer, buffer_size);
         break;
@@ -13831,6 +13896,12 @@ void VulkanDecoder::DecodeFunctionCall(format::ApiCallId             call_id,
         break;
     case format::ApiCallId::ApiCall_vkGetMicromapBuildSizesEXT:
         Decode_vkGetMicromapBuildSizesEXT(call_info, parameter_buffer, buffer_size);
+        break;
+    case format::ApiCallId::ApiCall_vkCmdDrawClusterHUAWEI:
+        Decode_vkCmdDrawClusterHUAWEI(call_info, parameter_buffer, buffer_size);
+        break;
+    case format::ApiCallId::ApiCall_vkCmdDrawClusterIndirectHUAWEI:
+        Decode_vkCmdDrawClusterIndirectHUAWEI(call_info, parameter_buffer, buffer_size);
         break;
     case format::ApiCallId::ApiCall_vkSetDeviceMemoryPriorityEXT:
         Decode_vkSetDeviceMemoryPriorityEXT(call_info, parameter_buffer, buffer_size);

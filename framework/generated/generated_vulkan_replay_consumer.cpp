@@ -5642,8 +5642,10 @@ void VulkanReplayConsumer::Process_vkSetDebugUtilsObjectNameEXT(
     VkDevice in_device = MapHandle<DeviceInfo>(device, &VulkanObjectInfoTable::GetDeviceInfo);
     const VkDebugUtilsObjectNameInfoEXT* in_pNameInfo = pNameInfo->GetPointer();
     MapStructHandles(pNameInfo->GetMetaStructPointer(), GetObjectInfoTable());
+    DeviceInfo* device_info = GetObjectInfoTable().GetDeviceInfo(device);
+    VkPhysicalDevice             physical_device = device_info->parent;
 
-    VkResult replay_result = GetDeviceTable(in_device)->SetDebugUtilsObjectNameEXT(in_device, in_pNameInfo);
+    VkResult replay_result = GetInstanceTable(physical_device)->SetDebugUtilsObjectNameEXT(in_device, in_pNameInfo);
     CheckResult("vkSetDebugUtilsObjectNameEXT", returnValue, replay_result);
 }
 
@@ -5656,8 +5658,10 @@ void VulkanReplayConsumer::Process_vkSetDebugUtilsObjectTagEXT(
     VkDevice in_device = MapHandle<DeviceInfo>(device, &VulkanObjectInfoTable::GetDeviceInfo);
     const VkDebugUtilsObjectTagInfoEXT* in_pTagInfo = pTagInfo->GetPointer();
     MapStructHandles(pTagInfo->GetMetaStructPointer(), GetObjectInfoTable());
+    DeviceInfo* device_info = GetObjectInfoTable().GetDeviceInfo(device);
+    VkPhysicalDevice             physical_device = device_info->parent;
 
-    VkResult replay_result = GetDeviceTable(in_device)->SetDebugUtilsObjectTagEXT(in_device, in_pTagInfo);
+    VkResult replay_result = GetInstanceTable(physical_device)->SetDebugUtilsObjectTagEXT(in_device, in_pTagInfo);
     CheckResult("vkSetDebugUtilsObjectTagEXT", returnValue, replay_result);
 }
 
@@ -6813,6 +6817,20 @@ void VulkanReplayConsumer::Process_vkCmdSetStencilOpEXT(
     GetDeviceTable(in_commandBuffer)->CmdSetStencilOpEXT(in_commandBuffer, faceMask, failOp, passOp, depthFailOp, compareOp);
 }
 
+void VulkanReplayConsumer::Process_vkReleaseSwapchainImagesEXT(
+    const ApiCallInfo&                          call_info,
+    VkResult                                    returnValue,
+    format::HandleId                            device,
+    StructPointerDecoder<Decoded_VkReleaseSwapchainImagesInfoEXT>* pReleaseInfo)
+{
+    VkDevice in_device = MapHandle<DeviceInfo>(device, &VulkanObjectInfoTable::GetDeviceInfo);
+    const VkReleaseSwapchainImagesInfoEXT* in_pReleaseInfo = pReleaseInfo->GetPointer();
+    MapStructHandles(pReleaseInfo->GetMetaStructPointer(), GetObjectInfoTable());
+
+    VkResult replay_result = GetDeviceTable(in_device)->ReleaseSwapchainImagesEXT(in_device, in_pReleaseInfo);
+    CheckResult("vkReleaseSwapchainImagesEXT", returnValue, replay_result);
+}
+
 void VulkanReplayConsumer::Process_vkGetGeneratedCommandsMemoryRequirementsNV(
     const ApiCallInfo&                          call_info,
     format::HandleId                            device,
@@ -7547,6 +7565,30 @@ void VulkanReplayConsumer::Process_vkGetMicromapBuildSizesEXT(
     VkMicromapBuildSizesInfoEXT* out_pSizeInfo = pSizeInfo->IsNull() ? nullptr : pSizeInfo->AllocateOutputData(1, { VK_STRUCTURE_TYPE_MICROMAP_BUILD_SIZES_INFO_EXT, nullptr });
 
     GetDeviceTable(in_device)->GetMicromapBuildSizesEXT(in_device, buildType, in_pBuildInfo, out_pSizeInfo);
+}
+
+void VulkanReplayConsumer::Process_vkCmdDrawClusterHUAWEI(
+    const ApiCallInfo&                          call_info,
+    format::HandleId                            commandBuffer,
+    uint32_t                                    groupCountX,
+    uint32_t                                    groupCountY,
+    uint32_t                                    groupCountZ)
+{
+    VkCommandBuffer in_commandBuffer = MapHandle<CommandBufferInfo>(commandBuffer, &VulkanObjectInfoTable::GetCommandBufferInfo);
+
+    GetDeviceTable(in_commandBuffer)->CmdDrawClusterHUAWEI(in_commandBuffer, groupCountX, groupCountY, groupCountZ);
+}
+
+void VulkanReplayConsumer::Process_vkCmdDrawClusterIndirectHUAWEI(
+    const ApiCallInfo&                          call_info,
+    format::HandleId                            commandBuffer,
+    format::HandleId                            buffer,
+    VkDeviceSize                                offset)
+{
+    VkCommandBuffer in_commandBuffer = MapHandle<CommandBufferInfo>(commandBuffer, &VulkanObjectInfoTable::GetCommandBufferInfo);
+    VkBuffer in_buffer = MapHandle<BufferInfo>(buffer, &VulkanObjectInfoTable::GetBufferInfo);
+
+    GetDeviceTable(in_commandBuffer)->CmdDrawClusterIndirectHUAWEI(in_commandBuffer, in_buffer, offset);
 }
 
 void VulkanReplayConsumer::Process_vkSetDeviceMemoryPriorityEXT(
