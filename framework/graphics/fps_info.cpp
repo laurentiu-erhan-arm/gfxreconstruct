@@ -90,6 +90,7 @@ void FpsInfo::BeginFrame(uint64_t frame)
         {
             measurement_start_time_ = util::datetime::GetTimestamp();
             started_measurement_    = true;
+            GFXRECON_WRITE_CONSOLE("================== Start timer (Frame: %llu) ==================", frame);
         }
     }
 }
