@@ -1,6 +1,6 @@
 /*
 ** Copyright (c) 2021-2022 LunarG, Inc.
-** Copyright (c) 2021-2022 Advanced Micro Devices, Inc. All rights reserved.
+** Copyright (c) 2021-2023 Advanced Micro Devices, Inc. All rights reserved.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -163,15 +163,49 @@ class Dx12ReplayConsumerBase : public Dx12Consumer
     }
 
     template <typename T>
-    void AddObject(const format::HandleId* p_id, T** pp_object)
+    void SetObjectName(const format::HandleId* p_id, T** pp_object, format::ApiCallId call_id)
     {
-        object_mapping::AddObject<T>(p_id, pp_object, &object_info_table_);
+        if ((p_id != nullptr) && (pp_object != nullptr) && (*pp_object != nullptr))
+        {
+            // Don't override object name if this AddObject() call is triggered by a QueryInterface() call
+            if (call_id != format::ApiCall_IUnknown_QueryInterface)
+            {
+                IUnknown* iunknown = reinterpret_cast<IUnknown*>(*pp_object);
+
+                graphics::dx12::ID3D12ObjectComPtr object;
+
+                // See if this is a D3D12Object
+                if (SUCCEEDED(iunknown->QueryInterface(IID_ID3D12Object, reinterpret_cast<void**>(&object))))
+                {
+                    const std::wstring constructed_name = ConstructObjectName(*p_id, call_id);
+
+                    HRESULT res = object->SetName(constructed_name.c_str());
+                    GFXRECON_ASSERT(res == S_OK);
+                }
+            }
+        }
     }
 
     template <typename T>
-    void AddObject(const format::HandleId* p_id, T** pp_object, DxObjectInfo&& initial_info)
+    void AddObject(const format::HandleId* p_id, T** pp_object, format::ApiCallId call_id)
+    {
+        object_mapping::AddObject<T>(p_id, pp_object, &object_info_table_);
+
+        if (options_.override_object_names)
+        {
+            SetObjectName(p_id, pp_object, call_id);
+        }
+    }
+
+    template <typename T>
+    void AddObject(const format::HandleId* p_id, T** pp_object, DxObjectInfo&& initial_info, format::ApiCallId call_id)
     {
         object_mapping::AddObject<T>(p_id, pp_object, std::move(initial_info), &object_info_table_);
+
+        if (options_.override_object_names)
+        {
+            SetObjectName(p_id, pp_object, call_id);
+        }
     }
 
     void RemoveObject(DxObjectInfo* info);
@@ -241,17 +275,67 @@ class Dx12ReplayConsumerBase : public Dx12Consumer
 
     void ProcessDxgiAdapterInfo(const format::DxgiAdapterInfoCommandHeader& adapter_info_header);
 
+    void InitCommandQueueExtraInfo(ID3D12Device* device, HandlePointerDecoder<void*>* command_queue_decoder);
+
     HRESULT OverrideCreateCommandQueue(DxObjectInfo*                                           replay_object_info,
                                        HRESULT                                                 original_result,
                                        StructPointerDecoder<Decoded_D3D12_COMMAND_QUEUE_DESC>* desc,
                                        Decoded_GUID                                            riid,
                                        HandlePointerDecoder<void*>*                            command_queue);
 
+    HRESULT OverrideCreateCommandQueue1(DxObjectInfo*                                           device9_object_info,
+                                        HRESULT                                                 original_result,
+                                        StructPointerDecoder<Decoded_D3D12_COMMAND_QUEUE_DESC>* desc,
+                                        Decoded_GUID                                            creator_id,
+                                        Decoded_GUID                                            riid,
+                                        HandlePointerDecoder<void*>*                            command_queue1_decoder);
+
     HRESULT OverrideCreateDescriptorHeap(DxObjectInfo*                                             replay_object_info,
                                          HRESULT                                                   original_result,
                                          StructPointerDecoder<Decoded_D3D12_DESCRIPTOR_HEAP_DESC>* desc,
                                          Decoded_GUID                                              riid,
                                          HandlePointerDecoder<void*>*                              heap);
+
+    template <typename T>
+    void SetResourceSamplerFeedbackMipRegion(D3D12_RESOURCE_DESC1& desc_dest, T* desc_src){};
+
+    template <>
+    void SetResourceSamplerFeedbackMipRegion(D3D12_RESOURCE_DESC1& desc_dest, D3D12_RESOURCE_DESC1* desc_src)
+    {
+        desc_dest.SamplerFeedbackMipRegion = desc_src->SamplerFeedbackMipRegion;
+    };
+
+    // Helper to initialize the resource's D3D12ResourceInfo and set its Dimension and Layout.
+    template <typename T>
+    void SetResourceDesc(HandlePointerDecoder<void*>* resource, StructPointerDecoder<T>* desc)
+    {
+        GFXRECON_ASSERT(resource != nullptr);
+
+        auto resource_object_info = GetObjectInfo(*resource->GetPointer());
+
+        GFXRECON_ASSERT(resource_object_info != nullptr);
+
+        if (resource_object_info->extra_info == nullptr)
+        {
+            auto resource_info               = std::make_unique<D3D12ResourceInfo>();
+            resource_object_info->extra_info = std::move(resource_info);
+        }
+
+        auto extra_info = reinterpret_cast<D3D12ResourceInfo*>(resource_object_info->extra_info.get());
+
+        extra_info->desc.Dimension        = desc->GetPointer()->Dimension;
+        extra_info->desc.Alignment        = desc->GetPointer()->Alignment;
+        extra_info->desc.Width            = desc->GetPointer()->Width;
+        extra_info->desc.Height           = desc->GetPointer()->Height;
+        extra_info->desc.DepthOrArraySize = desc->GetPointer()->DepthOrArraySize;
+        extra_info->desc.MipLevels        = desc->GetPointer()->MipLevels;
+        extra_info->desc.Format           = desc->GetPointer()->Format;
+        extra_info->desc.SampleDesc       = desc->GetPointer()->SampleDesc;
+        extra_info->desc.Layout           = desc->GetPointer()->Layout;
+        extra_info->desc.Flags            = desc->GetPointer()->Flags;
+
+        SetResourceSamplerFeedbackMipRegion(extra_info->desc, desc->GetPointer());
+    };
 
     HRESULT OverrideCreateCommittedResource(DxObjectInfo*                                        replay_object_info,
                                             HRESULT                                              original_result,
@@ -588,6 +672,8 @@ class Dx12ReplayConsumerBase : public Dx12Consumer
                                     UINT                                                    num_views,
                                     StructPointerDecoder<Decoded_D3D12_VERTEX_BUFFER_VIEW>* views_decoder);
 
+    HRESULT OverrideSetName(DxObjectInfo* replay_object_info, HRESULT original_result, WStringDecoder* Name);
+
     const Dx12ObjectInfoTable& GetObjectInfoTable() const { return object_info_table_; }
 
     Dx12ObjectInfoTable& GetObjectInfoTable() { return object_info_table_; }
@@ -747,6 +833,8 @@ class Dx12ReplayConsumerBase : public Dx12Consumer
                                   const format::InitSubresourceCommandHeader& command_header,
                                   const uint8_t*                              data);
 
+    std::wstring ConstructObjectName(format::HandleId capture_id, format::ApiCallId call_id);
+
     std::unique_ptr<graphics::DX12ImageRenderer>          frame_buffer_renderer_;
     Dx12ObjectInfoTable                                   object_info_table_;
     std::shared_ptr<application::Application>             application_;
@@ -772,10 +860,11 @@ class Dx12ReplayConsumerBase : public Dx12Consumer
     std::unique_ptr<Dx12AccelerationStructureBuilder>     accel_struct_builder_;
     graphics::Dx12ShaderIdMap                             shader_id_map_;
     graphics::dx12::ActiveAdapterMap                      adapters_;
-    IDXGIAdapter*                                         render_adapter_{nullptr};
+    IDXGIAdapter*                                         render_adapter_{ nullptr };
     FillMemoryResourceValueInfo                           fill_memory_resource_value_info_;
     std::unique_ptr<graphics::Dx12ResourceDataUtil>       resource_data_util_;
     std::string                                           screenshot_file_prefix_;
+    util::ScreenshotFormat                                screenshot_format_;
     std::unique_ptr<ScreenshotHandlerBase>                screenshot_handler_;
     std::unordered_map<ID3D12Resource*, ResourceInitInfo> resource_init_infos_;
 };

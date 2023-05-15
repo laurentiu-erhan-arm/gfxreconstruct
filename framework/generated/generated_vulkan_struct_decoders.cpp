@@ -1,6 +1,6 @@
 /*
-** Copyright (c) 2018-2021 Valve Corporation
-** Copyright (c) 2018-2022 LunarG, Inc.
+** Copyright (c) 2018-2023 Valve Corporation
+** Copyright (c) 2018-2023 LunarG, Inc.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -37,6 +37,1735 @@ GFXRECON_BEGIN_NAMESPACE(gfxrecon)
 GFXRECON_BEGIN_NAMESPACE(decode)
 
 size_t DecodePNextStruct(const uint8_t* buffer, size_t buffer_size, PNextNode** pNext);
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoH264SpsVuiFlags* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoH264SpsVuiFlags* value = wrapper->decoded_value;
+
+    uint32_t temp_aspect_ratio_info_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_aspect_ratio_info_present_flag);
+    value->aspect_ratio_info_present_flag = temp_aspect_ratio_info_present_flag;
+    uint32_t temp_overscan_info_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_overscan_info_present_flag);
+    value->overscan_info_present_flag = temp_overscan_info_present_flag;
+    uint32_t temp_overscan_appropriate_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_overscan_appropriate_flag);
+    value->overscan_appropriate_flag = temp_overscan_appropriate_flag;
+    uint32_t temp_video_signal_type_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_video_signal_type_present_flag);
+    value->video_signal_type_present_flag = temp_video_signal_type_present_flag;
+    uint32_t temp_video_full_range_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_video_full_range_flag);
+    value->video_full_range_flag = temp_video_full_range_flag;
+    uint32_t temp_color_description_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_color_description_present_flag);
+    value->color_description_present_flag = temp_color_description_present_flag;
+    uint32_t temp_chroma_loc_info_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_chroma_loc_info_present_flag);
+    value->chroma_loc_info_present_flag = temp_chroma_loc_info_present_flag;
+    uint32_t temp_timing_info_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_timing_info_present_flag);
+    value->timing_info_present_flag = temp_timing_info_present_flag;
+    uint32_t temp_fixed_frame_rate_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_fixed_frame_rate_flag);
+    value->fixed_frame_rate_flag = temp_fixed_frame_rate_flag;
+    uint32_t temp_bitstream_restriction_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_bitstream_restriction_flag);
+    value->bitstream_restriction_flag = temp_bitstream_restriction_flag;
+    uint32_t temp_nal_hrd_parameters_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_nal_hrd_parameters_present_flag);
+    value->nal_hrd_parameters_present_flag = temp_nal_hrd_parameters_present_flag;
+    uint32_t temp_vcl_hrd_parameters_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_vcl_hrd_parameters_present_flag);
+    value->vcl_hrd_parameters_present_flag = temp_vcl_hrd_parameters_present_flag;
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoH264HrdParameters* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoH264HrdParameters* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->cpb_cnt_minus1));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->bit_rate_scale));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->cpb_size_scale));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->reserved1));
+    wrapper->bit_rate_value_minus1.SetExternalMemory(value->bit_rate_value_minus1, STD_VIDEO_H264_CPB_CNT_LIST_SIZE);
+    bytes_read += wrapper->bit_rate_value_minus1.DecodeUInt32((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->cpb_size_value_minus1.SetExternalMemory(value->cpb_size_value_minus1, STD_VIDEO_H264_CPB_CNT_LIST_SIZE);
+    bytes_read += wrapper->cpb_size_value_minus1.DecodeUInt32((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->cbr_flag.SetExternalMemory(value->cbr_flag, STD_VIDEO_H264_CPB_CNT_LIST_SIZE);
+    bytes_read += wrapper->cbr_flag.DecodeUInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->initial_cpb_removal_delay_length_minus1));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->cpb_removal_delay_length_minus1));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->dpb_output_delay_length_minus1));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->time_offset_length));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoH264SequenceParameterSetVui* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoH264SequenceParameterSetVui* value = wrapper->decoded_value;
+
+    wrapper->flags = DecodeAllocator::Allocate<Decoded_StdVideoH264SpsVuiFlags>();
+    wrapper->flags->decoded_value = &(value->flags);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->flags);
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->aspect_ratio_idc));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->sar_width));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->sar_height));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->video_format));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->colour_primaries));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->transfer_characteristics));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->matrix_coefficients));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->num_units_in_tick));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->time_scale));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->max_num_reorder_frames));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->max_dec_frame_buffering));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->chroma_sample_loc_type_top_field));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->chroma_sample_loc_type_bottom_field));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->reserved1));
+    wrapper->pHrdParameters = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH264HrdParameters>>();
+    bytes_read += wrapper->pHrdParameters->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pHrdParameters = wrapper->pHrdParameters->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoH264SpsFlags* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoH264SpsFlags* value = wrapper->decoded_value;
+
+    uint32_t temp_constraint_set0_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_constraint_set0_flag);
+    value->constraint_set0_flag = temp_constraint_set0_flag;
+    uint32_t temp_constraint_set1_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_constraint_set1_flag);
+    value->constraint_set1_flag = temp_constraint_set1_flag;
+    uint32_t temp_constraint_set2_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_constraint_set2_flag);
+    value->constraint_set2_flag = temp_constraint_set2_flag;
+    uint32_t temp_constraint_set3_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_constraint_set3_flag);
+    value->constraint_set3_flag = temp_constraint_set3_flag;
+    uint32_t temp_constraint_set4_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_constraint_set4_flag);
+    value->constraint_set4_flag = temp_constraint_set4_flag;
+    uint32_t temp_constraint_set5_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_constraint_set5_flag);
+    value->constraint_set5_flag = temp_constraint_set5_flag;
+    uint32_t temp_direct_8x8_inference_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_direct_8x8_inference_flag);
+    value->direct_8x8_inference_flag = temp_direct_8x8_inference_flag;
+    uint32_t temp_mb_adaptive_frame_field_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_mb_adaptive_frame_field_flag);
+    value->mb_adaptive_frame_field_flag = temp_mb_adaptive_frame_field_flag;
+    uint32_t temp_frame_mbs_only_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_frame_mbs_only_flag);
+    value->frame_mbs_only_flag = temp_frame_mbs_only_flag;
+    uint32_t temp_delta_pic_order_always_zero_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_delta_pic_order_always_zero_flag);
+    value->delta_pic_order_always_zero_flag = temp_delta_pic_order_always_zero_flag;
+    uint32_t temp_separate_colour_plane_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_separate_colour_plane_flag);
+    value->separate_colour_plane_flag = temp_separate_colour_plane_flag;
+    uint32_t temp_gaps_in_frame_num_value_allowed_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_gaps_in_frame_num_value_allowed_flag);
+    value->gaps_in_frame_num_value_allowed_flag = temp_gaps_in_frame_num_value_allowed_flag;
+    uint32_t temp_qpprime_y_zero_transform_bypass_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_qpprime_y_zero_transform_bypass_flag);
+    value->qpprime_y_zero_transform_bypass_flag = temp_qpprime_y_zero_transform_bypass_flag;
+    uint32_t temp_frame_cropping_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_frame_cropping_flag);
+    value->frame_cropping_flag = temp_frame_cropping_flag;
+    uint32_t temp_seq_scaling_matrix_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_seq_scaling_matrix_present_flag);
+    value->seq_scaling_matrix_present_flag = temp_seq_scaling_matrix_present_flag;
+    uint32_t temp_vui_parameters_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_vui_parameters_present_flag);
+    value->vui_parameters_present_flag = temp_vui_parameters_present_flag;
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoH264ScalingLists* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoH264ScalingLists* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->scaling_list_present_mask));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->use_default_scaling_matrix_mask));
+    wrapper->ScalingList4x4.SetExternalMemory(value->ScalingList4x4, STD_VIDEO_H264_SCALING_LIST_4X4_NUM_LISTS, STD_VIDEO_H264_SCALING_LIST_4X4_NUM_ELEMENTS);
+    bytes_read += wrapper->ScalingList4x4.DecodeUInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->ScalingList8x8.SetExternalMemory(value->ScalingList8x8, STD_VIDEO_H264_SCALING_LIST_8X8_NUM_LISTS, STD_VIDEO_H264_SCALING_LIST_8X8_NUM_ELEMENTS);
+    bytes_read += wrapper->ScalingList8x8.DecodeUInt8((buffer + bytes_read), (buffer_size - bytes_read));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoH264SequenceParameterSet* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoH264SequenceParameterSet* value = wrapper->decoded_value;
+
+    wrapper->flags = DecodeAllocator::Allocate<Decoded_StdVideoH264SpsFlags>();
+    wrapper->flags->decoded_value = &(value->flags);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->flags);
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->profile_idc));
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->level_idc));
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->chroma_format_idc));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->seq_parameter_set_id));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->bit_depth_luma_minus8));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->bit_depth_chroma_minus8));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->log2_max_frame_num_minus4));
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->pic_order_cnt_type));
+    bytes_read += ValueDecoder::DecodeInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->offset_for_non_ref_pic));
+    bytes_read += ValueDecoder::DecodeInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->offset_for_top_to_bottom_field));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->log2_max_pic_order_cnt_lsb_minus4));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->num_ref_frames_in_pic_order_cnt_cycle));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->max_num_ref_frames));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->reserved1));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pic_width_in_mbs_minus1));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pic_height_in_map_units_minus1));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->frame_crop_left_offset));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->frame_crop_right_offset));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->frame_crop_top_offset));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->frame_crop_bottom_offset));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->reserved2));
+    bytes_read += wrapper->pOffsetForRefFrame.DecodeInt32((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pOffsetForRefFrame = wrapper->pOffsetForRefFrame.GetPointer();
+    wrapper->pScalingLists = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH264ScalingLists>>();
+    bytes_read += wrapper->pScalingLists->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pScalingLists = wrapper->pScalingLists->GetPointer();
+    wrapper->pSequenceParameterSetVui = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH264SequenceParameterSetVui>>();
+    bytes_read += wrapper->pSequenceParameterSetVui->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pSequenceParameterSetVui = wrapper->pSequenceParameterSetVui->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoH264PpsFlags* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoH264PpsFlags* value = wrapper->decoded_value;
+
+    uint32_t temp_transform_8x8_mode_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_transform_8x8_mode_flag);
+    value->transform_8x8_mode_flag = temp_transform_8x8_mode_flag;
+    uint32_t temp_redundant_pic_cnt_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_redundant_pic_cnt_present_flag);
+    value->redundant_pic_cnt_present_flag = temp_redundant_pic_cnt_present_flag;
+    uint32_t temp_constrained_intra_pred_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_constrained_intra_pred_flag);
+    value->constrained_intra_pred_flag = temp_constrained_intra_pred_flag;
+    uint32_t temp_deblocking_filter_control_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_deblocking_filter_control_present_flag);
+    value->deblocking_filter_control_present_flag = temp_deblocking_filter_control_present_flag;
+    uint32_t temp_weighted_pred_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_weighted_pred_flag);
+    value->weighted_pred_flag = temp_weighted_pred_flag;
+    uint32_t temp_bottom_field_pic_order_in_frame_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_bottom_field_pic_order_in_frame_present_flag);
+    value->bottom_field_pic_order_in_frame_present_flag = temp_bottom_field_pic_order_in_frame_present_flag;
+    uint32_t temp_entropy_coding_mode_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_entropy_coding_mode_flag);
+    value->entropy_coding_mode_flag = temp_entropy_coding_mode_flag;
+    uint32_t temp_pic_scaling_matrix_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_pic_scaling_matrix_present_flag);
+    value->pic_scaling_matrix_present_flag = temp_pic_scaling_matrix_present_flag;
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoH264PictureParameterSet* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoH264PictureParameterSet* value = wrapper->decoded_value;
+
+    wrapper->flags = DecodeAllocator::Allocate<Decoded_StdVideoH264PpsFlags>();
+    wrapper->flags->decoded_value = &(value->flags);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->flags);
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->seq_parameter_set_id));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pic_parameter_set_id));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->num_ref_idx_l0_default_active_minus1));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->num_ref_idx_l1_default_active_minus1));
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->weighted_bipred_idc));
+    bytes_read += ValueDecoder::DecodeInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pic_init_qp_minus26));
+    bytes_read += ValueDecoder::DecodeInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pic_init_qs_minus26));
+    bytes_read += ValueDecoder::DecodeInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->chroma_qp_index_offset));
+    bytes_read += ValueDecoder::DecodeInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->second_chroma_qp_index_offset));
+    wrapper->pScalingLists = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH264ScalingLists>>();
+    bytes_read += wrapper->pScalingLists->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pScalingLists = wrapper->pScalingLists->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoDecodeH264PictureInfoFlags* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoDecodeH264PictureInfoFlags* value = wrapper->decoded_value;
+
+    uint32_t temp_field_pic_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_field_pic_flag);
+    value->field_pic_flag = temp_field_pic_flag;
+    uint32_t temp_is_intra;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_is_intra);
+    value->is_intra = temp_is_intra;
+    uint32_t temp_IdrPicFlag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_IdrPicFlag);
+    value->IdrPicFlag = temp_IdrPicFlag;
+    uint32_t temp_bottom_field_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_bottom_field_flag);
+    value->bottom_field_flag = temp_bottom_field_flag;
+    uint32_t temp_is_reference;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_is_reference);
+    value->is_reference = temp_is_reference;
+    uint32_t temp_complementary_field_pair;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_complementary_field_pair);
+    value->complementary_field_pair = temp_complementary_field_pair;
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoDecodeH264PictureInfo* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoDecodeH264PictureInfo* value = wrapper->decoded_value;
+
+    wrapper->flags = DecodeAllocator::Allocate<Decoded_StdVideoDecodeH264PictureInfoFlags>();
+    wrapper->flags->decoded_value = &(value->flags);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->flags);
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->seq_parameter_set_id));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pic_parameter_set_id));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->reserved1));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->reserved2));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->frame_num));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->idr_pic_id));
+    wrapper->PicOrderCnt.SetExternalMemory(value->PicOrderCnt, STD_VIDEO_DECODE_H264_FIELD_ORDER_COUNT_LIST_SIZE);
+    bytes_read += wrapper->PicOrderCnt.DecodeInt32((buffer + bytes_read), (buffer_size - bytes_read));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoDecodeH264ReferenceInfoFlags* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoDecodeH264ReferenceInfoFlags* value = wrapper->decoded_value;
+
+    uint32_t temp_top_field_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_top_field_flag);
+    value->top_field_flag = temp_top_field_flag;
+    uint32_t temp_bottom_field_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_bottom_field_flag);
+    value->bottom_field_flag = temp_bottom_field_flag;
+    uint32_t temp_used_for_long_term_reference;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_used_for_long_term_reference);
+    value->used_for_long_term_reference = temp_used_for_long_term_reference;
+    uint32_t temp_is_non_existing;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_is_non_existing);
+    value->is_non_existing = temp_is_non_existing;
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoDecodeH264ReferenceInfo* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoDecodeH264ReferenceInfo* value = wrapper->decoded_value;
+
+    wrapper->flags = DecodeAllocator::Allocate<Decoded_StdVideoDecodeH264ReferenceInfoFlags>();
+    wrapper->flags->decoded_value = &(value->flags);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->flags);
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->FrameNum));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->reserved));
+    wrapper->PicOrderCnt.SetExternalMemory(value->PicOrderCnt, STD_VIDEO_DECODE_H264_FIELD_ORDER_COUNT_LIST_SIZE);
+    bytes_read += wrapper->PicOrderCnt.DecodeInt32((buffer + bytes_read), (buffer_size - bytes_read));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoEncodeH264WeightTableFlags* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoEncodeH264WeightTableFlags* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->luma_weight_l0_flag));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->chroma_weight_l0_flag));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->luma_weight_l1_flag));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->chroma_weight_l1_flag));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoEncodeH264WeightTable* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoEncodeH264WeightTable* value = wrapper->decoded_value;
+
+    wrapper->flags = DecodeAllocator::Allocate<Decoded_StdVideoEncodeH264WeightTableFlags>();
+    wrapper->flags->decoded_value = &(value->flags);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->flags);
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->luma_log2_weight_denom));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->chroma_log2_weight_denom));
+    wrapper->luma_weight_l0.SetExternalMemory(value->luma_weight_l0, STD_VIDEO_H264_MAX_NUM_LIST_REF);
+    bytes_read += wrapper->luma_weight_l0.DecodeInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->luma_offset_l0.SetExternalMemory(value->luma_offset_l0, STD_VIDEO_H264_MAX_NUM_LIST_REF);
+    bytes_read += wrapper->luma_offset_l0.DecodeInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->chroma_weight_l0.SetExternalMemory(value->chroma_weight_l0, STD_VIDEO_H264_MAX_NUM_LIST_REF, STD_VIDEO_H264_MAX_CHROMA_PLANES);
+    bytes_read += wrapper->chroma_weight_l0.DecodeInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->chroma_offset_l0.SetExternalMemory(value->chroma_offset_l0, STD_VIDEO_H264_MAX_NUM_LIST_REF, STD_VIDEO_H264_MAX_CHROMA_PLANES);
+    bytes_read += wrapper->chroma_offset_l0.DecodeInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->luma_weight_l1.SetExternalMemory(value->luma_weight_l1, STD_VIDEO_H264_MAX_NUM_LIST_REF);
+    bytes_read += wrapper->luma_weight_l1.DecodeInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->luma_offset_l1.SetExternalMemory(value->luma_offset_l1, STD_VIDEO_H264_MAX_NUM_LIST_REF);
+    bytes_read += wrapper->luma_offset_l1.DecodeInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->chroma_weight_l1.SetExternalMemory(value->chroma_weight_l1, STD_VIDEO_H264_MAX_NUM_LIST_REF, STD_VIDEO_H264_MAX_CHROMA_PLANES);
+    bytes_read += wrapper->chroma_weight_l1.DecodeInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->chroma_offset_l1.SetExternalMemory(value->chroma_offset_l1, STD_VIDEO_H264_MAX_NUM_LIST_REF, STD_VIDEO_H264_MAX_CHROMA_PLANES);
+    bytes_read += wrapper->chroma_offset_l1.DecodeInt8((buffer + bytes_read), (buffer_size - bytes_read));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoEncodeH264SliceHeaderFlags* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoEncodeH264SliceHeaderFlags* value = wrapper->decoded_value;
+
+    uint32_t temp_direct_spatial_mv_pred_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_direct_spatial_mv_pred_flag);
+    value->direct_spatial_mv_pred_flag = temp_direct_spatial_mv_pred_flag;
+    uint32_t temp_num_ref_idx_active_override_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_num_ref_idx_active_override_flag);
+    value->num_ref_idx_active_override_flag = temp_num_ref_idx_active_override_flag;
+    uint32_t temp_no_output_of_prior_pics_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_no_output_of_prior_pics_flag);
+    value->no_output_of_prior_pics_flag = temp_no_output_of_prior_pics_flag;
+    uint32_t temp_adaptive_ref_pic_marking_mode_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_adaptive_ref_pic_marking_mode_flag);
+    value->adaptive_ref_pic_marking_mode_flag = temp_adaptive_ref_pic_marking_mode_flag;
+    uint32_t temp_no_prior_references_available_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_no_prior_references_available_flag);
+    value->no_prior_references_available_flag = temp_no_prior_references_available_flag;
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoEncodeH264PictureInfoFlags* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoEncodeH264PictureInfoFlags* value = wrapper->decoded_value;
+
+    uint32_t temp_idr_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_idr_flag);
+    value->idr_flag = temp_idr_flag;
+    uint32_t temp_is_reference_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_is_reference_flag);
+    value->is_reference_flag = temp_is_reference_flag;
+    uint32_t temp_used_for_long_term_reference;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_used_for_long_term_reference);
+    value->used_for_long_term_reference = temp_used_for_long_term_reference;
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoEncodeH264ReferenceInfoFlags* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoEncodeH264ReferenceInfoFlags* value = wrapper->decoded_value;
+
+    uint32_t temp_used_for_long_term_reference;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_used_for_long_term_reference);
+    value->used_for_long_term_reference = temp_used_for_long_term_reference;
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoEncodeH264ReferenceListsInfoFlags* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoEncodeH264ReferenceListsInfoFlags* value = wrapper->decoded_value;
+
+    uint32_t temp_ref_pic_list_modification_flag_l0;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_ref_pic_list_modification_flag_l0);
+    value->ref_pic_list_modification_flag_l0 = temp_ref_pic_list_modification_flag_l0;
+    uint32_t temp_ref_pic_list_modification_flag_l1;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_ref_pic_list_modification_flag_l1);
+    value->ref_pic_list_modification_flag_l1 = temp_ref_pic_list_modification_flag_l1;
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoEncodeH264RefListModEntry* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoEncodeH264RefListModEntry* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->modification_of_pic_nums_idc));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->abs_diff_pic_num_minus1));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->long_term_pic_num));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoEncodeH264RefPicMarkingEntry* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoEncodeH264RefPicMarkingEntry* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->operation));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->difference_of_pic_nums_minus1));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->long_term_pic_num));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->long_term_frame_idx));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->max_long_term_frame_idx_plus1));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoEncodeH264ReferenceListsInfo* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoEncodeH264ReferenceListsInfo* value = wrapper->decoded_value;
+
+    wrapper->flags = DecodeAllocator::Allocate<Decoded_StdVideoEncodeH264ReferenceListsInfoFlags>();
+    wrapper->flags->decoded_value = &(value->flags);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->flags);
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->refPicList0EntryCount));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->refPicList1EntryCount));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->refList0ModOpCount));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->refList1ModOpCount));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->refPicMarkingOpCount));
+    wrapper->reserved1.SetExternalMemory(value->reserved1, 7);
+    bytes_read += wrapper->reserved1.DecodeUInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    bytes_read += wrapper->pRefPicList0Entries.DecodeUInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pRefPicList0Entries = wrapper->pRefPicList0Entries.GetPointer();
+    bytes_read += wrapper->pRefPicList1Entries.DecodeUInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pRefPicList1Entries = wrapper->pRefPicList1Entries.GetPointer();
+    wrapper->pRefList0ModOperations = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoEncodeH264RefListModEntry>>();
+    bytes_read += wrapper->pRefList0ModOperations->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pRefList0ModOperations = wrapper->pRefList0ModOperations->GetPointer();
+    wrapper->pRefList1ModOperations = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoEncodeH264RefListModEntry>>();
+    bytes_read += wrapper->pRefList1ModOperations->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pRefList1ModOperations = wrapper->pRefList1ModOperations->GetPointer();
+    wrapper->pRefPicMarkingOperations = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoEncodeH264RefPicMarkingEntry>>();
+    bytes_read += wrapper->pRefPicMarkingOperations->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pRefPicMarkingOperations = wrapper->pRefPicMarkingOperations->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoEncodeH264PictureInfo* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoEncodeH264PictureInfo* value = wrapper->decoded_value;
+
+    wrapper->flags = DecodeAllocator::Allocate<Decoded_StdVideoEncodeH264PictureInfoFlags>();
+    wrapper->flags->decoded_value = &(value->flags);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->flags);
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->seq_parameter_set_id));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pic_parameter_set_id));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->reserved1));
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->pictureType));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->frame_num));
+    bytes_read += ValueDecoder::DecodeInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->PicOrderCnt));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoEncodeH264ReferenceInfo* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoEncodeH264ReferenceInfo* value = wrapper->decoded_value;
+
+    wrapper->flags = DecodeAllocator::Allocate<Decoded_StdVideoEncodeH264ReferenceInfoFlags>();
+    wrapper->flags->decoded_value = &(value->flags);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->flags);
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->pictureType));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->FrameNum));
+    bytes_read += ValueDecoder::DecodeInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->PicOrderCnt));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->long_term_pic_num));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->long_term_frame_idx));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoEncodeH264SliceHeader* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoEncodeH264SliceHeader* value = wrapper->decoded_value;
+
+    wrapper->flags = DecodeAllocator::Allocate<Decoded_StdVideoEncodeH264SliceHeaderFlags>();
+    wrapper->flags->decoded_value = &(value->flags);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->flags);
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->first_mb_in_slice));
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->slice_type));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->idr_pic_id));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->num_ref_idx_l0_active_minus1));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->num_ref_idx_l1_active_minus1));
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->cabac_init_idc));
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->disable_deblocking_filter_idc));
+    bytes_read += ValueDecoder::DecodeInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->slice_alpha_c0_offset_div2));
+    bytes_read += ValueDecoder::DecodeInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->slice_beta_offset_div2));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->reserved1));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->reserved2));
+    wrapper->pWeightTable = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoEncodeH264WeightTable>>();
+    bytes_read += wrapper->pWeightTable->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pWeightTable = wrapper->pWeightTable->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoH265ProfileTierLevelFlags* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoH265ProfileTierLevelFlags* value = wrapper->decoded_value;
+
+    uint32_t temp_general_tier_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_general_tier_flag);
+    value->general_tier_flag = temp_general_tier_flag;
+    uint32_t temp_general_progressive_source_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_general_progressive_source_flag);
+    value->general_progressive_source_flag = temp_general_progressive_source_flag;
+    uint32_t temp_general_interlaced_source_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_general_interlaced_source_flag);
+    value->general_interlaced_source_flag = temp_general_interlaced_source_flag;
+    uint32_t temp_general_non_packed_constraint_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_general_non_packed_constraint_flag);
+    value->general_non_packed_constraint_flag = temp_general_non_packed_constraint_flag;
+    uint32_t temp_general_frame_only_constraint_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_general_frame_only_constraint_flag);
+    value->general_frame_only_constraint_flag = temp_general_frame_only_constraint_flag;
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoH265ProfileTierLevel* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoH265ProfileTierLevel* value = wrapper->decoded_value;
+
+    wrapper->flags = DecodeAllocator::Allocate<Decoded_StdVideoH265ProfileTierLevelFlags>();
+    wrapper->flags->decoded_value = &(value->flags);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->flags);
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->general_profile_idc));
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->general_level_idc));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoH265DecPicBufMgr* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoH265DecPicBufMgr* value = wrapper->decoded_value;
+
+    wrapper->max_latency_increase_plus1.SetExternalMemory(value->max_latency_increase_plus1, STD_VIDEO_H265_SUBLAYERS_LIST_SIZE);
+    bytes_read += wrapper->max_latency_increase_plus1.DecodeUInt32((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->max_dec_pic_buffering_minus1.SetExternalMemory(value->max_dec_pic_buffering_minus1, STD_VIDEO_H265_SUBLAYERS_LIST_SIZE);
+    bytes_read += wrapper->max_dec_pic_buffering_minus1.DecodeUInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->max_num_reorder_pics.SetExternalMemory(value->max_num_reorder_pics, STD_VIDEO_H265_SUBLAYERS_LIST_SIZE);
+    bytes_read += wrapper->max_num_reorder_pics.DecodeUInt8((buffer + bytes_read), (buffer_size - bytes_read));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoH265SubLayerHrdParameters* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoH265SubLayerHrdParameters* value = wrapper->decoded_value;
+
+    wrapper->bit_rate_value_minus1.SetExternalMemory(value->bit_rate_value_minus1, STD_VIDEO_H265_CPB_CNT_LIST_SIZE);
+    bytes_read += wrapper->bit_rate_value_minus1.DecodeUInt32((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->cpb_size_value_minus1.SetExternalMemory(value->cpb_size_value_minus1, STD_VIDEO_H265_CPB_CNT_LIST_SIZE);
+    bytes_read += wrapper->cpb_size_value_minus1.DecodeUInt32((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->cpb_size_du_value_minus1.SetExternalMemory(value->cpb_size_du_value_minus1, STD_VIDEO_H265_CPB_CNT_LIST_SIZE);
+    bytes_read += wrapper->cpb_size_du_value_minus1.DecodeUInt32((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->bit_rate_du_value_minus1.SetExternalMemory(value->bit_rate_du_value_minus1, STD_VIDEO_H265_CPB_CNT_LIST_SIZE);
+    bytes_read += wrapper->bit_rate_du_value_minus1.DecodeUInt32((buffer + bytes_read), (buffer_size - bytes_read));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->cbr_flag));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoH265HrdFlags* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoH265HrdFlags* value = wrapper->decoded_value;
+
+    uint32_t temp_nal_hrd_parameters_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_nal_hrd_parameters_present_flag);
+    value->nal_hrd_parameters_present_flag = temp_nal_hrd_parameters_present_flag;
+    uint32_t temp_vcl_hrd_parameters_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_vcl_hrd_parameters_present_flag);
+    value->vcl_hrd_parameters_present_flag = temp_vcl_hrd_parameters_present_flag;
+    uint32_t temp_sub_pic_hrd_params_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_sub_pic_hrd_params_present_flag);
+    value->sub_pic_hrd_params_present_flag = temp_sub_pic_hrd_params_present_flag;
+    uint32_t temp_sub_pic_cpb_params_in_pic_timing_sei_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_sub_pic_cpb_params_in_pic_timing_sei_flag);
+    value->sub_pic_cpb_params_in_pic_timing_sei_flag = temp_sub_pic_cpb_params_in_pic_timing_sei_flag;
+    uint32_t temp_fixed_pic_rate_general_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_fixed_pic_rate_general_flag);
+    value->fixed_pic_rate_general_flag = temp_fixed_pic_rate_general_flag;
+    uint32_t temp_fixed_pic_rate_within_cvs_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_fixed_pic_rate_within_cvs_flag);
+    value->fixed_pic_rate_within_cvs_flag = temp_fixed_pic_rate_within_cvs_flag;
+    uint32_t temp_low_delay_hrd_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_low_delay_hrd_flag);
+    value->low_delay_hrd_flag = temp_low_delay_hrd_flag;
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoH265HrdParameters* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoH265HrdParameters* value = wrapper->decoded_value;
+
+    wrapper->flags = DecodeAllocator::Allocate<Decoded_StdVideoH265HrdFlags>();
+    wrapper->flags->decoded_value = &(value->flags);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->flags);
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->tick_divisor_minus2));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->du_cpb_removal_delay_increment_length_minus1));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->dpb_output_delay_du_length_minus1));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->bit_rate_scale));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->cpb_size_scale));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->cpb_size_du_scale));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->initial_cpb_removal_delay_length_minus1));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->au_cpb_removal_delay_length_minus1));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->dpb_output_delay_length_minus1));
+    wrapper->cpb_cnt_minus1.SetExternalMemory(value->cpb_cnt_minus1, STD_VIDEO_H265_SUBLAYERS_LIST_SIZE);
+    bytes_read += wrapper->cpb_cnt_minus1.DecodeUInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->elemental_duration_in_tc_minus1.SetExternalMemory(value->elemental_duration_in_tc_minus1, STD_VIDEO_H265_SUBLAYERS_LIST_SIZE);
+    bytes_read += wrapper->elemental_duration_in_tc_minus1.DecodeUInt16((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->reserved.SetExternalMemory(value->reserved, 3);
+    bytes_read += wrapper->reserved.DecodeUInt16((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->pSubLayerHrdParametersNal = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH265SubLayerHrdParameters>>();
+    bytes_read += wrapper->pSubLayerHrdParametersNal->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pSubLayerHrdParametersNal = wrapper->pSubLayerHrdParametersNal->GetPointer();
+    wrapper->pSubLayerHrdParametersVcl = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH265SubLayerHrdParameters>>();
+    bytes_read += wrapper->pSubLayerHrdParametersVcl->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pSubLayerHrdParametersVcl = wrapper->pSubLayerHrdParametersVcl->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoH265VpsFlags* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoH265VpsFlags* value = wrapper->decoded_value;
+
+    uint32_t temp_vps_temporal_id_nesting_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_vps_temporal_id_nesting_flag);
+    value->vps_temporal_id_nesting_flag = temp_vps_temporal_id_nesting_flag;
+    uint32_t temp_vps_sub_layer_ordering_info_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_vps_sub_layer_ordering_info_present_flag);
+    value->vps_sub_layer_ordering_info_present_flag = temp_vps_sub_layer_ordering_info_present_flag;
+    uint32_t temp_vps_timing_info_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_vps_timing_info_present_flag);
+    value->vps_timing_info_present_flag = temp_vps_timing_info_present_flag;
+    uint32_t temp_vps_poc_proportional_to_timing_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_vps_poc_proportional_to_timing_flag);
+    value->vps_poc_proportional_to_timing_flag = temp_vps_poc_proportional_to_timing_flag;
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoH265VideoParameterSet* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoH265VideoParameterSet* value = wrapper->decoded_value;
+
+    wrapper->flags = DecodeAllocator::Allocate<Decoded_StdVideoH265VpsFlags>();
+    wrapper->flags->decoded_value = &(value->flags);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->flags);
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->vps_video_parameter_set_id));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->vps_max_sub_layers_minus1));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->reserved1));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->reserved2));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->vps_num_units_in_tick));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->vps_time_scale));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->vps_num_ticks_poc_diff_one_minus1));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->reserved3));
+    wrapper->pDecPicBufMgr = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH265DecPicBufMgr>>();
+    bytes_read += wrapper->pDecPicBufMgr->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pDecPicBufMgr = wrapper->pDecPicBufMgr->GetPointer();
+    wrapper->pHrdParameters = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH265HrdParameters>>();
+    bytes_read += wrapper->pHrdParameters->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pHrdParameters = wrapper->pHrdParameters->GetPointer();
+    wrapper->pProfileTierLevel = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH265ProfileTierLevel>>();
+    bytes_read += wrapper->pProfileTierLevel->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pProfileTierLevel = wrapper->pProfileTierLevel->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoH265ScalingLists* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoH265ScalingLists* value = wrapper->decoded_value;
+
+    wrapper->ScalingList4x4.SetExternalMemory(value->ScalingList4x4, STD_VIDEO_H265_SCALING_LIST_4X4_NUM_LISTS, STD_VIDEO_H265_SCALING_LIST_4X4_NUM_ELEMENTS);
+    bytes_read += wrapper->ScalingList4x4.DecodeUInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->ScalingList8x8.SetExternalMemory(value->ScalingList8x8, STD_VIDEO_H265_SCALING_LIST_8X8_NUM_LISTS, STD_VIDEO_H265_SCALING_LIST_8X8_NUM_ELEMENTS);
+    bytes_read += wrapper->ScalingList8x8.DecodeUInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->ScalingList16x16.SetExternalMemory(value->ScalingList16x16, STD_VIDEO_H265_SCALING_LIST_16X16_NUM_LISTS, STD_VIDEO_H265_SCALING_LIST_16X16_NUM_ELEMENTS);
+    bytes_read += wrapper->ScalingList16x16.DecodeUInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->ScalingList32x32.SetExternalMemory(value->ScalingList32x32, STD_VIDEO_H265_SCALING_LIST_32X32_NUM_LISTS, STD_VIDEO_H265_SCALING_LIST_32X32_NUM_ELEMENTS);
+    bytes_read += wrapper->ScalingList32x32.DecodeUInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->ScalingListDCCoef16x16.SetExternalMemory(value->ScalingListDCCoef16x16, STD_VIDEO_H265_SCALING_LIST_16X16_NUM_LISTS);
+    bytes_read += wrapper->ScalingListDCCoef16x16.DecodeUInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->ScalingListDCCoef32x32.SetExternalMemory(value->ScalingListDCCoef32x32, STD_VIDEO_H265_SCALING_LIST_32X32_NUM_LISTS);
+    bytes_read += wrapper->ScalingListDCCoef32x32.DecodeUInt8((buffer + bytes_read), (buffer_size - bytes_read));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoH265ShortTermRefPicSetFlags* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoH265ShortTermRefPicSetFlags* value = wrapper->decoded_value;
+
+    uint32_t temp_inter_ref_pic_set_prediction_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_inter_ref_pic_set_prediction_flag);
+    value->inter_ref_pic_set_prediction_flag = temp_inter_ref_pic_set_prediction_flag;
+    uint32_t temp_delta_rps_sign;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_delta_rps_sign);
+    value->delta_rps_sign = temp_delta_rps_sign;
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoH265ShortTermRefPicSet* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoH265ShortTermRefPicSet* value = wrapper->decoded_value;
+
+    wrapper->flags = DecodeAllocator::Allocate<Decoded_StdVideoH265ShortTermRefPicSetFlags>();
+    wrapper->flags->decoded_value = &(value->flags);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->flags);
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->delta_idx_minus1));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->use_delta_flag));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->abs_delta_rps_minus1));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->used_by_curr_pic_flag));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->used_by_curr_pic_s0_flag));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->used_by_curr_pic_s1_flag));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->reserved1));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->reserved2));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->reserved3));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->num_negative_pics));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->num_positive_pics));
+    wrapper->delta_poc_s0_minus1.SetExternalMemory(value->delta_poc_s0_minus1, STD_VIDEO_H265_MAX_DPB_SIZE);
+    bytes_read += wrapper->delta_poc_s0_minus1.DecodeUInt16((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->delta_poc_s1_minus1.SetExternalMemory(value->delta_poc_s1_minus1, STD_VIDEO_H265_MAX_DPB_SIZE);
+    bytes_read += wrapper->delta_poc_s1_minus1.DecodeUInt16((buffer + bytes_read), (buffer_size - bytes_read));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoH265LongTermRefPicsSps* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoH265LongTermRefPicsSps* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->used_by_curr_pic_lt_sps_flag));
+    wrapper->lt_ref_pic_poc_lsb_sps.SetExternalMemory(value->lt_ref_pic_poc_lsb_sps, STD_VIDEO_H265_MAX_LONG_TERM_REF_PICS_SPS);
+    bytes_read += wrapper->lt_ref_pic_poc_lsb_sps.DecodeUInt32((buffer + bytes_read), (buffer_size - bytes_read));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoH265SpsVuiFlags* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoH265SpsVuiFlags* value = wrapper->decoded_value;
+
+    uint32_t temp_aspect_ratio_info_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_aspect_ratio_info_present_flag);
+    value->aspect_ratio_info_present_flag = temp_aspect_ratio_info_present_flag;
+    uint32_t temp_overscan_info_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_overscan_info_present_flag);
+    value->overscan_info_present_flag = temp_overscan_info_present_flag;
+    uint32_t temp_overscan_appropriate_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_overscan_appropriate_flag);
+    value->overscan_appropriate_flag = temp_overscan_appropriate_flag;
+    uint32_t temp_video_signal_type_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_video_signal_type_present_flag);
+    value->video_signal_type_present_flag = temp_video_signal_type_present_flag;
+    uint32_t temp_video_full_range_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_video_full_range_flag);
+    value->video_full_range_flag = temp_video_full_range_flag;
+    uint32_t temp_colour_description_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_colour_description_present_flag);
+    value->colour_description_present_flag = temp_colour_description_present_flag;
+    uint32_t temp_chroma_loc_info_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_chroma_loc_info_present_flag);
+    value->chroma_loc_info_present_flag = temp_chroma_loc_info_present_flag;
+    uint32_t temp_neutral_chroma_indication_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_neutral_chroma_indication_flag);
+    value->neutral_chroma_indication_flag = temp_neutral_chroma_indication_flag;
+    uint32_t temp_field_seq_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_field_seq_flag);
+    value->field_seq_flag = temp_field_seq_flag;
+    uint32_t temp_frame_field_info_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_frame_field_info_present_flag);
+    value->frame_field_info_present_flag = temp_frame_field_info_present_flag;
+    uint32_t temp_default_display_window_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_default_display_window_flag);
+    value->default_display_window_flag = temp_default_display_window_flag;
+    uint32_t temp_vui_timing_info_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_vui_timing_info_present_flag);
+    value->vui_timing_info_present_flag = temp_vui_timing_info_present_flag;
+    uint32_t temp_vui_poc_proportional_to_timing_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_vui_poc_proportional_to_timing_flag);
+    value->vui_poc_proportional_to_timing_flag = temp_vui_poc_proportional_to_timing_flag;
+    uint32_t temp_vui_hrd_parameters_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_vui_hrd_parameters_present_flag);
+    value->vui_hrd_parameters_present_flag = temp_vui_hrd_parameters_present_flag;
+    uint32_t temp_bitstream_restriction_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_bitstream_restriction_flag);
+    value->bitstream_restriction_flag = temp_bitstream_restriction_flag;
+    uint32_t temp_tiles_fixed_structure_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_tiles_fixed_structure_flag);
+    value->tiles_fixed_structure_flag = temp_tiles_fixed_structure_flag;
+    uint32_t temp_motion_vectors_over_pic_boundaries_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_motion_vectors_over_pic_boundaries_flag);
+    value->motion_vectors_over_pic_boundaries_flag = temp_motion_vectors_over_pic_boundaries_flag;
+    uint32_t temp_restricted_ref_pic_lists_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_restricted_ref_pic_lists_flag);
+    value->restricted_ref_pic_lists_flag = temp_restricted_ref_pic_lists_flag;
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoH265SequenceParameterSetVui* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoH265SequenceParameterSetVui* value = wrapper->decoded_value;
+
+    wrapper->flags = DecodeAllocator::Allocate<Decoded_StdVideoH265SpsVuiFlags>();
+    wrapper->flags->decoded_value = &(value->flags);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->flags);
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->aspect_ratio_idc));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->sar_width));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->sar_height));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->video_format));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->colour_primaries));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->transfer_characteristics));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->matrix_coeffs));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->chroma_sample_loc_type_top_field));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->chroma_sample_loc_type_bottom_field));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->reserved1));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->reserved2));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->def_disp_win_left_offset));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->def_disp_win_right_offset));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->def_disp_win_top_offset));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->def_disp_win_bottom_offset));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->vui_num_units_in_tick));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->vui_time_scale));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->vui_num_ticks_poc_diff_one_minus1));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->min_spatial_segmentation_idc));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->reserved3));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->max_bytes_per_pic_denom));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->max_bits_per_min_cu_denom));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->log2_max_mv_length_horizontal));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->log2_max_mv_length_vertical));
+    wrapper->pHrdParameters = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH265HrdParameters>>();
+    bytes_read += wrapper->pHrdParameters->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pHrdParameters = wrapper->pHrdParameters->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoH265PredictorPaletteEntries* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoH265PredictorPaletteEntries* value = wrapper->decoded_value;
+
+    wrapper->PredictorPaletteEntries.SetExternalMemory(value->PredictorPaletteEntries, STD_VIDEO_H265_PREDICTOR_PALETTE_COMPONENTS_LIST_SIZE, STD_VIDEO_H265_PREDICTOR_PALETTE_COMP_ENTRIES_LIST_SIZE);
+    bytes_read += wrapper->PredictorPaletteEntries.DecodeUInt16((buffer + bytes_read), (buffer_size - bytes_read));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoH265SpsFlags* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoH265SpsFlags* value = wrapper->decoded_value;
+
+    uint32_t temp_sps_temporal_id_nesting_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_sps_temporal_id_nesting_flag);
+    value->sps_temporal_id_nesting_flag = temp_sps_temporal_id_nesting_flag;
+    uint32_t temp_separate_colour_plane_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_separate_colour_plane_flag);
+    value->separate_colour_plane_flag = temp_separate_colour_plane_flag;
+    uint32_t temp_conformance_window_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_conformance_window_flag);
+    value->conformance_window_flag = temp_conformance_window_flag;
+    uint32_t temp_sps_sub_layer_ordering_info_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_sps_sub_layer_ordering_info_present_flag);
+    value->sps_sub_layer_ordering_info_present_flag = temp_sps_sub_layer_ordering_info_present_flag;
+    uint32_t temp_scaling_list_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_scaling_list_enabled_flag);
+    value->scaling_list_enabled_flag = temp_scaling_list_enabled_flag;
+    uint32_t temp_sps_scaling_list_data_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_sps_scaling_list_data_present_flag);
+    value->sps_scaling_list_data_present_flag = temp_sps_scaling_list_data_present_flag;
+    uint32_t temp_amp_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_amp_enabled_flag);
+    value->amp_enabled_flag = temp_amp_enabled_flag;
+    uint32_t temp_sample_adaptive_offset_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_sample_adaptive_offset_enabled_flag);
+    value->sample_adaptive_offset_enabled_flag = temp_sample_adaptive_offset_enabled_flag;
+    uint32_t temp_pcm_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_pcm_enabled_flag);
+    value->pcm_enabled_flag = temp_pcm_enabled_flag;
+    uint32_t temp_pcm_loop_filter_disabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_pcm_loop_filter_disabled_flag);
+    value->pcm_loop_filter_disabled_flag = temp_pcm_loop_filter_disabled_flag;
+    uint32_t temp_long_term_ref_pics_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_long_term_ref_pics_present_flag);
+    value->long_term_ref_pics_present_flag = temp_long_term_ref_pics_present_flag;
+    uint32_t temp_sps_temporal_mvp_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_sps_temporal_mvp_enabled_flag);
+    value->sps_temporal_mvp_enabled_flag = temp_sps_temporal_mvp_enabled_flag;
+    uint32_t temp_strong_intra_smoothing_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_strong_intra_smoothing_enabled_flag);
+    value->strong_intra_smoothing_enabled_flag = temp_strong_intra_smoothing_enabled_flag;
+    uint32_t temp_vui_parameters_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_vui_parameters_present_flag);
+    value->vui_parameters_present_flag = temp_vui_parameters_present_flag;
+    uint32_t temp_sps_extension_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_sps_extension_present_flag);
+    value->sps_extension_present_flag = temp_sps_extension_present_flag;
+    uint32_t temp_sps_range_extension_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_sps_range_extension_flag);
+    value->sps_range_extension_flag = temp_sps_range_extension_flag;
+    uint32_t temp_transform_skip_rotation_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_transform_skip_rotation_enabled_flag);
+    value->transform_skip_rotation_enabled_flag = temp_transform_skip_rotation_enabled_flag;
+    uint32_t temp_transform_skip_context_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_transform_skip_context_enabled_flag);
+    value->transform_skip_context_enabled_flag = temp_transform_skip_context_enabled_flag;
+    uint32_t temp_implicit_rdpcm_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_implicit_rdpcm_enabled_flag);
+    value->implicit_rdpcm_enabled_flag = temp_implicit_rdpcm_enabled_flag;
+    uint32_t temp_explicit_rdpcm_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_explicit_rdpcm_enabled_flag);
+    value->explicit_rdpcm_enabled_flag = temp_explicit_rdpcm_enabled_flag;
+    uint32_t temp_extended_precision_processing_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_extended_precision_processing_flag);
+    value->extended_precision_processing_flag = temp_extended_precision_processing_flag;
+    uint32_t temp_intra_smoothing_disabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_intra_smoothing_disabled_flag);
+    value->intra_smoothing_disabled_flag = temp_intra_smoothing_disabled_flag;
+    uint32_t temp_high_precision_offsets_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_high_precision_offsets_enabled_flag);
+    value->high_precision_offsets_enabled_flag = temp_high_precision_offsets_enabled_flag;
+    uint32_t temp_persistent_rice_adaptation_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_persistent_rice_adaptation_enabled_flag);
+    value->persistent_rice_adaptation_enabled_flag = temp_persistent_rice_adaptation_enabled_flag;
+    uint32_t temp_cabac_bypass_alignment_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_cabac_bypass_alignment_enabled_flag);
+    value->cabac_bypass_alignment_enabled_flag = temp_cabac_bypass_alignment_enabled_flag;
+    uint32_t temp_sps_scc_extension_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_sps_scc_extension_flag);
+    value->sps_scc_extension_flag = temp_sps_scc_extension_flag;
+    uint32_t temp_sps_curr_pic_ref_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_sps_curr_pic_ref_enabled_flag);
+    value->sps_curr_pic_ref_enabled_flag = temp_sps_curr_pic_ref_enabled_flag;
+    uint32_t temp_palette_mode_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_palette_mode_enabled_flag);
+    value->palette_mode_enabled_flag = temp_palette_mode_enabled_flag;
+    uint32_t temp_sps_palette_predictor_initializers_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_sps_palette_predictor_initializers_present_flag);
+    value->sps_palette_predictor_initializers_present_flag = temp_sps_palette_predictor_initializers_present_flag;
+    uint32_t temp_intra_boundary_filtering_disabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_intra_boundary_filtering_disabled_flag);
+    value->intra_boundary_filtering_disabled_flag = temp_intra_boundary_filtering_disabled_flag;
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoH265SequenceParameterSet* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoH265SequenceParameterSet* value = wrapper->decoded_value;
+
+    wrapper->flags = DecodeAllocator::Allocate<Decoded_StdVideoH265SpsFlags>();
+    wrapper->flags->decoded_value = &(value->flags);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->flags);
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->chroma_format_idc));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pic_width_in_luma_samples));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pic_height_in_luma_samples));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->sps_video_parameter_set_id));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->sps_max_sub_layers_minus1));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->sps_seq_parameter_set_id));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->bit_depth_luma_minus8));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->bit_depth_chroma_minus8));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->log2_max_pic_order_cnt_lsb_minus4));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->log2_min_luma_coding_block_size_minus3));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->log2_diff_max_min_luma_coding_block_size));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->log2_min_luma_transform_block_size_minus2));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->log2_diff_max_min_luma_transform_block_size));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->max_transform_hierarchy_depth_inter));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->max_transform_hierarchy_depth_intra));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->num_short_term_ref_pic_sets));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->num_long_term_ref_pics_sps));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pcm_sample_bit_depth_luma_minus1));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pcm_sample_bit_depth_chroma_minus1));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->log2_min_pcm_luma_coding_block_size_minus3));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->log2_diff_max_min_pcm_luma_coding_block_size));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->reserved1));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->reserved2));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->palette_max_size));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->delta_palette_max_predictor_size));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->motion_vector_resolution_control_idc));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->sps_num_palette_predictor_initializers_minus1));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->conf_win_left_offset));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->conf_win_right_offset));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->conf_win_top_offset));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->conf_win_bottom_offset));
+    wrapper->pProfileTierLevel = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH265ProfileTierLevel>>();
+    bytes_read += wrapper->pProfileTierLevel->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pProfileTierLevel = wrapper->pProfileTierLevel->GetPointer();
+    wrapper->pDecPicBufMgr = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH265DecPicBufMgr>>();
+    bytes_read += wrapper->pDecPicBufMgr->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pDecPicBufMgr = wrapper->pDecPicBufMgr->GetPointer();
+    wrapper->pScalingLists = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH265ScalingLists>>();
+    bytes_read += wrapper->pScalingLists->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pScalingLists = wrapper->pScalingLists->GetPointer();
+    wrapper->pShortTermRefPicSet = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH265ShortTermRefPicSet>>();
+    bytes_read += wrapper->pShortTermRefPicSet->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pShortTermRefPicSet = wrapper->pShortTermRefPicSet->GetPointer();
+    wrapper->pLongTermRefPicsSps = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH265LongTermRefPicsSps>>();
+    bytes_read += wrapper->pLongTermRefPicsSps->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pLongTermRefPicsSps = wrapper->pLongTermRefPicsSps->GetPointer();
+    wrapper->pSequenceParameterSetVui = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH265SequenceParameterSetVui>>();
+    bytes_read += wrapper->pSequenceParameterSetVui->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pSequenceParameterSetVui = wrapper->pSequenceParameterSetVui->GetPointer();
+    wrapper->pPredictorPaletteEntries = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH265PredictorPaletteEntries>>();
+    bytes_read += wrapper->pPredictorPaletteEntries->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pPredictorPaletteEntries = wrapper->pPredictorPaletteEntries->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoH265PpsFlags* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoH265PpsFlags* value = wrapper->decoded_value;
+
+    uint32_t temp_dependent_slice_segments_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_dependent_slice_segments_enabled_flag);
+    value->dependent_slice_segments_enabled_flag = temp_dependent_slice_segments_enabled_flag;
+    uint32_t temp_output_flag_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_output_flag_present_flag);
+    value->output_flag_present_flag = temp_output_flag_present_flag;
+    uint32_t temp_sign_data_hiding_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_sign_data_hiding_enabled_flag);
+    value->sign_data_hiding_enabled_flag = temp_sign_data_hiding_enabled_flag;
+    uint32_t temp_cabac_init_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_cabac_init_present_flag);
+    value->cabac_init_present_flag = temp_cabac_init_present_flag;
+    uint32_t temp_constrained_intra_pred_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_constrained_intra_pred_flag);
+    value->constrained_intra_pred_flag = temp_constrained_intra_pred_flag;
+    uint32_t temp_transform_skip_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_transform_skip_enabled_flag);
+    value->transform_skip_enabled_flag = temp_transform_skip_enabled_flag;
+    uint32_t temp_cu_qp_delta_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_cu_qp_delta_enabled_flag);
+    value->cu_qp_delta_enabled_flag = temp_cu_qp_delta_enabled_flag;
+    uint32_t temp_pps_slice_chroma_qp_offsets_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_pps_slice_chroma_qp_offsets_present_flag);
+    value->pps_slice_chroma_qp_offsets_present_flag = temp_pps_slice_chroma_qp_offsets_present_flag;
+    uint32_t temp_weighted_pred_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_weighted_pred_flag);
+    value->weighted_pred_flag = temp_weighted_pred_flag;
+    uint32_t temp_weighted_bipred_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_weighted_bipred_flag);
+    value->weighted_bipred_flag = temp_weighted_bipred_flag;
+    uint32_t temp_transquant_bypass_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_transquant_bypass_enabled_flag);
+    value->transquant_bypass_enabled_flag = temp_transquant_bypass_enabled_flag;
+    uint32_t temp_tiles_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_tiles_enabled_flag);
+    value->tiles_enabled_flag = temp_tiles_enabled_flag;
+    uint32_t temp_entropy_coding_sync_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_entropy_coding_sync_enabled_flag);
+    value->entropy_coding_sync_enabled_flag = temp_entropy_coding_sync_enabled_flag;
+    uint32_t temp_uniform_spacing_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_uniform_spacing_flag);
+    value->uniform_spacing_flag = temp_uniform_spacing_flag;
+    uint32_t temp_loop_filter_across_tiles_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_loop_filter_across_tiles_enabled_flag);
+    value->loop_filter_across_tiles_enabled_flag = temp_loop_filter_across_tiles_enabled_flag;
+    uint32_t temp_pps_loop_filter_across_slices_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_pps_loop_filter_across_slices_enabled_flag);
+    value->pps_loop_filter_across_slices_enabled_flag = temp_pps_loop_filter_across_slices_enabled_flag;
+    uint32_t temp_deblocking_filter_control_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_deblocking_filter_control_present_flag);
+    value->deblocking_filter_control_present_flag = temp_deblocking_filter_control_present_flag;
+    uint32_t temp_deblocking_filter_override_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_deblocking_filter_override_enabled_flag);
+    value->deblocking_filter_override_enabled_flag = temp_deblocking_filter_override_enabled_flag;
+    uint32_t temp_pps_deblocking_filter_disabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_pps_deblocking_filter_disabled_flag);
+    value->pps_deblocking_filter_disabled_flag = temp_pps_deblocking_filter_disabled_flag;
+    uint32_t temp_pps_scaling_list_data_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_pps_scaling_list_data_present_flag);
+    value->pps_scaling_list_data_present_flag = temp_pps_scaling_list_data_present_flag;
+    uint32_t temp_lists_modification_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_lists_modification_present_flag);
+    value->lists_modification_present_flag = temp_lists_modification_present_flag;
+    uint32_t temp_slice_segment_header_extension_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_slice_segment_header_extension_present_flag);
+    value->slice_segment_header_extension_present_flag = temp_slice_segment_header_extension_present_flag;
+    uint32_t temp_pps_extension_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_pps_extension_present_flag);
+    value->pps_extension_present_flag = temp_pps_extension_present_flag;
+    uint32_t temp_cross_component_prediction_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_cross_component_prediction_enabled_flag);
+    value->cross_component_prediction_enabled_flag = temp_cross_component_prediction_enabled_flag;
+    uint32_t temp_chroma_qp_offset_list_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_chroma_qp_offset_list_enabled_flag);
+    value->chroma_qp_offset_list_enabled_flag = temp_chroma_qp_offset_list_enabled_flag;
+    uint32_t temp_pps_curr_pic_ref_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_pps_curr_pic_ref_enabled_flag);
+    value->pps_curr_pic_ref_enabled_flag = temp_pps_curr_pic_ref_enabled_flag;
+    uint32_t temp_residual_adaptive_colour_transform_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_residual_adaptive_colour_transform_enabled_flag);
+    value->residual_adaptive_colour_transform_enabled_flag = temp_residual_adaptive_colour_transform_enabled_flag;
+    uint32_t temp_pps_slice_act_qp_offsets_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_pps_slice_act_qp_offsets_present_flag);
+    value->pps_slice_act_qp_offsets_present_flag = temp_pps_slice_act_qp_offsets_present_flag;
+    uint32_t temp_pps_palette_predictor_initializers_present_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_pps_palette_predictor_initializers_present_flag);
+    value->pps_palette_predictor_initializers_present_flag = temp_pps_palette_predictor_initializers_present_flag;
+    uint32_t temp_monochrome_palette_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_monochrome_palette_flag);
+    value->monochrome_palette_flag = temp_monochrome_palette_flag;
+    uint32_t temp_pps_range_extension_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_pps_range_extension_flag);
+    value->pps_range_extension_flag = temp_pps_range_extension_flag;
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoH265PictureParameterSet* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoH265PictureParameterSet* value = wrapper->decoded_value;
+
+    wrapper->flags = DecodeAllocator::Allocate<Decoded_StdVideoH265PpsFlags>();
+    wrapper->flags->decoded_value = &(value->flags);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->flags);
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pps_pic_parameter_set_id));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pps_seq_parameter_set_id));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->sps_video_parameter_set_id));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->num_extra_slice_header_bits));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->num_ref_idx_l0_default_active_minus1));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->num_ref_idx_l1_default_active_minus1));
+    bytes_read += ValueDecoder::DecodeInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->init_qp_minus26));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->diff_cu_qp_delta_depth));
+    bytes_read += ValueDecoder::DecodeInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pps_cb_qp_offset));
+    bytes_read += ValueDecoder::DecodeInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pps_cr_qp_offset));
+    bytes_read += ValueDecoder::DecodeInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pps_beta_offset_div2));
+    bytes_read += ValueDecoder::DecodeInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pps_tc_offset_div2));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->log2_parallel_merge_level_minus2));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->log2_max_transform_skip_block_size_minus2));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->diff_cu_chroma_qp_offset_depth));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->chroma_qp_offset_list_len_minus1));
+    wrapper->cb_qp_offset_list.SetExternalMemory(value->cb_qp_offset_list, STD_VIDEO_H265_CHROMA_QP_OFFSET_LIST_SIZE);
+    bytes_read += wrapper->cb_qp_offset_list.DecodeInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->cr_qp_offset_list.SetExternalMemory(value->cr_qp_offset_list, STD_VIDEO_H265_CHROMA_QP_OFFSET_LIST_SIZE);
+    bytes_read += wrapper->cr_qp_offset_list.DecodeInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->log2_sao_offset_scale_luma));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->log2_sao_offset_scale_chroma));
+    bytes_read += ValueDecoder::DecodeInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pps_act_y_qp_offset_plus5));
+    bytes_read += ValueDecoder::DecodeInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pps_act_cb_qp_offset_plus5));
+    bytes_read += ValueDecoder::DecodeInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pps_act_cr_qp_offset_plus3));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pps_num_palette_predictor_initializers));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->luma_bit_depth_entry_minus8));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->chroma_bit_depth_entry_minus8));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->num_tile_columns_minus1));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->num_tile_rows_minus1));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->reserved1));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->reserved2));
+    wrapper->column_width_minus1.SetExternalMemory(value->column_width_minus1, STD_VIDEO_H265_CHROMA_QP_OFFSET_TILE_COLS_LIST_SIZE);
+    bytes_read += wrapper->column_width_minus1.DecodeUInt16((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->row_height_minus1.SetExternalMemory(value->row_height_minus1, STD_VIDEO_H265_CHROMA_QP_OFFSET_TILE_ROWS_LIST_SIZE);
+    bytes_read += wrapper->row_height_minus1.DecodeUInt16((buffer + bytes_read), (buffer_size - bytes_read));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->reserved3));
+    wrapper->pScalingLists = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH265ScalingLists>>();
+    bytes_read += wrapper->pScalingLists->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pScalingLists = wrapper->pScalingLists->GetPointer();
+    wrapper->pPredictorPaletteEntries = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH265PredictorPaletteEntries>>();
+    bytes_read += wrapper->pPredictorPaletteEntries->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pPredictorPaletteEntries = wrapper->pPredictorPaletteEntries->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoDecodeH265PictureInfoFlags* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoDecodeH265PictureInfoFlags* value = wrapper->decoded_value;
+
+    uint32_t temp_IrapPicFlag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_IrapPicFlag);
+    value->IrapPicFlag = temp_IrapPicFlag;
+    uint32_t temp_IdrPicFlag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_IdrPicFlag);
+    value->IdrPicFlag = temp_IdrPicFlag;
+    uint32_t temp_IsReference;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_IsReference);
+    value->IsReference = temp_IsReference;
+    uint32_t temp_short_term_ref_pic_set_sps_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_short_term_ref_pic_set_sps_flag);
+    value->short_term_ref_pic_set_sps_flag = temp_short_term_ref_pic_set_sps_flag;
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoDecodeH265PictureInfo* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoDecodeH265PictureInfo* value = wrapper->decoded_value;
+
+    wrapper->flags = DecodeAllocator::Allocate<Decoded_StdVideoDecodeH265PictureInfoFlags>();
+    wrapper->flags->decoded_value = &(value->flags);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->flags);
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->sps_video_parameter_set_id));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pps_seq_parameter_set_id));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pps_pic_parameter_set_id));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->NumDeltaPocsOfRefRpsIdx));
+    bytes_read += ValueDecoder::DecodeInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->PicOrderCntVal));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->NumBitsForSTRefPicSetInSlice));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->reserved));
+    wrapper->RefPicSetStCurrBefore.SetExternalMemory(value->RefPicSetStCurrBefore, STD_VIDEO_DECODE_H265_REF_PIC_SET_LIST_SIZE);
+    bytes_read += wrapper->RefPicSetStCurrBefore.DecodeUInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->RefPicSetStCurrAfter.SetExternalMemory(value->RefPicSetStCurrAfter, STD_VIDEO_DECODE_H265_REF_PIC_SET_LIST_SIZE);
+    bytes_read += wrapper->RefPicSetStCurrAfter.DecodeUInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->RefPicSetLtCurr.SetExternalMemory(value->RefPicSetLtCurr, STD_VIDEO_DECODE_H265_REF_PIC_SET_LIST_SIZE);
+    bytes_read += wrapper->RefPicSetLtCurr.DecodeUInt8((buffer + bytes_read), (buffer_size - bytes_read));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoDecodeH265ReferenceInfoFlags* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoDecodeH265ReferenceInfoFlags* value = wrapper->decoded_value;
+
+    uint32_t temp_used_for_long_term_reference;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_used_for_long_term_reference);
+    value->used_for_long_term_reference = temp_used_for_long_term_reference;
+    uint32_t temp_unused_for_reference;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_unused_for_reference);
+    value->unused_for_reference = temp_unused_for_reference;
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoDecodeH265ReferenceInfo* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoDecodeH265ReferenceInfo* value = wrapper->decoded_value;
+
+    wrapper->flags = DecodeAllocator::Allocate<Decoded_StdVideoDecodeH265ReferenceInfoFlags>();
+    wrapper->flags->decoded_value = &(value->flags);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->flags);
+    bytes_read += ValueDecoder::DecodeInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->PicOrderCntVal));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoEncodeH265WeightTableFlags* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoEncodeH265WeightTableFlags* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->luma_weight_l0_flag));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->chroma_weight_l0_flag));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->luma_weight_l1_flag));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->chroma_weight_l1_flag));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoEncodeH265WeightTable* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoEncodeH265WeightTable* value = wrapper->decoded_value;
+
+    wrapper->flags = DecodeAllocator::Allocate<Decoded_StdVideoEncodeH265WeightTableFlags>();
+    wrapper->flags->decoded_value = &(value->flags);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->flags);
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->luma_log2_weight_denom));
+    bytes_read += ValueDecoder::DecodeInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->delta_chroma_log2_weight_denom));
+    wrapper->delta_luma_weight_l0.SetExternalMemory(value->delta_luma_weight_l0, STD_VIDEO_H265_MAX_NUM_LIST_REF);
+    bytes_read += wrapper->delta_luma_weight_l0.DecodeInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->luma_offset_l0.SetExternalMemory(value->luma_offset_l0, STD_VIDEO_H265_MAX_NUM_LIST_REF);
+    bytes_read += wrapper->luma_offset_l0.DecodeInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->delta_chroma_weight_l0.SetExternalMemory(value->delta_chroma_weight_l0, STD_VIDEO_H265_MAX_NUM_LIST_REF, STD_VIDEO_H265_MAX_CHROMA_PLANES);
+    bytes_read += wrapper->delta_chroma_weight_l0.DecodeInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->delta_chroma_offset_l0.SetExternalMemory(value->delta_chroma_offset_l0, STD_VIDEO_H265_MAX_NUM_LIST_REF, STD_VIDEO_H265_MAX_CHROMA_PLANES);
+    bytes_read += wrapper->delta_chroma_offset_l0.DecodeInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->delta_luma_weight_l1.SetExternalMemory(value->delta_luma_weight_l1, STD_VIDEO_H265_MAX_NUM_LIST_REF);
+    bytes_read += wrapper->delta_luma_weight_l1.DecodeInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->luma_offset_l1.SetExternalMemory(value->luma_offset_l1, STD_VIDEO_H265_MAX_NUM_LIST_REF);
+    bytes_read += wrapper->luma_offset_l1.DecodeInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->delta_chroma_weight_l1.SetExternalMemory(value->delta_chroma_weight_l1, STD_VIDEO_H265_MAX_NUM_LIST_REF, STD_VIDEO_H265_MAX_CHROMA_PLANES);
+    bytes_read += wrapper->delta_chroma_weight_l1.DecodeInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->delta_chroma_offset_l1.SetExternalMemory(value->delta_chroma_offset_l1, STD_VIDEO_H265_MAX_NUM_LIST_REF, STD_VIDEO_H265_MAX_CHROMA_PLANES);
+    bytes_read += wrapper->delta_chroma_offset_l1.DecodeInt8((buffer + bytes_read), (buffer_size - bytes_read));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoEncodeH265SliceSegmentLongTermRefPics* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoEncodeH265SliceSegmentLongTermRefPics* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->num_long_term_sps));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->num_long_term_pics));
+    wrapper->lt_idx_sps.SetExternalMemory(value->lt_idx_sps, STD_VIDEO_H265_MAX_LONG_TERM_REF_PICS_SPS);
+    bytes_read += wrapper->lt_idx_sps.DecodeUInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->poc_lsb_lt.SetExternalMemory(value->poc_lsb_lt, STD_VIDEO_H265_MAX_LONG_TERM_PICS);
+    bytes_read += wrapper->poc_lsb_lt.DecodeUInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->used_by_curr_pic_lt_flag));
+    wrapper->delta_poc_msb_present_flag.SetExternalMemory(value->delta_poc_msb_present_flag, STD_VIDEO_H265_MAX_DELTA_POC);
+    bytes_read += wrapper->delta_poc_msb_present_flag.DecodeUInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    wrapper->delta_poc_msb_cycle_lt.SetExternalMemory(value->delta_poc_msb_cycle_lt, STD_VIDEO_H265_MAX_DELTA_POC);
+    bytes_read += wrapper->delta_poc_msb_cycle_lt.DecodeUInt8((buffer + bytes_read), (buffer_size - bytes_read));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoEncodeH265SliceSegmentHeaderFlags* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoEncodeH265SliceSegmentHeaderFlags* value = wrapper->decoded_value;
+
+    uint32_t temp_first_slice_segment_in_pic_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_first_slice_segment_in_pic_flag);
+    value->first_slice_segment_in_pic_flag = temp_first_slice_segment_in_pic_flag;
+    uint32_t temp_no_output_of_prior_pics_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_no_output_of_prior_pics_flag);
+    value->no_output_of_prior_pics_flag = temp_no_output_of_prior_pics_flag;
+    uint32_t temp_dependent_slice_segment_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_dependent_slice_segment_flag);
+    value->dependent_slice_segment_flag = temp_dependent_slice_segment_flag;
+    uint32_t temp_pic_output_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_pic_output_flag);
+    value->pic_output_flag = temp_pic_output_flag;
+    uint32_t temp_short_term_ref_pic_set_sps_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_short_term_ref_pic_set_sps_flag);
+    value->short_term_ref_pic_set_sps_flag = temp_short_term_ref_pic_set_sps_flag;
+    uint32_t temp_slice_temporal_mvp_enable_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_slice_temporal_mvp_enable_flag);
+    value->slice_temporal_mvp_enable_flag = temp_slice_temporal_mvp_enable_flag;
+    uint32_t temp_slice_sao_luma_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_slice_sao_luma_flag);
+    value->slice_sao_luma_flag = temp_slice_sao_luma_flag;
+    uint32_t temp_slice_sao_chroma_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_slice_sao_chroma_flag);
+    value->slice_sao_chroma_flag = temp_slice_sao_chroma_flag;
+    uint32_t temp_num_ref_idx_active_override_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_num_ref_idx_active_override_flag);
+    value->num_ref_idx_active_override_flag = temp_num_ref_idx_active_override_flag;
+    uint32_t temp_mvd_l1_zero_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_mvd_l1_zero_flag);
+    value->mvd_l1_zero_flag = temp_mvd_l1_zero_flag;
+    uint32_t temp_cabac_init_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_cabac_init_flag);
+    value->cabac_init_flag = temp_cabac_init_flag;
+    uint32_t temp_cu_chroma_qp_offset_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_cu_chroma_qp_offset_enabled_flag);
+    value->cu_chroma_qp_offset_enabled_flag = temp_cu_chroma_qp_offset_enabled_flag;
+    uint32_t temp_deblocking_filter_override_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_deblocking_filter_override_flag);
+    value->deblocking_filter_override_flag = temp_deblocking_filter_override_flag;
+    uint32_t temp_slice_deblocking_filter_disabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_slice_deblocking_filter_disabled_flag);
+    value->slice_deblocking_filter_disabled_flag = temp_slice_deblocking_filter_disabled_flag;
+    uint32_t temp_collocated_from_l0_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_collocated_from_l0_flag);
+    value->collocated_from_l0_flag = temp_collocated_from_l0_flag;
+    uint32_t temp_slice_loop_filter_across_slices_enabled_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_slice_loop_filter_across_slices_enabled_flag);
+    value->slice_loop_filter_across_slices_enabled_flag = temp_slice_loop_filter_across_slices_enabled_flag;
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoEncodeH265SliceSegmentHeader* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoEncodeH265SliceSegmentHeader* value = wrapper->decoded_value;
+
+    wrapper->flags = DecodeAllocator::Allocate<Decoded_StdVideoEncodeH265SliceSegmentHeaderFlags>();
+    wrapper->flags->decoded_value = &(value->flags);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->flags);
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->slice_type));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->slice_segment_address));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->short_term_ref_pic_set_idx));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->collocated_ref_idx));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->num_ref_idx_l0_active_minus1));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->num_ref_idx_l1_active_minus1));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->MaxNumMergeCand));
+    bytes_read += ValueDecoder::DecodeInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->slice_cb_qp_offset));
+    bytes_read += ValueDecoder::DecodeInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->slice_cr_qp_offset));
+    bytes_read += ValueDecoder::DecodeInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->slice_beta_offset_div2));
+    bytes_read += ValueDecoder::DecodeInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->slice_tc_offset_div2));
+    bytes_read += ValueDecoder::DecodeInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->slice_act_y_qp_offset));
+    bytes_read += ValueDecoder::DecodeInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->slice_act_cb_qp_offset));
+    bytes_read += ValueDecoder::DecodeInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->slice_act_cr_qp_offset));
+    wrapper->pShortTermRefPicSet = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH265ShortTermRefPicSet>>();
+    bytes_read += wrapper->pShortTermRefPicSet->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pShortTermRefPicSet = wrapper->pShortTermRefPicSet->GetPointer();
+    wrapper->pLongTermRefPics = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoEncodeH265SliceSegmentLongTermRefPics>>();
+    bytes_read += wrapper->pLongTermRefPics->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pLongTermRefPics = wrapper->pLongTermRefPics->GetPointer();
+    wrapper->pWeightTable = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoEncodeH265WeightTable>>();
+    bytes_read += wrapper->pWeightTable->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pWeightTable = wrapper->pWeightTable->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoEncodeH265ReferenceListsInfoFlags* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoEncodeH265ReferenceListsInfoFlags* value = wrapper->decoded_value;
+
+    uint32_t temp_ref_pic_list_modification_flag_l0;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_ref_pic_list_modification_flag_l0);
+    value->ref_pic_list_modification_flag_l0 = temp_ref_pic_list_modification_flag_l0;
+    uint32_t temp_ref_pic_list_modification_flag_l1;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_ref_pic_list_modification_flag_l1);
+    value->ref_pic_list_modification_flag_l1 = temp_ref_pic_list_modification_flag_l1;
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoEncodeH265ReferenceListsInfo* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoEncodeH265ReferenceListsInfo* value = wrapper->decoded_value;
+
+    wrapper->flags = DecodeAllocator::Allocate<Decoded_StdVideoEncodeH265ReferenceListsInfoFlags>();
+    wrapper->flags->decoded_value = &(value->flags);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->flags);
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->num_ref_idx_l0_active_minus1));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->num_ref_idx_l1_active_minus1));
+    bytes_read += ValueDecoder::DecodeUInt16Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->reserved1));
+    bytes_read += wrapper->pRefPicList0Entries.DecodeUInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pRefPicList0Entries = wrapper->pRefPicList0Entries.GetPointer();
+    bytes_read += wrapper->pRefPicList1Entries.DecodeUInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pRefPicList1Entries = wrapper->pRefPicList1Entries.GetPointer();
+    bytes_read += wrapper->pRefList0Modifications.DecodeUInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pRefList0Modifications = wrapper->pRefList0Modifications.GetPointer();
+    bytes_read += wrapper->pRefList1Modifications.DecodeUInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pRefList1Modifications = wrapper->pRefList1Modifications.GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoEncodeH265PictureInfoFlags* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoEncodeH265PictureInfoFlags* value = wrapper->decoded_value;
+
+    uint32_t temp_is_reference_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_is_reference_flag);
+    value->is_reference_flag = temp_is_reference_flag;
+    uint32_t temp_IrapPicFlag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_IrapPicFlag);
+    value->IrapPicFlag = temp_IrapPicFlag;
+    uint32_t temp_long_term_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_long_term_flag);
+    value->long_term_flag = temp_long_term_flag;
+    uint32_t temp_discardable_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_discardable_flag);
+    value->discardable_flag = temp_discardable_flag;
+    uint32_t temp_cross_layer_bla_flag;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_cross_layer_bla_flag);
+    value->cross_layer_bla_flag = temp_cross_layer_bla_flag;
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoEncodeH265PictureInfo* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoEncodeH265PictureInfo* value = wrapper->decoded_value;
+
+    wrapper->flags = DecodeAllocator::Allocate<Decoded_StdVideoEncodeH265PictureInfoFlags>();
+    wrapper->flags->decoded_value = &(value->flags);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->flags);
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->PictureType));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->sps_video_parameter_set_id));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pps_seq_parameter_set_id));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pps_pic_parameter_set_id));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->TemporalId));
+    bytes_read += ValueDecoder::DecodeInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->PicOrderCntVal));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoEncodeH265ReferenceInfoFlags* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoEncodeH265ReferenceInfoFlags* value = wrapper->decoded_value;
+
+    uint32_t temp_used_for_long_term_reference;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_used_for_long_term_reference);
+    value->used_for_long_term_reference = temp_used_for_long_term_reference;
+    uint32_t temp_unused_for_reference;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &temp_unused_for_reference);
+    value->unused_for_reference = temp_unused_for_reference;
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_StdVideoEncodeH265ReferenceInfo* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    StdVideoEncodeH265ReferenceInfo* value = wrapper->decoded_value;
+
+    wrapper->flags = DecodeAllocator::Allocate<Decoded_StdVideoEncodeH265ReferenceInfoFlags>();
+    wrapper->flags->decoded_value = &(value->flags);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->flags);
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->PictureType));
+    bytes_read += ValueDecoder::DecodeInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->PicOrderCntVal));
+    bytes_read += ValueDecoder::DecodeUInt8Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->TemporalId));
+
+    return bytes_read;
+}
 
 size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkExtent2D* wrapper)
 {
@@ -5978,6 +7707,505 @@ size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkWin32Su
     return bytes_read;
 }
 
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkQueueFamilyQueryResultStatusPropertiesKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkQueueFamilyQueryResultStatusPropertiesKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeVkBool32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->queryResultStatusSupport));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkQueueFamilyVideoPropertiesKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkQueueFamilyVideoPropertiesKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->videoCodecOperations));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoProfileInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoProfileInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->videoCodecOperation));
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->chromaSubsampling));
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->lumaBitDepth));
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->chromaBitDepth));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoProfileListInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoProfileListInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->profileCount));
+    wrapper->pProfiles = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_VkVideoProfileInfoKHR>>();
+    bytes_read += wrapper->pProfiles->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pProfiles = wrapper->pProfiles->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoCapabilitiesKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoCapabilitiesKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->flags));
+    bytes_read += ValueDecoder::DecodeVkDeviceSizeValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->minBitstreamBufferOffsetAlignment));
+    bytes_read += ValueDecoder::DecodeVkDeviceSizeValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->minBitstreamBufferSizeAlignment));
+    wrapper->pictureAccessGranularity = DecodeAllocator::Allocate<Decoded_VkExtent2D>();
+    wrapper->pictureAccessGranularity->decoded_value = &(value->pictureAccessGranularity);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->pictureAccessGranularity);
+    wrapper->minCodedExtent = DecodeAllocator::Allocate<Decoded_VkExtent2D>();
+    wrapper->minCodedExtent->decoded_value = &(value->minCodedExtent);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->minCodedExtent);
+    wrapper->maxCodedExtent = DecodeAllocator::Allocate<Decoded_VkExtent2D>();
+    wrapper->maxCodedExtent->decoded_value = &(value->maxCodedExtent);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->maxCodedExtent);
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxDpbSlots));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxActiveReferencePictures));
+    wrapper->stdHeaderVersion = DecodeAllocator::Allocate<Decoded_VkExtensionProperties>();
+    wrapper->stdHeaderVersion->decoded_value = &(value->stdHeaderVersion);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->stdHeaderVersion);
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkPhysicalDeviceVideoFormatInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkPhysicalDeviceVideoFormatInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->imageUsage));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoFormatPropertiesKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoFormatPropertiesKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->format));
+    wrapper->componentMapping = DecodeAllocator::Allocate<Decoded_VkComponentMapping>();
+    wrapper->componentMapping->decoded_value = &(value->componentMapping);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->componentMapping);
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->imageCreateFlags));
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->imageType));
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->imageTiling));
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->imageUsageFlags));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoPictureResourceInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoPictureResourceInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    wrapper->codedOffset = DecodeAllocator::Allocate<Decoded_VkOffset2D>();
+    wrapper->codedOffset->decoded_value = &(value->codedOffset);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->codedOffset);
+    wrapper->codedExtent = DecodeAllocator::Allocate<Decoded_VkExtent2D>();
+    wrapper->codedExtent->decoded_value = &(value->codedExtent);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->codedExtent);
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->baseArrayLayer));
+    bytes_read += ValueDecoder::DecodeHandleIdValue((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->imageViewBinding));
+    value->imageViewBinding = VK_NULL_HANDLE;
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoReferenceSlotInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoReferenceSlotInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->slotIndex));
+    wrapper->pPictureResource = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_VkVideoPictureResourceInfoKHR>>();
+    bytes_read += wrapper->pPictureResource->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pPictureResource = wrapper->pPictureResource->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoSessionMemoryRequirementsKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoSessionMemoryRequirementsKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->memoryBindIndex));
+    wrapper->memoryRequirements = DecodeAllocator::Allocate<Decoded_VkMemoryRequirements>();
+    wrapper->memoryRequirements->decoded_value = &(value->memoryRequirements);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->memoryRequirements);
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkBindVideoSessionMemoryInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkBindVideoSessionMemoryInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->memoryBindIndex));
+    bytes_read += ValueDecoder::DecodeHandleIdValue((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->memory));
+    value->memory = VK_NULL_HANDLE;
+    bytes_read += ValueDecoder::DecodeVkDeviceSizeValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->memoryOffset));
+    bytes_read += ValueDecoder::DecodeVkDeviceSizeValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->memorySize));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoSessionCreateInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoSessionCreateInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->queueFamilyIndex));
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->flags));
+    wrapper->pVideoProfile = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_VkVideoProfileInfoKHR>>();
+    bytes_read += wrapper->pVideoProfile->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pVideoProfile = wrapper->pVideoProfile->GetPointer();
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->pictureFormat));
+    wrapper->maxCodedExtent = DecodeAllocator::Allocate<Decoded_VkExtent2D>();
+    wrapper->maxCodedExtent->decoded_value = &(value->maxCodedExtent);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->maxCodedExtent);
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->referencePictureFormat));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxDpbSlots));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxActiveReferencePictures));
+    wrapper->pStdHeaderVersion = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_VkExtensionProperties>>();
+    bytes_read += wrapper->pStdHeaderVersion->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pStdHeaderVersion = wrapper->pStdHeaderVersion->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoSessionParametersCreateInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoSessionParametersCreateInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->flags));
+    bytes_read += ValueDecoder::DecodeHandleIdValue((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->videoSessionParametersTemplate));
+    value->videoSessionParametersTemplate = VK_NULL_HANDLE;
+    bytes_read += ValueDecoder::DecodeHandleIdValue((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->videoSession));
+    value->videoSession = VK_NULL_HANDLE;
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoSessionParametersUpdateInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoSessionParametersUpdateInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->updateSequenceCount));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoBeginCodingInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoBeginCodingInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->flags));
+    bytes_read += ValueDecoder::DecodeHandleIdValue((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->videoSession));
+    value->videoSession = VK_NULL_HANDLE;
+    bytes_read += ValueDecoder::DecodeHandleIdValue((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->videoSessionParameters));
+    value->videoSessionParameters = VK_NULL_HANDLE;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->referenceSlotCount));
+    wrapper->pReferenceSlots = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_VkVideoReferenceSlotInfoKHR>>();
+    bytes_read += wrapper->pReferenceSlots->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pReferenceSlots = wrapper->pReferenceSlots->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEndCodingInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEndCodingInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->flags));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoCodingControlInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoCodingControlInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->flags));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoDecodeCapabilitiesKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoDecodeCapabilitiesKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->flags));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoDecodeUsageInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoDecodeUsageInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->videoUsageHints));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoDecodeInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoDecodeInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->flags));
+    bytes_read += ValueDecoder::DecodeHandleIdValue((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->srcBuffer));
+    value->srcBuffer = VK_NULL_HANDLE;
+    bytes_read += ValueDecoder::DecodeVkDeviceSizeValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->srcBufferOffset));
+    bytes_read += ValueDecoder::DecodeVkDeviceSizeValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->srcBufferRange));
+    wrapper->dstPictureResource = DecodeAllocator::Allocate<Decoded_VkVideoPictureResourceInfoKHR>();
+    wrapper->dstPictureResource->decoded_value = &(value->dstPictureResource);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->dstPictureResource);
+    wrapper->pSetupReferenceSlot = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_VkVideoReferenceSlotInfoKHR>>();
+    bytes_read += wrapper->pSetupReferenceSlot->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pSetupReferenceSlot = wrapper->pSetupReferenceSlot->GetPointer();
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->referenceSlotCount));
+    wrapper->pReferenceSlots = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_VkVideoReferenceSlotInfoKHR>>();
+    bytes_read += wrapper->pReferenceSlots->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pReferenceSlots = wrapper->pReferenceSlots->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoDecodeH264ProfileInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoDecodeH264ProfileInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->stdProfileIdc));
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->pictureLayout));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoDecodeH264CapabilitiesKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoDecodeH264CapabilitiesKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxLevelIdc));
+    wrapper->fieldOffsetGranularity = DecodeAllocator::Allocate<Decoded_VkOffset2D>();
+    wrapper->fieldOffsetGranularity->decoded_value = &(value->fieldOffsetGranularity);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->fieldOffsetGranularity);
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoDecodeH264SessionParametersAddInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoDecodeH264SessionParametersAddInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->stdSPSCount));
+    wrapper->pStdSPSs = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH264SequenceParameterSet>>();
+    bytes_read += wrapper->pStdSPSs->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pStdSPSs = wrapper->pStdSPSs->GetPointer();
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->stdPPSCount));
+    wrapper->pStdPPSs = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH264PictureParameterSet>>();
+    bytes_read += wrapper->pStdPPSs->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pStdPPSs = wrapper->pStdPPSs->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoDecodeH264SessionParametersCreateInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoDecodeH264SessionParametersCreateInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxStdSPSCount));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxStdPPSCount));
+    wrapper->pParametersAddInfo = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_VkVideoDecodeH264SessionParametersAddInfoKHR>>();
+    bytes_read += wrapper->pParametersAddInfo->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pParametersAddInfo = wrapper->pParametersAddInfo->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoDecodeH264PictureInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoDecodeH264PictureInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    wrapper->pStdPictureInfo = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoDecodeH264PictureInfo>>();
+    bytes_read += wrapper->pStdPictureInfo->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pStdPictureInfo = wrapper->pStdPictureInfo->GetPointer();
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->sliceCount));
+    bytes_read += wrapper->pSliceOffsets.DecodeUInt32((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pSliceOffsets = wrapper->pSliceOffsets.GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoDecodeH264DpbSlotInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoDecodeH264DpbSlotInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    wrapper->pStdReferenceInfo = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoDecodeH264ReferenceInfo>>();
+    bytes_read += wrapper->pStdReferenceInfo->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pStdReferenceInfo = wrapper->pStdReferenceInfo->GetPointer();
+
+    return bytes_read;
+}
+
 size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkRenderingFragmentShadingRateAttachmentInfoKHR* wrapper)
 {
     assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
@@ -6800,6 +9028,119 @@ size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkPhysica
     return bytes_read;
 }
 
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoDecodeH265ProfileInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoDecodeH265ProfileInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->stdProfileIdc));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoDecodeH265CapabilitiesKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoDecodeH265CapabilitiesKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxLevelIdc));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoDecodeH265SessionParametersAddInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoDecodeH265SessionParametersAddInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->stdVPSCount));
+    wrapper->pStdVPSs = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH265VideoParameterSet>>();
+    bytes_read += wrapper->pStdVPSs->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pStdVPSs = wrapper->pStdVPSs->GetPointer();
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->stdSPSCount));
+    wrapper->pStdSPSs = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH265SequenceParameterSet>>();
+    bytes_read += wrapper->pStdSPSs->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pStdSPSs = wrapper->pStdSPSs->GetPointer();
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->stdPPSCount));
+    wrapper->pStdPPSs = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH265PictureParameterSet>>();
+    bytes_read += wrapper->pStdPPSs->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pStdPPSs = wrapper->pStdPPSs->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoDecodeH265SessionParametersCreateInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoDecodeH265SessionParametersCreateInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxStdVPSCount));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxStdSPSCount));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxStdPPSCount));
+    wrapper->pParametersAddInfo = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_VkVideoDecodeH265SessionParametersAddInfoKHR>>();
+    bytes_read += wrapper->pParametersAddInfo->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pParametersAddInfo = wrapper->pParametersAddInfo->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoDecodeH265PictureInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoDecodeH265PictureInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    wrapper->pStdPictureInfo = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoDecodeH265PictureInfo>>();
+    bytes_read += wrapper->pStdPictureInfo->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pStdPictureInfo = wrapper->pStdPictureInfo->GetPointer();
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->sliceSegmentCount));
+    bytes_read += wrapper->pSliceSegmentOffsets.DecodeUInt32((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pSliceSegmentOffsets = wrapper->pSliceSegmentOffsets.GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoDecodeH265DpbSlotInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoDecodeH265DpbSlotInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    wrapper->pStdReferenceInfo = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoDecodeH265ReferenceInfo>>();
+    bytes_read += wrapper->pStdReferenceInfo->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pStdReferenceInfo = wrapper->pStdReferenceInfo->GetPointer();
+
+    return bytes_read;
+}
+
 size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkDeviceQueueGlobalPriorityCreateInfoKHR* wrapper)
 {
     assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
@@ -7100,6 +9441,42 @@ size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkPipelin
     return bytes_read;
 }
 
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkMemoryMapInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkMemoryMapInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->flags));
+    bytes_read += ValueDecoder::DecodeHandleIdValue((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->memory));
+    value->memory = VK_NULL_HANDLE;
+    bytes_read += ValueDecoder::DecodeVkDeviceSizeValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->offset));
+    bytes_read += ValueDecoder::DecodeVkDeviceSizeValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->size));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkMemoryUnmapInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkMemoryUnmapInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->flags));
+    bytes_read += ValueDecoder::DecodeHandleIdValue((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->memory));
+    value->memory = VK_NULL_HANDLE;
+
+    return bytes_read;
+}
+
 size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkPipelineLibraryCreateInfoKHR* wrapper)
 {
     assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
@@ -7145,6 +9522,131 @@ size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkPhysica
     bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
     value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
     bytes_read += ValueDecoder::DecodeVkBool32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->presentId));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEncodeInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEncodeInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->flags));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->qualityLevel));
+    bytes_read += ValueDecoder::DecodeHandleIdValue((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->dstBuffer));
+    value->dstBuffer = VK_NULL_HANDLE;
+    bytes_read += ValueDecoder::DecodeVkDeviceSizeValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->dstBufferOffset));
+    bytes_read += ValueDecoder::DecodeVkDeviceSizeValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->dstBufferRange));
+    wrapper->srcPictureResource = DecodeAllocator::Allocate<Decoded_VkVideoPictureResourceInfoKHR>();
+    wrapper->srcPictureResource->decoded_value = &(value->srcPictureResource);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->srcPictureResource);
+    wrapper->pSetupReferenceSlot = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_VkVideoReferenceSlotInfoKHR>>();
+    bytes_read += wrapper->pSetupReferenceSlot->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pSetupReferenceSlot = wrapper->pSetupReferenceSlot->GetPointer();
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->referenceSlotCount));
+    wrapper->pReferenceSlots = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_VkVideoReferenceSlotInfoKHR>>();
+    bytes_read += wrapper->pReferenceSlots->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pReferenceSlots = wrapper->pReferenceSlots->GetPointer();
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->precedingExternallyEncodedBytes));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEncodeCapabilitiesKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEncodeCapabilitiesKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->flags));
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->rateControlModes));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxRateControlLayers));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxQualityLevels));
+    wrapper->inputImageDataFillAlignment = DecodeAllocator::Allocate<Decoded_VkExtent2D>();
+    wrapper->inputImageDataFillAlignment->decoded_value = &(value->inputImageDataFillAlignment);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->inputImageDataFillAlignment);
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->supportedEncodeFeedbackFlags));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkQueryPoolVideoEncodeFeedbackCreateInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkQueryPoolVideoEncodeFeedbackCreateInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->encodeFeedbackFlags));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEncodeUsageInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEncodeUsageInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->videoUsageHints));
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->videoContentHints));
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->tuningMode));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEncodeRateControlLayerInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEncodeRateControlLayerInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeUInt64Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->averageBitrate));
+    bytes_read += ValueDecoder::DecodeUInt64Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxBitrate));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->frameRateNumerator));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->frameRateDenominator));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->virtualBufferSizeInMs));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->initialVirtualBufferSizeInMs));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEncodeRateControlInfoKHR* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEncodeRateControlInfoKHR* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->flags));
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->rateControlMode));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->layerCount));
+    wrapper->pLayers = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_VkVideoEncodeRateControlLayerInfoKHR>>();
+    bytes_read += wrapper->pLayers->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pLayers = wrapper->pLayers->GetPointer();
 
     return bytes_read;
 }
@@ -7512,6 +10014,458 @@ size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkImageVi
     value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
     bytes_read += ValueDecoder::DecodeVkDeviceAddressValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->deviceAddress));
     bytes_read += ValueDecoder::DecodeVkDeviceSizeValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->size));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEncodeH264CapabilitiesEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEncodeH264CapabilitiesEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->flags));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxPPictureL0ReferenceCount));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxBPictureL0ReferenceCount));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxL1ReferenceCount));
+    bytes_read += ValueDecoder::DecodeVkBool32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->motionVectorsOverPicBoundariesFlag));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxBytesPerPicDenom));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxBitsPerMbDenom));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->log2MaxMvLengthHorizontal));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->log2MaxMvLengthVertical));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEncodeH264SessionParametersAddInfoEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEncodeH264SessionParametersAddInfoEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->stdSPSCount));
+    wrapper->pStdSPSs = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH264SequenceParameterSet>>();
+    bytes_read += wrapper->pStdSPSs->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pStdSPSs = wrapper->pStdSPSs->GetPointer();
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->stdPPSCount));
+    wrapper->pStdPPSs = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH264PictureParameterSet>>();
+    bytes_read += wrapper->pStdPPSs->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pStdPPSs = wrapper->pStdPPSs->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEncodeH264SessionParametersCreateInfoEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEncodeH264SessionParametersCreateInfoEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxStdSPSCount));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxStdPPSCount));
+    wrapper->pParametersAddInfo = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_VkVideoEncodeH264SessionParametersAddInfoEXT>>();
+    bytes_read += wrapper->pParametersAddInfo->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pParametersAddInfo = wrapper->pParametersAddInfo->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEncodeH264NaluSliceInfoEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEncodeH264NaluSliceInfoEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->mbCount));
+    wrapper->pStdReferenceFinalLists = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoEncodeH264ReferenceListsInfo>>();
+    bytes_read += wrapper->pStdReferenceFinalLists->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pStdReferenceFinalLists = wrapper->pStdReferenceFinalLists->GetPointer();
+    wrapper->pStdSliceHeader = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoEncodeH264SliceHeader>>();
+    bytes_read += wrapper->pStdSliceHeader->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pStdSliceHeader = wrapper->pStdSliceHeader->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEncodeH264VclFrameInfoEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEncodeH264VclFrameInfoEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    wrapper->pStdReferenceFinalLists = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoEncodeH264ReferenceListsInfo>>();
+    bytes_read += wrapper->pStdReferenceFinalLists->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pStdReferenceFinalLists = wrapper->pStdReferenceFinalLists->GetPointer();
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->naluSliceEntryCount));
+    wrapper->pNaluSliceEntries = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_VkVideoEncodeH264NaluSliceInfoEXT>>();
+    bytes_read += wrapper->pNaluSliceEntries->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pNaluSliceEntries = wrapper->pNaluSliceEntries->GetPointer();
+    wrapper->pStdPictureInfo = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoEncodeH264PictureInfo>>();
+    bytes_read += wrapper->pStdPictureInfo->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pStdPictureInfo = wrapper->pStdPictureInfo->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEncodeH264DpbSlotInfoEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEncodeH264DpbSlotInfoEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    wrapper->pStdReferenceInfo = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoEncodeH264ReferenceInfo>>();
+    bytes_read += wrapper->pStdReferenceInfo->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pStdReferenceInfo = wrapper->pStdReferenceInfo->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEncodeH264ProfileInfoEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEncodeH264ProfileInfoEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->stdProfileIdc));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEncodeH264RateControlInfoEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEncodeH264RateControlInfoEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->gopFrameCount));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->idrPeriod));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->consecutiveBFrameCount));
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->rateControlStructure));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->temporalLayerCount));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEncodeH264QpEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEncodeH264QpEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->qpI));
+    bytes_read += ValueDecoder::DecodeInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->qpP));
+    bytes_read += ValueDecoder::DecodeInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->qpB));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEncodeH264FrameSizeEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEncodeH264FrameSizeEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->frameISize));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->framePSize));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->frameBSize));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEncodeH264RateControlLayerInfoEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEncodeH264RateControlLayerInfoEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->temporalLayerId));
+    bytes_read += ValueDecoder::DecodeVkBool32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->useInitialRcQp));
+    wrapper->initialRcQp = DecodeAllocator::Allocate<Decoded_VkVideoEncodeH264QpEXT>();
+    wrapper->initialRcQp->decoded_value = &(value->initialRcQp);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->initialRcQp);
+    bytes_read += ValueDecoder::DecodeVkBool32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->useMinQp));
+    wrapper->minQp = DecodeAllocator::Allocate<Decoded_VkVideoEncodeH264QpEXT>();
+    wrapper->minQp->decoded_value = &(value->minQp);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->minQp);
+    bytes_read += ValueDecoder::DecodeVkBool32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->useMaxQp));
+    wrapper->maxQp = DecodeAllocator::Allocate<Decoded_VkVideoEncodeH264QpEXT>();
+    wrapper->maxQp->decoded_value = &(value->maxQp);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->maxQp);
+    bytes_read += ValueDecoder::DecodeVkBool32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->useMaxFrameSize));
+    wrapper->maxFrameSize = DecodeAllocator::Allocate<Decoded_VkVideoEncodeH264FrameSizeEXT>();
+    wrapper->maxFrameSize->decoded_value = &(value->maxFrameSize);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->maxFrameSize);
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEncodeH265CapabilitiesEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEncodeH265CapabilitiesEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->flags));
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->ctbSizes));
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->transformBlockSizes));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxPPictureL0ReferenceCount));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxBPictureL0ReferenceCount));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxL1ReferenceCount));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxSubLayersCount));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->minLog2MinLumaCodingBlockSizeMinus3));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxLog2MinLumaCodingBlockSizeMinus3));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->minLog2MinLumaTransformBlockSizeMinus2));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxLog2MinLumaTransformBlockSizeMinus2));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->minMaxTransformHierarchyDepthInter));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxMaxTransformHierarchyDepthInter));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->minMaxTransformHierarchyDepthIntra));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxMaxTransformHierarchyDepthIntra));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxDiffCuQpDeltaDepth));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->minMaxNumMergeCand));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxMaxNumMergeCand));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEncodeH265SessionParametersAddInfoEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEncodeH265SessionParametersAddInfoEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->stdVPSCount));
+    wrapper->pStdVPSs = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH265VideoParameterSet>>();
+    bytes_read += wrapper->pStdVPSs->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pStdVPSs = wrapper->pStdVPSs->GetPointer();
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->stdSPSCount));
+    wrapper->pStdSPSs = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH265SequenceParameterSet>>();
+    bytes_read += wrapper->pStdSPSs->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pStdSPSs = wrapper->pStdSPSs->GetPointer();
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->stdPPSCount));
+    wrapper->pStdPPSs = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoH265PictureParameterSet>>();
+    bytes_read += wrapper->pStdPPSs->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pStdPPSs = wrapper->pStdPPSs->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEncodeH265SessionParametersCreateInfoEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEncodeH265SessionParametersCreateInfoEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxStdVPSCount));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxStdSPSCount));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxStdPPSCount));
+    wrapper->pParametersAddInfo = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_VkVideoEncodeH265SessionParametersAddInfoEXT>>();
+    bytes_read += wrapper->pParametersAddInfo->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pParametersAddInfo = wrapper->pParametersAddInfo->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEncodeH265NaluSliceSegmentInfoEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEncodeH265NaluSliceSegmentInfoEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->ctbCount));
+    wrapper->pStdReferenceFinalLists = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoEncodeH265ReferenceListsInfo>>();
+    bytes_read += wrapper->pStdReferenceFinalLists->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pStdReferenceFinalLists = wrapper->pStdReferenceFinalLists->GetPointer();
+    wrapper->pStdSliceSegmentHeader = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoEncodeH265SliceSegmentHeader>>();
+    bytes_read += wrapper->pStdSliceSegmentHeader->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pStdSliceSegmentHeader = wrapper->pStdSliceSegmentHeader->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEncodeH265VclFrameInfoEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEncodeH265VclFrameInfoEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    wrapper->pStdReferenceFinalLists = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoEncodeH265ReferenceListsInfo>>();
+    bytes_read += wrapper->pStdReferenceFinalLists->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pStdReferenceFinalLists = wrapper->pStdReferenceFinalLists->GetPointer();
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->naluSliceSegmentEntryCount));
+    wrapper->pNaluSliceSegmentEntries = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_VkVideoEncodeH265NaluSliceSegmentInfoEXT>>();
+    bytes_read += wrapper->pNaluSliceSegmentEntries->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pNaluSliceSegmentEntries = wrapper->pNaluSliceSegmentEntries->GetPointer();
+    wrapper->pStdPictureInfo = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoEncodeH265PictureInfo>>();
+    bytes_read += wrapper->pStdPictureInfo->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pStdPictureInfo = wrapper->pStdPictureInfo->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEncodeH265DpbSlotInfoEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEncodeH265DpbSlotInfoEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    wrapper->pStdReferenceInfo = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_StdVideoEncodeH265ReferenceInfo>>();
+    bytes_read += wrapper->pStdReferenceInfo->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pStdReferenceInfo = wrapper->pStdReferenceInfo->GetPointer();
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEncodeH265ProfileInfoEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEncodeH265ProfileInfoEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->stdProfileIdc));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEncodeH265RateControlInfoEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEncodeH265RateControlInfoEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->gopFrameCount));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->idrPeriod));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->consecutiveBFrameCount));
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->rateControlStructure));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->subLayerCount));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEncodeH265QpEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEncodeH265QpEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->qpI));
+    bytes_read += ValueDecoder::DecodeInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->qpP));
+    bytes_read += ValueDecoder::DecodeInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->qpB));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEncodeH265FrameSizeEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEncodeH265FrameSizeEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->frameISize));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->framePSize));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->frameBSize));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkVideoEncodeH265RateControlLayerInfoEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkVideoEncodeH265RateControlLayerInfoEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->temporalId));
+    bytes_read += ValueDecoder::DecodeVkBool32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->useInitialRcQp));
+    wrapper->initialRcQp = DecodeAllocator::Allocate<Decoded_VkVideoEncodeH265QpEXT>();
+    wrapper->initialRcQp->decoded_value = &(value->initialRcQp);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->initialRcQp);
+    bytes_read += ValueDecoder::DecodeVkBool32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->useMinQp));
+    wrapper->minQp = DecodeAllocator::Allocate<Decoded_VkVideoEncodeH265QpEXT>();
+    wrapper->minQp->decoded_value = &(value->minQp);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->minQp);
+    bytes_read += ValueDecoder::DecodeVkBool32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->useMaxQp));
+    wrapper->maxQp = DecodeAllocator::Allocate<Decoded_VkVideoEncodeH265QpEXT>();
+    wrapper->maxQp->decoded_value = &(value->maxQp);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->maxQp);
+    bytes_read += ValueDecoder::DecodeVkBool32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->useMaxFrameSize));
+    wrapper->maxFrameSize = DecodeAllocator::Allocate<Decoded_VkVideoEncodeH265FrameSizeEXT>();
+    wrapper->maxFrameSize->decoded_value = &(value->maxFrameSize);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->maxFrameSize);
 
     return bytes_read;
 }
@@ -11279,6 +14233,22 @@ size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkDeviceD
     return bytes_read;
 }
 
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkQueryLowLatencySupportNV* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkQueryLowLatencySupportNV* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeAddress((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pQueriedLowLatencyData));
+    value->pQueriedLowLatencyData = nullptr;
+
+    return bytes_read;
+}
+
 size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT* wrapper)
 {
     assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
@@ -12423,6 +15393,40 @@ size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkPhysica
     return bytes_read;
 }
 
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkPhysicalDeviceShaderTileImageFeaturesEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkPhysicalDeviceShaderTileImageFeaturesEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeVkBool32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->shaderTileImageColorReadAccess));
+    bytes_read += ValueDecoder::DecodeVkBool32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->shaderTileImageDepthReadAccess));
+    bytes_read += ValueDecoder::DecodeVkBool32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->shaderTileImageStencilReadAccess));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkPhysicalDeviceShaderTileImagePropertiesEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkPhysicalDeviceShaderTileImagePropertiesEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeVkBool32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->shaderTileImageCoherentReadAccelerated));
+    bytes_read += ValueDecoder::DecodeVkBool32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->shaderTileImageReadSampleFromPixelRateInvocation));
+    bytes_read += ValueDecoder::DecodeVkBool32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->shaderTileImageReadFromHelperInvocation));
+
+    return bytes_read;
+}
+
 size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkMicromapUsageEXT* wrapper)
 {
     assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
@@ -12662,6 +15666,79 @@ size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkMicroma
     return bytes_read;
 }
 
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkPhysicalDeviceDisplacementMicromapFeaturesNV* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkPhysicalDeviceDisplacementMicromapFeaturesNV* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeVkBool32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->displacementMicromap));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkPhysicalDeviceDisplacementMicromapPropertiesNV* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkPhysicalDeviceDisplacementMicromapPropertiesNV* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxDisplacementMicromapSubdivisionLevel));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkAccelerationStructureTrianglesDisplacementMicromapNV* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkAccelerationStructureTrianglesDisplacementMicromapNV* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->displacementBiasAndScaleFormat));
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->displacementVectorFormat));
+    wrapper->displacementBiasAndScaleBuffer = DecodeAllocator::Allocate<Decoded_VkDeviceOrHostAddressConstKHR>();
+    wrapper->displacementBiasAndScaleBuffer->decoded_value = &(value->displacementBiasAndScaleBuffer);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->displacementBiasAndScaleBuffer);
+    bytes_read += ValueDecoder::DecodeVkDeviceSizeValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->displacementBiasAndScaleStride));
+    wrapper->displacementVectorBuffer = DecodeAllocator::Allocate<Decoded_VkDeviceOrHostAddressConstKHR>();
+    wrapper->displacementVectorBuffer->decoded_value = &(value->displacementVectorBuffer);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->displacementVectorBuffer);
+    bytes_read += ValueDecoder::DecodeVkDeviceSizeValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->displacementVectorStride));
+    wrapper->displacedMicromapPrimitiveFlags = DecodeAllocator::Allocate<Decoded_VkDeviceOrHostAddressConstKHR>();
+    wrapper->displacedMicromapPrimitiveFlags->decoded_value = &(value->displacedMicromapPrimitiveFlags);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->displacedMicromapPrimitiveFlags);
+    bytes_read += ValueDecoder::DecodeVkDeviceSizeValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->displacedMicromapPrimitiveFlagsStride));
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->indexType));
+    wrapper->indexBuffer = DecodeAllocator::Allocate<Decoded_VkDeviceOrHostAddressConstKHR>();
+    wrapper->indexBuffer->decoded_value = &(value->indexBuffer);
+    bytes_read += DecodeStruct((buffer + bytes_read), (buffer_size - bytes_read), wrapper->indexBuffer);
+    bytes_read += ValueDecoder::DecodeVkDeviceSizeValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->indexStride));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->baseTriangle));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->usageCountsCount));
+    wrapper->pUsageCounts = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_VkMicromapUsageEXT>>();
+    bytes_read += wrapper->pUsageCounts->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pUsageCounts = wrapper->pUsageCounts->GetPointer();
+    wrapper->ppUsageCounts = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_VkMicromapUsageEXT*>>();
+    bytes_read += wrapper->ppUsageCounts->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->ppUsageCounts = wrapper->ppUsageCounts->GetPointer();
+    bytes_read += ValueDecoder::DecodeHandleIdValue((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->micromap));
+    value->micromap = VK_NULL_HANDLE;
+
+    return bytes_read;
+}
+
 size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkPhysicalDeviceClusterCullingShaderFeaturesHUAWEI* wrapper)
 {
     assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
@@ -12693,6 +15770,7 @@ size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkPhysica
     wrapper->maxWorkGroupSize.SetExternalMemory(value->maxWorkGroupSize, 3);
     bytes_read += wrapper->maxWorkGroupSize.DecodeUInt32((buffer + bytes_read), (buffer_size - bytes_read));
     bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->maxOutputClusterCount));
+    bytes_read += ValueDecoder::DecodeVkDeviceSizeValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->indirectBufferOffsetAlignment));
 
     return bytes_read;
 }
@@ -12742,6 +15820,54 @@ size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkPhysica
     bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
     value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
     bytes_read += ValueDecoder::DecodeVkBool32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pageableDeviceLocalMemory));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkPhysicalDeviceShaderCorePropertiesARM* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkPhysicalDeviceShaderCorePropertiesARM* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pixelRate));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->texelRate));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->fmaRate));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkPhysicalDeviceImageSlicedViewOf3DFeaturesEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkPhysicalDeviceImageSlicedViewOf3DFeaturesEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeVkBool32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->imageSlicedViewOf3D));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkImageViewSlicedCreateInfoEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkImageViewSlicedCreateInfoEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->sliceOffset));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->sliceCount));
 
     return bytes_read;
 }
@@ -13411,6 +16537,71 @@ size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkPhysica
     return bytes_read;
 }
 
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkPhysicalDeviceShaderObjectFeaturesEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkPhysicalDeviceShaderObjectFeaturesEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeVkBool32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->shaderObject));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkPhysicalDeviceShaderObjectPropertiesEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkPhysicalDeviceShaderObjectPropertiesEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    wrapper->shaderBinaryUUID.SetExternalMemory(value->shaderBinaryUUID, VK_UUID_SIZE);
+    bytes_read += wrapper->shaderBinaryUUID.DecodeUInt8((buffer + bytes_read), (buffer_size - bytes_read));
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->shaderBinaryVersion));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkShaderCreateInfoEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkShaderCreateInfoEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->flags));
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->stage));
+    bytes_read += ValueDecoder::DecodeFlagsValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->nextStage));
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->codeType));
+    bytes_read += ValueDecoder::DecodeSizeTValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->codeSize));
+    bytes_read += wrapper->pCode.DecodeVoid((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pCode = wrapper->pCode.GetPointer();
+    bytes_read += wrapper->pName.Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pName = wrapper->pName.GetPointer();
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->setLayoutCount));
+    bytes_read += wrapper->pSetLayouts.Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pSetLayouts = nullptr;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pushConstantRangeCount));
+    wrapper->pPushConstantRanges = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_VkPushConstantRange>>();
+    bytes_read += wrapper->pPushConstantRanges->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pPushConstantRanges = wrapper->pPushConstantRanges->GetPointer();
+    wrapper->pSpecializationInfo = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_VkSpecializationInfo>>();
+    bytes_read += wrapper->pSpecializationInfo->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pSpecializationInfo = wrapper->pSpecializationInfo->GetPointer();
+
+    return bytes_read;
+}
+
 size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkPhysicalDeviceTilePropertiesFeaturesQCOM* wrapper)
 {
     assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
@@ -13553,6 +16744,54 @@ size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkPhysica
     bytes_read += ValueDecoder::DecodeUInt64Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->shaderCoreMask));
     bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->shaderCoreCount));
     bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->shaderWarpsPerCore));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesEXT* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkPhysicalDevicePipelineLibraryGroupHandlesFeaturesEXT* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeVkBool32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->pipelineLibraryGroupHandles));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkPhysicalDeviceMultiviewPerViewRenderAreasFeaturesQCOM* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkPhysicalDeviceMultiviewPerViewRenderAreasFeaturesQCOM* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeVkBool32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->multiviewPerViewRenderAreas));
+
+    return bytes_read;
+}
+
+size_t DecodeStruct(const uint8_t* buffer, size_t buffer_size, Decoded_VkMultiviewPerViewRenderAreasRenderPassBeginInfoQCOM* wrapper)
+{
+    assert((wrapper != nullptr) && (wrapper->decoded_value != nullptr));
+
+    size_t bytes_read = 0;
+    VkMultiviewPerViewRenderAreasRenderPassBeginInfoQCOM* value = wrapper->decoded_value;
+
+    bytes_read += ValueDecoder::DecodeEnumValue((buffer + bytes_read), (buffer_size - bytes_read), &(value->sType));
+    bytes_read += DecodePNextStruct((buffer + bytes_read), (buffer_size - bytes_read), &(wrapper->pNext));
+    value->pNext = wrapper->pNext ? wrapper->pNext->GetPointer() : nullptr;
+    bytes_read += ValueDecoder::DecodeUInt32Value((buffer + bytes_read), (buffer_size - bytes_read), &(value->perViewRenderAreaCount));
+    wrapper->pPerViewRenderAreas = DecodeAllocator::Allocate<StructPointerDecoder<Decoded_VkRect2D>>();
+    bytes_read += wrapper->pPerViewRenderAreas->Decode((buffer + bytes_read), (buffer_size - bytes_read));
+    value->pPerViewRenderAreas = wrapper->pPerViewRenderAreas->GetPointer();
 
     return bytes_read;
 }

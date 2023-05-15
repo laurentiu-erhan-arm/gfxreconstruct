@@ -69,16 +69,17 @@ _emit_extensions = []
 # To screen an extension out from the list reported to the application it should
 # be added to the list kUnsupportedDeviceExtensions in trace_layer.cpp.
 _remove_extensions = [
-    "VK_KHR_video_queue", "VK_KHR_video_decode_queue",
-    "VK_KHR_video_encode_queue", "VK_EXT_video_encode_h264",
-    "VK_KHR_video_decode_h264", "VK_KHR_video_decode_h265", 
-    "VK_EXT_video_encode_h265", "VK_FUCHSIA_buffer_collection",
+    "VK_FUCHSIA_buffer_collection",
     "VK_NVX_binary_import", "VK_HUAWEI_subpass_shading",
     "VK_EXT_pipeline_properties", "VK_EXT_metal_objects",
     # @todo <https://github.com/LunarG/gfxreconstruct/issues/917>
     "VK_EXT_descriptor_buffer",
     "VK_NV_copy_memory_indirect",
     "VK_NV_memory_decompression"
+]
+
+_supported_subsets = [
+    "vulkan"
 ]
 
 # Turn lists of names/patterns into matching regular expressions.
@@ -344,6 +345,10 @@ class BaseGenerator(OutputGenerator):
     # Default C++ code indentation size.
     INDENT_SIZE = 4
 
+    VIDEO_TREE = None
+
+    generate_video = False
+
     def __init__(
         self,
         process_cmds,
@@ -423,6 +428,13 @@ class BaseGenerator(OutputGenerator):
         """Write Vulkan header include statements
         """
         write('#include "vulkan/vulkan.h"', file=self.outFile)
+        write('#include "vk_video/vulkan_video_codec_h264std.h"', file=self.outFile)
+        write('#include "vk_video/vulkan_video_codec_h264std_decode.h"', file=self.outFile)
+        write('#include "vk_video/vulkan_video_codec_h264std_encode.h"', file=self.outFile)
+        write('#include "vk_video/vulkan_video_codec_h265std.h"', file=self.outFile)
+        write('#include "vk_video/vulkan_video_codec_h265std_decode.h"', file=self.outFile)
+        write('#include "vk_video/vulkan_video_codec_h265std_encode.h"', file=self.outFile)
+        write('#include "vk_video/vulkan_video_codecs_common.h"', file=self.outFile)
         for extra_vulkan_header in gen_opts.extraVulkanHeaders:
             header_include_path = re.sub(r'\\', '/', extra_vulkan_header)
             write(f'#include "{header_include_path}"', file=self.outFile)
@@ -451,6 +463,35 @@ class BaseGenerator(OutputGenerator):
         # Some generation cases require that extra feature protection be suppressed
         if self.genOpts.protect_feature:
             self.featureExtraProtect = self.__get_feature_protect(interface)
+
+        if not self.generate_video:
+            self.gen_video_type()
+            self.generate_video = True
+
+    def gen_video_type(self):
+        if not self.VIDEO_TREE:
+            return
+        
+        if self.process_structs:
+            types = self.VIDEO_TREE.find('types')
+            for element in types.iter('type'):
+                name = element.get('name')
+                category = element.get('category')
+                if name and category and (category == 'struct' or category == 'union'):
+                    self.struct_names.add(name)
+                    if category == 'struct':
+                        self.feature_struct_members[name] = self.make_value_info(
+                            element.findall('member')
+                        )
+
+        for element in self.VIDEO_TREE.iter('enums'):
+            group_name = element.get('name')
+            self.enum_names.add(group_name)
+            enumerants = dict()
+            for elem in element.findall('enum'):
+                name = elem.get('name')
+                enumerants[name] = elem.get('value')
+            self.enumEnumerants[group_name] = enumerants
 
     def endFeature(self):
         """Method override. Generate code for the feature."""
@@ -528,7 +569,16 @@ class BaseGenerator(OutputGenerator):
             enumerants = dict()
             for elem in groupinfo.elem:
                 supported = elem.get('supported')
-                if not supported or not 'disabled' in supported:
+                is_supported = False
+                if not supported:
+                    is_supported = True
+                else:
+                    supported_list = supported.split(",")
+                    for e in supported_list:
+                        if e in _supported_subsets:
+                            is_supported = True
+                            break
+                if is_supported:
                     name = elem.get('name')
                     if name and not elem.get('alias'):
                         enumerants[name] = elem.get('value')
@@ -612,6 +662,12 @@ class BaseGenerator(OutputGenerator):
                     name, params, array_capacity
                 )
 
+            array_dimension = 0
+            if array_length:
+                array_length_list = array_length.split(',')
+                if array_length_list:
+                    array_dimension = len(array_length_list)
+
             # Get bitfield width
             bitfield_width = None
             if ':' in name_tail:
@@ -625,6 +681,7 @@ class BaseGenerator(OutputGenerator):
                     pointer_count=self.get_pointer_count(full_type),
                     array_length=array_length,
                     array_capacity=array_capacity,
+                    array_dimension=array_dimension,
                     platform_base_type=platform_base_type,
                     platform_full_type=platform_full_type,
                     bitfield_width=bitfield_width
@@ -739,9 +796,16 @@ class BaseGenerator(OutputGenerator):
             # Check for a static array
             paramname = param.find('name')
             if (paramname.tail is not None) and ('[' in paramname.tail):
-                paramenumsize = param.find('enum')
-                if paramenumsize is not None:
-                    result = paramenumsize.text
+                paramenumsizes = param.findall('enum')
+                if paramenumsizes:
+                    first = True
+                    for paramenumsize in paramenumsizes:
+                        if first:
+                            first = False
+                            result = paramenumsize.text
+                        else:
+                            result +=', '
+                            result += paramenumsize.text
                 else:
                     paramsizes = paramname.tail[1:-1].split('][')
                     sizetokens = []
@@ -1339,6 +1403,10 @@ class BaseGenerator(OutputGenerator):
                 method_call += 'Ptr' * value.pointer_count
             else:
                 method_call += 'Value'
+
+        if (method_call == 'encoder->EncodeHandleValue' or method_call == 'encoder->EncodeHandleArray' 
+            or method_call == 'encoder->EncodeHandlePtr'):
+            method_call += '<{}>'.format(value.base_type[2:] + 'Wrapper')
 
         if self.is_output_parameter(value) and omit_output_param:
             args.append(omit_output_param)

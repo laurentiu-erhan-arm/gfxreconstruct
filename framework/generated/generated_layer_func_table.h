@@ -1,6 +1,6 @@
 /*
-** Copyright (c) 2018-2021 Valve Corporation
-** Copyright (c) 2018-2022 LunarG, Inc.
+** Copyright (c) 2018-2023 Valve Corporation
+** Copyright (c) 2018-2023 LunarG, Inc.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -35,6 +35,13 @@
 #include "util/defines.h"
 
 #include "vulkan/vulkan.h"
+#include "vk_video/vulkan_video_codec_h264std.h"
+#include "vk_video/vulkan_video_codec_h264std_decode.h"
+#include "vk_video/vulkan_video_codec_h264std_encode.h"
+#include "vk_video/vulkan_video_codec_h265std.h"
+#include "vk_video/vulkan_video_codec_h265std_decode.h"
+#include "vk_video/vulkan_video_codec_h265std_encode.h"
+#include "vk_video/vulkan_video_codecs_common.h"
 
 #include <unordered_map>
 
@@ -286,6 +293,19 @@ const std::unordered_map<std::string, PFN_vkVoidFunction> func_table = {
     { "vkCreateAndroidSurfaceKHR",                                                                           reinterpret_cast<PFN_vkVoidFunction>(encode::CreateAndroidSurfaceKHR) },
     { "vkCreateWin32SurfaceKHR",                                                                             reinterpret_cast<PFN_vkVoidFunction>(encode::CreateWin32SurfaceKHR) },
     { "vkGetPhysicalDeviceWin32PresentationSupportKHR",                                                      reinterpret_cast<PFN_vkVoidFunction>(encode::GetPhysicalDeviceWin32PresentationSupportKHR) },
+    { "vkGetPhysicalDeviceVideoCapabilitiesKHR",                                                             reinterpret_cast<PFN_vkVoidFunction>(encode::GetPhysicalDeviceVideoCapabilitiesKHR) },
+    { "vkGetPhysicalDeviceVideoFormatPropertiesKHR",                                                         reinterpret_cast<PFN_vkVoidFunction>(encode::GetPhysicalDeviceVideoFormatPropertiesKHR) },
+    { "vkCreateVideoSessionKHR",                                                                             reinterpret_cast<PFN_vkVoidFunction>(encode::CreateVideoSessionKHR) },
+    { "vkDestroyVideoSessionKHR",                                                                            reinterpret_cast<PFN_vkVoidFunction>(encode::DestroyVideoSessionKHR) },
+    { "vkGetVideoSessionMemoryRequirementsKHR",                                                              reinterpret_cast<PFN_vkVoidFunction>(encode::GetVideoSessionMemoryRequirementsKHR) },
+    { "vkBindVideoSessionMemoryKHR",                                                                         reinterpret_cast<PFN_vkVoidFunction>(encode::BindVideoSessionMemoryKHR) },
+    { "vkCreateVideoSessionParametersKHR",                                                                   reinterpret_cast<PFN_vkVoidFunction>(encode::CreateVideoSessionParametersKHR) },
+    { "vkUpdateVideoSessionParametersKHR",                                                                   reinterpret_cast<PFN_vkVoidFunction>(encode::UpdateVideoSessionParametersKHR) },
+    { "vkDestroyVideoSessionParametersKHR",                                                                  reinterpret_cast<PFN_vkVoidFunction>(encode::DestroyVideoSessionParametersKHR) },
+    { "vkCmdBeginVideoCodingKHR",                                                                            reinterpret_cast<PFN_vkVoidFunction>(encode::CmdBeginVideoCodingKHR) },
+    { "vkCmdEndVideoCodingKHR",                                                                              reinterpret_cast<PFN_vkVoidFunction>(encode::CmdEndVideoCodingKHR) },
+    { "vkCmdControlVideoCodingKHR",                                                                          reinterpret_cast<PFN_vkVoidFunction>(encode::CmdControlVideoCodingKHR) },
+    { "vkCmdDecodeVideoKHR",                                                                                 reinterpret_cast<PFN_vkVoidFunction>(encode::CmdDecodeVideoKHR) },
     { "vkCmdBeginRenderingKHR",                                                                              reinterpret_cast<PFN_vkVoidFunction>(encode::CmdBeginRenderingKHR) },
     { "vkCmdEndRenderingKHR",                                                                                reinterpret_cast<PFN_vkVoidFunction>(encode::CmdEndRenderingKHR) },
     { "vkGetPhysicalDeviceFeatures2KHR",                                                                     reinterpret_cast<PFN_vkVoidFunction>(encode::GetPhysicalDeviceFeatures2KHR) },
@@ -362,6 +382,9 @@ const std::unordered_map<std::string, PFN_vkVoidFunction> func_table = {
     { "vkGetPipelineExecutablePropertiesKHR",                                                                reinterpret_cast<PFN_vkVoidFunction>(encode::GetPipelineExecutablePropertiesKHR) },
     { "vkGetPipelineExecutableStatisticsKHR",                                                                reinterpret_cast<PFN_vkVoidFunction>(encode::GetPipelineExecutableStatisticsKHR) },
     { "vkGetPipelineExecutableInternalRepresentationsKHR",                                                   reinterpret_cast<PFN_vkVoidFunction>(encode::GetPipelineExecutableInternalRepresentationsKHR) },
+    { "vkMapMemory2KHR",                                                                                     reinterpret_cast<PFN_vkVoidFunction>(encode::MapMemory2KHR) },
+    { "vkUnmapMemory2KHR",                                                                                   reinterpret_cast<PFN_vkVoidFunction>(encode::UnmapMemory2KHR) },
+    { "vkCmdEncodeVideoKHR",                                                                                 reinterpret_cast<PFN_vkVoidFunction>(encode::CmdEncodeVideoKHR) },
     { "vkCmdSetEvent2KHR",                                                                                   reinterpret_cast<PFN_vkVoidFunction>(encode::CmdSetEvent2KHR) },
     { "vkCmdResetEvent2KHR",                                                                                 reinterpret_cast<PFN_vkVoidFunction>(encode::CmdResetEvent2KHR) },
     { "vkCmdWaitEvents2KHR",                                                                                 reinterpret_cast<PFN_vkVoidFunction>(encode::CmdWaitEvents2KHR) },
@@ -417,6 +440,8 @@ const std::unordered_map<std::string, PFN_vkVoidFunction> func_table = {
     { "vkGetRefreshCycleDurationGOOGLE",                                                                     reinterpret_cast<PFN_vkVoidFunction>(encode::GetRefreshCycleDurationGOOGLE) },
     { "vkGetPastPresentationTimingGOOGLE",                                                                   reinterpret_cast<PFN_vkVoidFunction>(encode::GetPastPresentationTimingGOOGLE) },
     { "vkCmdSetDiscardRectangleEXT",                                                                         reinterpret_cast<PFN_vkVoidFunction>(encode::CmdSetDiscardRectangleEXT) },
+    { "vkCmdSetDiscardRectangleEnableEXT",                                                                   reinterpret_cast<PFN_vkVoidFunction>(encode::CmdSetDiscardRectangleEnableEXT) },
+    { "vkCmdSetDiscardRectangleModeEXT",                                                                     reinterpret_cast<PFN_vkVoidFunction>(encode::CmdSetDiscardRectangleModeEXT) },
     { "vkSetHdrMetadataEXT",                                                                                 reinterpret_cast<PFN_vkVoidFunction>(encode::SetHdrMetadataEXT) },
     { "vkCreateIOSSurfaceMVK",                                                                               reinterpret_cast<PFN_vkVoidFunction>(encode::CreateIOSSurfaceMVK) },
     { "vkCreateMacOSSurfaceMVK",                                                                             reinterpret_cast<PFN_vkVoidFunction>(encode::CreateMacOSSurfaceMVK) },
@@ -463,6 +488,7 @@ const std::unordered_map<std::string, PFN_vkVoidFunction> func_table = {
     { "vkCmdDrawMeshTasksNV",                                                                                reinterpret_cast<PFN_vkVoidFunction>(encode::CmdDrawMeshTasksNV) },
     { "vkCmdDrawMeshTasksIndirectNV",                                                                        reinterpret_cast<PFN_vkVoidFunction>(encode::CmdDrawMeshTasksIndirectNV) },
     { "vkCmdDrawMeshTasksIndirectCountNV",                                                                   reinterpret_cast<PFN_vkVoidFunction>(encode::CmdDrawMeshTasksIndirectCountNV) },
+    { "vkCmdSetExclusiveScissorEnableNV",                                                                    reinterpret_cast<PFN_vkVoidFunction>(encode::CmdSetExclusiveScissorEnableNV) },
     { "vkCmdSetExclusiveScissorNV",                                                                          reinterpret_cast<PFN_vkVoidFunction>(encode::CmdSetExclusiveScissorNV) },
     { "vkCmdSetCheckpointNV",                                                                                reinterpret_cast<PFN_vkVoidFunction>(encode::CmdSetCheckpointNV) },
     { "vkGetQueueCheckpointDataNV",                                                                          reinterpret_cast<PFN_vkVoidFunction>(encode::GetQueueCheckpointDataNV) },
@@ -595,6 +621,10 @@ const std::unordered_map<std::string, PFN_vkVoidFunction> func_table = {
     { "vkDestroyOpticalFlowSessionNV",                                                                       reinterpret_cast<PFN_vkVoidFunction>(encode::DestroyOpticalFlowSessionNV) },
     { "vkBindOpticalFlowSessionImageNV",                                                                     reinterpret_cast<PFN_vkVoidFunction>(encode::BindOpticalFlowSessionImageNV) },
     { "vkCmdOpticalFlowExecuteNV",                                                                           reinterpret_cast<PFN_vkVoidFunction>(encode::CmdOpticalFlowExecuteNV) },
+    { "vkCreateShadersEXT",                                                                                  reinterpret_cast<PFN_vkVoidFunction>(encode::CreateShadersEXT) },
+    { "vkDestroyShaderEXT",                                                                                  reinterpret_cast<PFN_vkVoidFunction>(encode::DestroyShaderEXT) },
+    { "vkGetShaderBinaryDataEXT",                                                                            reinterpret_cast<PFN_vkVoidFunction>(encode::GetShaderBinaryDataEXT) },
+    { "vkCmdBindShadersEXT",                                                                                 reinterpret_cast<PFN_vkVoidFunction>(encode::CmdBindShadersEXT) },
     { "vkGetFramebufferTilePropertiesQCOM",                                                                  reinterpret_cast<PFN_vkVoidFunction>(encode::GetFramebufferTilePropertiesQCOM) },
     { "vkGetDynamicRenderingTilePropertiesQCOM",                                                             reinterpret_cast<PFN_vkVoidFunction>(encode::GetDynamicRenderingTilePropertiesQCOM) },
     { "vkCreateAccelerationStructureKHR",                                                                    reinterpret_cast<PFN_vkVoidFunction>(encode::CreateAccelerationStructureKHR) },

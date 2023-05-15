@@ -1,6 +1,6 @@
 /*
-** Copyright (c) 2018-2021 Valve Corporation
-** Copyright (c) 2018-2022 LunarG, Inc.
+** Copyright (c) 2018-2023 Valve Corporation
+** Copyright (c) 2018-2023 LunarG, Inc.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -33,6 +33,13 @@
 #include "util/defines.h"
 
 #include "vulkan/vulkan.h"
+#include "vk_video/vulkan_video_codec_h264std.h"
+#include "vk_video/vulkan_video_codec_h264std_decode.h"
+#include "vk_video/vulkan_video_codec_h264std_encode.h"
+#include "vk_video/vulkan_video_codec_h265std.h"
+#include "vk_video/vulkan_video_codec_h265std_decode.h"
+#include "vk_video/vulkan_video_codec_h265std_encode.h"
+#include "vk_video/vulkan_video_codecs_common.h"
 
 GFXRECON_BEGIN_NAMESPACE(gfxrecon)
 GFXRECON_BEGIN_NAMESPACE(decode)
@@ -1709,6 +1716,92 @@ class VulkanConsumer : public VulkanConsumerBase
         format::HandleId                            physicalDevice,
         uint32_t                                    queueFamilyIndex) {}
 
+    virtual void Process_vkGetPhysicalDeviceVideoCapabilitiesKHR(
+        const ApiCallInfo&                          call_info,
+        VkResult                                    returnValue,
+        format::HandleId                            physicalDevice,
+        StructPointerDecoder<Decoded_VkVideoProfileInfoKHR>* pVideoProfile,
+        StructPointerDecoder<Decoded_VkVideoCapabilitiesKHR>* pCapabilities) {}
+
+    virtual void Process_vkGetPhysicalDeviceVideoFormatPropertiesKHR(
+        const ApiCallInfo&                          call_info,
+        VkResult                                    returnValue,
+        format::HandleId                            physicalDevice,
+        StructPointerDecoder<Decoded_VkPhysicalDeviceVideoFormatInfoKHR>* pVideoFormatInfo,
+        PointerDecoder<uint32_t>*                   pVideoFormatPropertyCount,
+        StructPointerDecoder<Decoded_VkVideoFormatPropertiesKHR>* pVideoFormatProperties) {}
+
+    virtual void Process_vkCreateVideoSessionKHR(
+        const ApiCallInfo&                          call_info,
+        VkResult                                    returnValue,
+        format::HandleId                            device,
+        StructPointerDecoder<Decoded_VkVideoSessionCreateInfoKHR>* pCreateInfo,
+        StructPointerDecoder<Decoded_VkAllocationCallbacks>* pAllocator,
+        HandlePointerDecoder<VkVideoSessionKHR>*    pVideoSession) {}
+
+    virtual void Process_vkDestroyVideoSessionKHR(
+        const ApiCallInfo&                          call_info,
+        format::HandleId                            device,
+        format::HandleId                            videoSession,
+        StructPointerDecoder<Decoded_VkAllocationCallbacks>* pAllocator) {}
+
+    virtual void Process_vkGetVideoSessionMemoryRequirementsKHR(
+        const ApiCallInfo&                          call_info,
+        VkResult                                    returnValue,
+        format::HandleId                            device,
+        format::HandleId                            videoSession,
+        PointerDecoder<uint32_t>*                   pMemoryRequirementsCount,
+        StructPointerDecoder<Decoded_VkVideoSessionMemoryRequirementsKHR>* pMemoryRequirements) {}
+
+    virtual void Process_vkBindVideoSessionMemoryKHR(
+        const ApiCallInfo&                          call_info,
+        VkResult                                    returnValue,
+        format::HandleId                            device,
+        format::HandleId                            videoSession,
+        uint32_t                                    bindSessionMemoryInfoCount,
+        StructPointerDecoder<Decoded_VkBindVideoSessionMemoryInfoKHR>* pBindSessionMemoryInfos) {}
+
+    virtual void Process_vkCreateVideoSessionParametersKHR(
+        const ApiCallInfo&                          call_info,
+        VkResult                                    returnValue,
+        format::HandleId                            device,
+        StructPointerDecoder<Decoded_VkVideoSessionParametersCreateInfoKHR>* pCreateInfo,
+        StructPointerDecoder<Decoded_VkAllocationCallbacks>* pAllocator,
+        HandlePointerDecoder<VkVideoSessionParametersKHR>* pVideoSessionParameters) {}
+
+    virtual void Process_vkUpdateVideoSessionParametersKHR(
+        const ApiCallInfo&                          call_info,
+        VkResult                                    returnValue,
+        format::HandleId                            device,
+        format::HandleId                            videoSessionParameters,
+        StructPointerDecoder<Decoded_VkVideoSessionParametersUpdateInfoKHR>* pUpdateInfo) {}
+
+    virtual void Process_vkDestroyVideoSessionParametersKHR(
+        const ApiCallInfo&                          call_info,
+        format::HandleId                            device,
+        format::HandleId                            videoSessionParameters,
+        StructPointerDecoder<Decoded_VkAllocationCallbacks>* pAllocator) {}
+
+    virtual void Process_vkCmdBeginVideoCodingKHR(
+        const ApiCallInfo&                          call_info,
+        format::HandleId                            commandBuffer,
+        StructPointerDecoder<Decoded_VkVideoBeginCodingInfoKHR>* pBeginInfo) {}
+
+    virtual void Process_vkCmdEndVideoCodingKHR(
+        const ApiCallInfo&                          call_info,
+        format::HandleId                            commandBuffer,
+        StructPointerDecoder<Decoded_VkVideoEndCodingInfoKHR>* pEndCodingInfo) {}
+
+    virtual void Process_vkCmdControlVideoCodingKHR(
+        const ApiCallInfo&                          call_info,
+        format::HandleId                            commandBuffer,
+        StructPointerDecoder<Decoded_VkVideoCodingControlInfoKHR>* pCodingControlInfo) {}
+
+    virtual void Process_vkCmdDecodeVideoKHR(
+        const ApiCallInfo&                          call_info,
+        format::HandleId                            commandBuffer,
+        StructPointerDecoder<Decoded_VkVideoDecodeInfoKHR>* pDecodeInfo) {}
+
     virtual void Process_vkCmdBeginRenderingKHR(
         const ApiCallInfo&                          call_info,
         format::HandleId                            commandBuffer,
@@ -2205,6 +2298,24 @@ class VulkanConsumer : public VulkanConsumerBase
         PointerDecoder<uint32_t>*                   pInternalRepresentationCount,
         StructPointerDecoder<Decoded_VkPipelineExecutableInternalRepresentationKHR>* pInternalRepresentations) {}
 
+    virtual void Process_vkMapMemory2KHR(
+        const ApiCallInfo&                          call_info,
+        VkResult                                    returnValue,
+        format::HandleId                            device,
+        StructPointerDecoder<Decoded_VkMemoryMapInfoKHR>* pMemoryMapInfo,
+        PointerDecoder<uint64_t, void*>*            ppData) {}
+
+    virtual void Process_vkUnmapMemory2KHR(
+        const ApiCallInfo&                          call_info,
+        VkResult                                    returnValue,
+        format::HandleId                            device,
+        StructPointerDecoder<Decoded_VkMemoryUnmapInfoKHR>* pMemoryUnmapInfo) {}
+
+    virtual void Process_vkCmdEncodeVideoKHR(
+        const ApiCallInfo&                          call_info,
+        format::HandleId                            commandBuffer,
+        StructPointerDecoder<Decoded_VkVideoEncodeInfoKHR>* pEncodeInfo) {}
+
     virtual void Process_vkCmdSetEvent2KHR(
         const ApiCallInfo&                          call_info,
         format::HandleId                            commandBuffer,
@@ -2590,6 +2701,16 @@ class VulkanConsumer : public VulkanConsumerBase
         uint32_t                                    discardRectangleCount,
         StructPointerDecoder<Decoded_VkRect2D>*     pDiscardRectangles) {}
 
+    virtual void Process_vkCmdSetDiscardRectangleEnableEXT(
+        const ApiCallInfo&                          call_info,
+        format::HandleId                            commandBuffer,
+        VkBool32                                    discardRectangleEnable) {}
+
+    virtual void Process_vkCmdSetDiscardRectangleModeEXT(
+        const ApiCallInfo&                          call_info,
+        format::HandleId                            commandBuffer,
+        VkDiscardRectangleModeEXT                   discardRectangleMode) {}
+
     virtual void Process_vkSetHdrMetadataEXT(
         const ApiCallInfo&                          call_info,
         format::HandleId                            device,
@@ -2929,6 +3050,13 @@ class VulkanConsumer : public VulkanConsumerBase
         VkDeviceSize                                countBufferOffset,
         uint32_t                                    maxDrawCount,
         uint32_t                                    stride) {}
+
+    virtual void Process_vkCmdSetExclusiveScissorEnableNV(
+        const ApiCallInfo&                          call_info,
+        format::HandleId                            commandBuffer,
+        uint32_t                                    firstExclusiveScissor,
+        uint32_t                                    exclusiveScissorCount,
+        PointerDecoder<VkBool32>*                   pExclusiveScissorEnables) {}
 
     virtual void Process_vkCmdSetExclusiveScissorNV(
         const ApiCallInfo&                          call_info,
@@ -3765,6 +3893,36 @@ class VulkanConsumer : public VulkanConsumerBase
         format::HandleId                            commandBuffer,
         format::HandleId                            session,
         StructPointerDecoder<Decoded_VkOpticalFlowExecuteInfoNV>* pExecuteInfo) {}
+
+    virtual void Process_vkCreateShadersEXT(
+        const ApiCallInfo&                          call_info,
+        VkResult                                    returnValue,
+        format::HandleId                            device,
+        uint32_t                                    createInfoCount,
+        StructPointerDecoder<Decoded_VkShaderCreateInfoEXT>* pCreateInfos,
+        StructPointerDecoder<Decoded_VkAllocationCallbacks>* pAllocator,
+        HandlePointerDecoder<VkShaderEXT>*          pShaders) {}
+
+    virtual void Process_vkDestroyShaderEXT(
+        const ApiCallInfo&                          call_info,
+        format::HandleId                            device,
+        format::HandleId                            shader,
+        StructPointerDecoder<Decoded_VkAllocationCallbacks>* pAllocator) {}
+
+    virtual void Process_vkGetShaderBinaryDataEXT(
+        const ApiCallInfo&                          call_info,
+        VkResult                                    returnValue,
+        format::HandleId                            device,
+        format::HandleId                            shader,
+        PointerDecoder<size_t>*                     pDataSize,
+        PointerDecoder<uint8_t>*                    pData) {}
+
+    virtual void Process_vkCmdBindShadersEXT(
+        const ApiCallInfo&                          call_info,
+        format::HandleId                            commandBuffer,
+        uint32_t                                    stageCount,
+        PointerDecoder<VkShaderStageFlagBits>*      pStages,
+        HandlePointerDecoder<VkShaderEXT>*          pShaders) {}
 
     virtual void Process_vkGetFramebufferTilePropertiesQCOM(
         const ApiCallInfo&                          call_info,

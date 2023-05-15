@@ -1,6 +1,7 @@
 /*
 ** Copyright (c) 2019-2020 Valve Corporation
 ** Copyright (c) 2019-2021 LunarG, Inc.
+** Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -27,6 +28,7 @@
 #include "decode/replay_options.h"
 
 #include "util/defines.h"
+#include "util/options.h"
 
 #include <vector>
 #include <string>
@@ -41,8 +43,9 @@ struct DxReplayOptions : public ReplayOptions
     bool                 discard_cached_psos{ false };
     std::vector<int32_t> AllowedDebugMessages;
     std::vector<int32_t> DeniedDebugMessages;
+    bool                 override_object_names{ false };
 
-    ScreenshotFormat             screenshot_format{ ScreenshotFormat::kBmp };
+    util::ScreenshotFormat       screenshot_format{ util::ScreenshotFormat::kBmp };
     std::vector<ScreenshotRange> screenshot_ranges;
     std::string                  screenshot_dir;
     std::string                  screenshot_file_prefix{ kDefaultScreenshotFilePrefix };

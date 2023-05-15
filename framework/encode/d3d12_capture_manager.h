@@ -122,10 +122,6 @@ class D3D12CaptureManager : public CaptureManager
     //----------------------------------------------------------------------------
     uint32_t DecrementCallScope() { return --call_scope_; }
 
-    virtual bool CreateCaptureFile(const std::string& base_filename) override;
-    virtual void ActivateTrimming() override;
-    virtual void DeactivateTrimming() override;
-
     void EndCreateApiCallCapture(HRESULT result, REFIID riid, void** handle);
 
     template <typename ParentWrapper>
@@ -300,6 +296,15 @@ class D3D12CaptureManager : public CaptureManager
                                                          const D3D12_CLEAR_VALUE*   optimized_clear_value,
                                                          REFIID                     riid,
                                                          void**                     resource);
+
+    void PostProcess_ID3D12Device4_CreateReservedResource1(ID3D12Device4_Wrapper*          wrapper,
+                                                           HRESULT                         result,
+                                                           const D3D12_RESOURCE_DESC*      desc,
+                                                           D3D12_RESOURCE_STATES           initial_state,
+                                                           const D3D12_CLEAR_VALUE*        optimized_clear_value,
+                                                           ID3D12ProtectedResourceSession* protected_session,
+                                                           REFIID                          riid,
+                                                           void**                          resource);
 
     void PreProcess_ID3D12Device3_OpenExistingHeapFromAddress(ID3D12Device3_Wrapper* wrapper,
                                                               const void*            address,
@@ -634,6 +639,8 @@ class D3D12CaptureManager : public CaptureManager
 
     void WriteDxgiAdapterInfo();
 
+    bool IsAccelerationStructureResource(format::HandleId id);
+
   protected:
     D3D12CaptureManager();
 
@@ -657,6 +664,7 @@ class D3D12CaptureManager : public CaptureManager
     void InitializeID3D12ResourceInfo(ID3D12Device_Wrapper*    device_wrapper,
                                       ID3D12Resource_Wrapper*  resource_wrapper,
                                       D3D12_RESOURCE_DIMENSION dimension,
+                                      D3D12_TEXTURE_LAYOUT     layout,
                                       UINT64                   width,
                                       UINT64                   size,
                                       D3D12_HEAP_TYPE          heap_type,
@@ -682,7 +690,6 @@ class D3D12CaptureManager : public CaptureManager
     void                          EnableDebugLayer();
     void                          EnableDRED();
 
-    void                              TakeScreenshot(IDXGISwapChain_Wrapper* swapchain_wrapper);
     void                              PrePresent(IDXGISwapChain_Wrapper* wrapper);
     void                              PostPresent(IDXGISwapChain_Wrapper* wrapper);
     static D3D12CaptureManager*       instance_;

@@ -80,6 +80,7 @@ class CaptureSettings
         MemoryTrackingMode            memory_tracking_mode{ kPageGuard };
         std::string                   screenshot_dir;
         std::vector<util::FrameRange> screenshot_ranges;
+        util::ScreenshotFormat        screenshot_format;
         std::vector<TrimRange>        trim_ranges;
         std::string                   trim_key;
         uint32_t                      trim_key_frames{ 0 };
@@ -96,6 +97,7 @@ class CaptureSettings
         bool                          debug_device_lost{ false };
         bool                          disable_dxr{ false };
         uint32_t                      accel_struct_padding{ 0 };
+        bool                          force_command_serialization{ false };
 
         // An optimization for the page_guard memory tracking mode that eliminates the need for shadow memory by
         // overriding vkAllocateMemory so that all host visible allocations use the external memory extension with a
@@ -163,6 +165,9 @@ class CaptureSettings
     static std::string ParseTrimKeyString(const std::string& value_string);
 
     static uint32_t ParseTrimKeyFramesString(const std::string& value_string);
+
+    static util::ScreenshotFormat ParseScreenshotFormatString(const std::string&     value_string,
+                                                              util::ScreenshotFormat default_value);
 
   private:
     TraceSettings       trace_settings_;

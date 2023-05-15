@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2018-2022 LunarG, Inc.
+# Copyright (c) 2018-2023 LunarG, Inc.
 # Copyright (c) 2019-2020 Advanced Micro Devices, Inc.
 # All rights reserved
 #
@@ -25,22 +25,22 @@
 # Author: AMD Developer Tools Team
 # Description: CMake script for framework util target
 ###############################################################################
-
-cmake_minimum_required(VERSION 3.10.2)
-project(GFXReconstruct)
+cmake_minimum_required(VERSION 3.16.3)
+project(GFXReconstruct LANGUAGES CXX)
 
 set_property(GLOBAL PROPERTY TEST_SCRIPT ${CMAKE_ROOT})
 
 include(GNUInstallDirs)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
+set(CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" "${CMAKE_SOURCE_DIR}/external/cmake-modules")
 
 # Version info
 set(GFXRECONSTRUCT_PROJECT_VERSION_MAJOR 0)
 set(GFXRECONSTRUCT_PROJECT_VERSION_MINOR 9)
-set(GFXRECONSTRUCT_PROJECT_VERSION_PATCH 18)
+set(GFXRECONSTRUCT_PROJECT_VERSION_PATCH 20)
 
 set(GFXRECON_PROJECT_VERSION_SHA1 "unknown-build-source")
 
@@ -133,9 +133,9 @@ if(MSVC)
 
     # Default to using the precompiled LZ4 and ZLIB binaries for VisualStudio builds.
     set (PRECOMPILED_ARCH "64")
-    if(NOT CMAKE_CL_64)
+    if(CMAKE_SIZEOF_VOID_P EQUAL 4)
         set (PRECOMPILED_ARCH "32")
-    endif(NOT CMAKE_CL_64)
+    endif(CMAKE_SIZEOF_VOID_P EQUAL 4)
 
     if(GFXR_ARM_WINDOWS_BUILD)
         set (PRECOMPILED_ARCH "64-arm")
@@ -188,10 +188,17 @@ else(MSVC)
 endif(MSVC)
 
 # GFXReconstruct provided find modules
-find_package(AGS)
+if(${D3D12_SUPPORT})
+    find_package(AGS)
+endif() # D3D12_SUPPORT
+
+if(WIN32)
 find_package(Detours)
+endif() # WIN32
+
 find_package(LZ4)
 find_package(ZSTD)
+
 if(UNIX)
     option(BUILD_WSI_XCB_SUPPORT "Build XCB WSI support" ON)
     option(BUILD_WSI_WAYLAND_SUPPORT "Build Wayland WSI support" ON)
@@ -266,6 +273,7 @@ if (${RUN_TESTS})
     target_include_directories(catch2 INTERFACE external)
 endif()
 
+add_subdirectory(external/nlohmann)
 add_subdirectory(framework)
 if(NOT BUILD_STATIC)
     add_subdirectory(layer)

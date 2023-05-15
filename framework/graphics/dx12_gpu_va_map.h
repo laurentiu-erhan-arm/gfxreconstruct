@@ -1,6 +1,7 @@
 
 /*
 ** Copyright (c) 2021 LunarG, Inc.
+** Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -32,6 +33,8 @@
 GFXRECON_BEGIN_NAMESPACE(gfxrecon)
 GFXRECON_BEGIN_NAMESPACE(graphics)
 
+typedef bool (*ResourceMatchFunctionPtr)(format::HandleId id);
+
 class Dx12GpuVaMap
 {
   public:
@@ -39,7 +42,11 @@ class Dx12GpuVaMap
 
     void Remove(format::HandleId resource_id, uint64_t old_start_address);
 
-    uint64_t Map(uint64_t old_address, format::HandleId* resource_id = nullptr, bool* found = nullptr) const;
+    uint64_t Map(uint64_t                 old_address,
+                 format::HandleId*        resource_id             = nullptr,
+                 bool*                    found                   = nullptr,
+                 uint64_t                 minimum_old_end_address = 0,
+                 ResourceMatchFunctionPtr resource_match_func     = nullptr) const;
 
   private:
     struct GpuVaInfo
@@ -55,7 +62,9 @@ class Dx12GpuVaMap
     bool FindMatch(const AliasedResourceVaInfo& resource_info,
                    uint64_t                     old_start_address,
                    uint64_t&                    address,
-                   format::HandleId*            resource_id) const;
+                   format::HandleId*            resource_id,
+                   uint64_t                     minimum_old_end_address,
+                   ResourceMatchFunctionPtr     resource_match_func = nullptr) const;
 
   private:
     GpuVaMap gpu_va_map_;

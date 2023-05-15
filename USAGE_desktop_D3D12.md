@@ -14,7 +14,14 @@ Copyright &copy; 2022 Advanced Micro Devices, Inc.
 
 # GFXReconstruct API Capture and Replay - D3D12
 
-This document describes the GFXReconstruct software for capturing and replaying D3D12 API calls on Windows desktop systems.
+***This document describes the GFXReconstruct software for capturing and
+replaying D3D12 API calls on Windows Desktop systems.***
+
+If you are looking for capturing/replaying on a different platform, please refer
+to one of these other documents:
+ * [GfxReconstruct for Android Vulkan](./USAGE_android.md)
+ * [GfxReconstruct for Desktop Vulkan](./USAGE_desktop_Vulkan.md)
+
 
 ## Index
 
@@ -119,7 +126,7 @@ Enable Debug Layer | GFXRECON_DEBUG_LAYER | BOOL | Direct3D 12 only option. Enab
  Debug Device Lost                 | GFXRECON_DEBUG_DEVICE_LOST             | BOOL   | Direct3D 12 only option. Enables automatic injection of breadcrumbs into command buffers and page fault reporting.                  Used to debug device removed problems. 
  Disable DXR Support               | GFXRECON_DISABLE_DXR                   | BOOL   | Direct3D 12 only option. Override the result of `CheckFeatureSupport` to report the `RaytracingTier` as `D3D12_RAYTRACING_TIER_NOT_SUPPORTED`. Default is `false` 
 Acceleration Struct Size Padding | GFXRECON_ACCEL_STRUCT_PADDING | UINT | Direct3D 12 only option. Increase the required acceleration structure size that is reported to the application by calls to `GetRaytracingAccelerationStructurePrebuildInfo`. This can enable replay in environments with increased acceleration structure size requirements. The value should be specified as a percent of size increase. For example, a value of `5` would increase the reported acceleration structure sizes by `5%`. Default is `0` 
-
+Force Command Serialization | GFXRECON_FORCE_COMMAND_SERIALIZATION | BOOL | Sets exclusive locks(unique_lock) for every ApiCall. It can avoid external multi-thread to cause captured issue.
 
 
 ### Capture Files
@@ -217,6 +224,11 @@ Optional arguments:
   --validate            Enables the Khronos Vulkan validation layer when replaying a
                         Vulkan capture or the Direct3D debug layer when replaying a
                         Direct3D 12 capture.
+  --gpu <index>         Use the specified device for replay, where index
+                        is the zero-based index to the array of physical devices
+                        returned by vkEnumeratePhysicalDevices or IDXGIFactory1::EnumAdapters1.
+                        Replay may fail if the specified device is not compatible with the
+                        original capture devices.
 
 Windows-only:
   --api <api>           Use the specified API for replay
@@ -246,11 +258,6 @@ Vulkan-only:
   --sync                Synchronize after each queue submission with vkQueueWaitIdle.
   --remove-unsupported  Remove unsupported extensions and features from instance
                         and device creation parameters.
-  --gpu <index>         Use the specified device for replay, where index
-                        is the zero-based index to the array of physical devices
-                        returned by vkEnumeratePhysicalDevices.  Replay may fail
-                        if the specified device is not compatible with the
-                        original capture devices.
   -m <mode>             Enable memory translation for replay on GPUs with memory
                         types that are not compatible with the capture GPU's
                         memory types.  Available modes are:
@@ -280,6 +287,9 @@ D3D12-only:
                         (Same as --force-windowed)
   --create-dummy-allocations Enables creation of dummy heaps and resources
                              for replay validation.
+  --dx12-override-object-names Generates unique names for all ID3D12Objects and
+                               assigns each object the generated name.
+                               This is intended to assist replay debugging.
 ```
 
 

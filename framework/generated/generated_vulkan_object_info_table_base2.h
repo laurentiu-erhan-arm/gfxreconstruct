@@ -1,6 +1,6 @@
 /*
-** Copyright (c) 2018-2021 Valve Corporation
-** Copyright (c) 2018-2022 LunarG, Inc.
+** Copyright (c) 2018-2023 Valve Corporation
+** Copyright (c) 2018-2023 LunarG, Inc.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -79,10 +79,13 @@ class VulkanObjectInfoTableBase2 : VulkanObjectInfoTableBase
     void AddSamplerInfo(SamplerInfo&& info) { AddObjectInfo(std::move(info), &sampler_map_); }
     void AddSamplerYcbcrConversionInfo(SamplerYcbcrConversionInfo&& info) { AddObjectInfo(std::move(info), &samplerYcbcrConversion_map_); }
     void AddSemaphoreInfo(SemaphoreInfo&& info) { AddObjectInfo(std::move(info), &semaphore_map_); }
+    void AddShaderEXTInfo(ShaderEXTInfo&& info) { AddObjectInfo(std::move(info), &shaderEXT_map_); }
     void AddShaderModuleInfo(ShaderModuleInfo&& info) { AddObjectInfo(std::move(info), &shaderModule_map_); }
     void AddSurfaceKHRInfo(SurfaceKHRInfo&& info) { AddObjectInfo(std::move(info), &surfaceKHR_map_); }
     void AddSwapchainKHRInfo(SwapchainKHRInfo&& info) { AddObjectInfo(std::move(info), &swapchainKHR_map_); }
     void AddValidationCacheEXTInfo(ValidationCacheEXTInfo&& info) { AddObjectInfo(std::move(info), &validationCacheEXT_map_); }
+    void AddVideoSessionKHRInfo(VideoSessionKHRInfo&& info) { AddObjectInfo(std::move(info), &videoSessionKHR_map_); }
+    void AddVideoSessionParametersKHRInfo(VideoSessionParametersKHRInfo&& info) { AddObjectInfo(std::move(info), &videoSessionParametersKHR_map_); }
 
     void RemoveAccelerationStructureKHRInfo(format::HandleId id) { accelerationStructureKHR_map_.erase(id); }
     void RemoveAccelerationStructureNVInfo(format::HandleId id) { accelerationStructureNV_map_.erase(id); }
@@ -122,10 +125,13 @@ class VulkanObjectInfoTableBase2 : VulkanObjectInfoTableBase
     void RemoveSamplerInfo(format::HandleId id) { sampler_map_.erase(id); }
     void RemoveSamplerYcbcrConversionInfo(format::HandleId id) { samplerYcbcrConversion_map_.erase(id); }
     void RemoveSemaphoreInfo(format::HandleId id) { semaphore_map_.erase(id); }
+    void RemoveShaderEXTInfo(format::HandleId id) { shaderEXT_map_.erase(id); }
     void RemoveShaderModuleInfo(format::HandleId id) { shaderModule_map_.erase(id); }
     void RemoveSurfaceKHRInfo(format::HandleId id) { surfaceKHR_map_.erase(id); }
     void RemoveSwapchainKHRInfo(format::HandleId id) { swapchainKHR_map_.erase(id); }
     void RemoveValidationCacheEXTInfo(format::HandleId id) { validationCacheEXT_map_.erase(id); }
+    void RemoveVideoSessionKHRInfo(format::HandleId id) { videoSessionKHR_map_.erase(id); }
+    void RemoveVideoSessionParametersKHRInfo(format::HandleId id) { videoSessionParametersKHR_map_.erase(id); }
 
     const AccelerationStructureKHRInfo* GetAccelerationStructureKHRInfo(format::HandleId id) const { return GetObjectInfo<AccelerationStructureKHRInfo>(id, &accelerationStructureKHR_map_); }
     const AccelerationStructureNVInfo* GetAccelerationStructureNVInfo(format::HandleId id) const { return GetObjectInfo<AccelerationStructureNVInfo>(id, &accelerationStructureNV_map_); }
@@ -165,10 +171,13 @@ class VulkanObjectInfoTableBase2 : VulkanObjectInfoTableBase
     const SamplerInfo* GetSamplerInfo(format::HandleId id) const { return GetObjectInfo<SamplerInfo>(id, &sampler_map_); }
     const SamplerYcbcrConversionInfo* GetSamplerYcbcrConversionInfo(format::HandleId id) const { return GetObjectInfo<SamplerYcbcrConversionInfo>(id, &samplerYcbcrConversion_map_); }
     const SemaphoreInfo* GetSemaphoreInfo(format::HandleId id) const { return GetObjectInfo<SemaphoreInfo>(id, &semaphore_map_); }
+    const ShaderEXTInfo* GetShaderEXTInfo(format::HandleId id) const { return GetObjectInfo<ShaderEXTInfo>(id, &shaderEXT_map_); }
     const ShaderModuleInfo* GetShaderModuleInfo(format::HandleId id) const { return GetObjectInfo<ShaderModuleInfo>(id, &shaderModule_map_); }
     const SurfaceKHRInfo* GetSurfaceKHRInfo(format::HandleId id) const { return GetObjectInfo<SurfaceKHRInfo>(id, &surfaceKHR_map_); }
     const SwapchainKHRInfo* GetSwapchainKHRInfo(format::HandleId id) const { return GetObjectInfo<SwapchainKHRInfo>(id, &swapchainKHR_map_); }
     const ValidationCacheEXTInfo* GetValidationCacheEXTInfo(format::HandleId id) const { return GetObjectInfo<ValidationCacheEXTInfo>(id, &validationCacheEXT_map_); }
+    const VideoSessionKHRInfo* GetVideoSessionKHRInfo(format::HandleId id) const { return GetObjectInfo<VideoSessionKHRInfo>(id, &videoSessionKHR_map_); }
+    const VideoSessionParametersKHRInfo* GetVideoSessionParametersKHRInfo(format::HandleId id) const { return GetObjectInfo<VideoSessionParametersKHRInfo>(id, &videoSessionParametersKHR_map_); }
 
     AccelerationStructureKHRInfo* GetAccelerationStructureKHRInfo(format::HandleId id) { return GetObjectInfo<AccelerationStructureKHRInfo>(id, &accelerationStructureKHR_map_); }
     AccelerationStructureNVInfo* GetAccelerationStructureNVInfo(format::HandleId id) { return GetObjectInfo<AccelerationStructureNVInfo>(id, &accelerationStructureNV_map_); }
@@ -208,10 +217,13 @@ class VulkanObjectInfoTableBase2 : VulkanObjectInfoTableBase
     SamplerInfo* GetSamplerInfo(format::HandleId id) { return GetObjectInfo<SamplerInfo>(id, &sampler_map_); }
     SamplerYcbcrConversionInfo* GetSamplerYcbcrConversionInfo(format::HandleId id) { return GetObjectInfo<SamplerYcbcrConversionInfo>(id, &samplerYcbcrConversion_map_); }
     SemaphoreInfo* GetSemaphoreInfo(format::HandleId id) { return GetObjectInfo<SemaphoreInfo>(id, &semaphore_map_); }
+    ShaderEXTInfo* GetShaderEXTInfo(format::HandleId id) { return GetObjectInfo<ShaderEXTInfo>(id, &shaderEXT_map_); }
     ShaderModuleInfo* GetShaderModuleInfo(format::HandleId id) { return GetObjectInfo<ShaderModuleInfo>(id, &shaderModule_map_); }
     SurfaceKHRInfo* GetSurfaceKHRInfo(format::HandleId id) { return GetObjectInfo<SurfaceKHRInfo>(id, &surfaceKHR_map_); }
     SwapchainKHRInfo* GetSwapchainKHRInfo(format::HandleId id) { return GetObjectInfo<SwapchainKHRInfo>(id, &swapchainKHR_map_); }
     ValidationCacheEXTInfo* GetValidationCacheEXTInfo(format::HandleId id) { return GetObjectInfo<ValidationCacheEXTInfo>(id, &validationCacheEXT_map_); }
+    VideoSessionKHRInfo* GetVideoSessionKHRInfo(format::HandleId id) { return GetObjectInfo<VideoSessionKHRInfo>(id, &videoSessionKHR_map_); }
+    VideoSessionParametersKHRInfo* GetVideoSessionParametersKHRInfo(format::HandleId id) { return GetObjectInfo<VideoSessionParametersKHRInfo>(id, &videoSessionParametersKHR_map_); }
 
     void VisitAccelerationStructureKHRInfo(std::function<void(const AccelerationStructureKHRInfo*)> visitor) const {  for (const auto& entry : accelerationStructureKHR_map_) { visitor(&entry.second); }  }
     void VisitAccelerationStructureNVInfo(std::function<void(const AccelerationStructureNVInfo*)> visitor) const {  for (const auto& entry : accelerationStructureNV_map_) { visitor(&entry.second); }  }
@@ -251,10 +263,13 @@ class VulkanObjectInfoTableBase2 : VulkanObjectInfoTableBase
     void VisitSamplerInfo(std::function<void(const SamplerInfo*)> visitor) const {  for (const auto& entry : sampler_map_) { visitor(&entry.second); }  }
     void VisitSamplerYcbcrConversionInfo(std::function<void(const SamplerYcbcrConversionInfo*)> visitor) const {  for (const auto& entry : samplerYcbcrConversion_map_) { visitor(&entry.second); }  }
     void VisitSemaphoreInfo(std::function<void(const SemaphoreInfo*)> visitor) const {  for (const auto& entry : semaphore_map_) { visitor(&entry.second); }  }
+    void VisitShaderEXTInfo(std::function<void(const ShaderEXTInfo*)> visitor) const {  for (const auto& entry : shaderEXT_map_) { visitor(&entry.second); }  }
     void VisitShaderModuleInfo(std::function<void(const ShaderModuleInfo*)> visitor) const {  for (const auto& entry : shaderModule_map_) { visitor(&entry.second); }  }
     void VisitSurfaceKHRInfo(std::function<void(const SurfaceKHRInfo*)> visitor) const {  for (const auto& entry : surfaceKHR_map_) { visitor(&entry.second); }  }
     void VisitSwapchainKHRInfo(std::function<void(const SwapchainKHRInfo*)> visitor) const {  for (const auto& entry : swapchainKHR_map_) { visitor(&entry.second); }  }
     void VisitValidationCacheEXTInfo(std::function<void(const ValidationCacheEXTInfo*)> visitor) const {  for (const auto& entry : validationCacheEXT_map_) { visitor(&entry.second); }  }
+    void VisitVideoSessionKHRInfo(std::function<void(const VideoSessionKHRInfo*)> visitor) const {  for (const auto& entry : videoSessionKHR_map_) { visitor(&entry.second); }  }
+    void VisitVideoSessionParametersKHRInfo(std::function<void(const VideoSessionParametersKHRInfo*)> visitor) const {  for (const auto& entry : videoSessionParametersKHR_map_) { visitor(&entry.second); }  }
 
   protected:
      std::unordered_map<format::HandleId, AccelerationStructureKHRInfo> accelerationStructureKHR_map_;
@@ -295,10 +310,13 @@ class VulkanObjectInfoTableBase2 : VulkanObjectInfoTableBase
      std::unordered_map<format::HandleId, SamplerInfo> sampler_map_;
      std::unordered_map<format::HandleId, SamplerYcbcrConversionInfo> samplerYcbcrConversion_map_;
      std::unordered_map<format::HandleId, SemaphoreInfo> semaphore_map_;
+     std::unordered_map<format::HandleId, ShaderEXTInfo> shaderEXT_map_;
      std::unordered_map<format::HandleId, ShaderModuleInfo> shaderModule_map_;
      std::unordered_map<format::HandleId, SurfaceKHRInfo> surfaceKHR_map_;
      std::unordered_map<format::HandleId, SwapchainKHRInfo> swapchainKHR_map_;
      std::unordered_map<format::HandleId, ValidationCacheEXTInfo> validationCacheEXT_map_;
+     std::unordered_map<format::HandleId, VideoSessionKHRInfo> videoSessionKHR_map_;
+     std::unordered_map<format::HandleId, VideoSessionParametersKHRInfo> videoSessionParametersKHR_map_;
 };
 
 GFXRECON_END_NAMESPACE(decode)

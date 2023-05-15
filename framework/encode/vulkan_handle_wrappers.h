@@ -80,6 +80,9 @@ struct IndirectCommandsLayoutNVWrapper      : public HandleWrapper<VkIndirectCom
 struct PerformanceConfigurationINTELWrapper : public HandleWrapper<VkPerformanceConfigurationINTEL> {};
 struct MicromapEXTWrapper                   : public HandleWrapper<VkMicromapEXT> {};
 struct OpticalFlowSessionNVWrapper          : public HandleWrapper<VkOpticalFlowSessionNV> {};
+struct VideoSessionKHRWrapper               : public HandleWrapper<VkVideoSessionKHR> {};
+struct VideoSessionParametersKHRWrapper     : public HandleWrapper<VkVideoSessionParametersKHR> {};
+struct ShaderEXTWrapper                     : public HandleWrapper<VkShaderEXT> {};
 
 
 // This handle type has a create function, but no destroy function. The handle wrapper will be owned by its parent VkDisplayKHR

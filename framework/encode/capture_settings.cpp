@@ -25,6 +25,7 @@
 #include "encode/capture_settings.h"
 
 #include "util/file_path.h"
+#include "util/strings.h"
 #include "util/options.h"
 #include "util/platform.h"
 #include "util/settings_loader.h"
@@ -75,6 +76,8 @@ GFXRECON_BEGIN_NAMESPACE(encode)
 #define MEMORY_TRACKING_MODE_UPPER                           "MEMORY_TRACKING_MODE"
 #define SCREENSHOT_DIR_LOWER                                 "screenshot_dir"
 #define SCREENSHOT_DIR_UPPER                                 "SCREENSHOT_DIR"
+#define SCREENSHOT_FORMAT_LOWER                              "screenshot_format"
+#define SCREENSHOT_FORMAT_UPPER                              "SCREENSHOT_FORMAT"
 #define SCREENSHOT_FRAMES_LOWER                              "screenshot_frames"
 #define SCREENSHOT_FRAMES_UPPER                              "SCREENSHOT_FRAMES"
 #define CAPTURE_FRAMES_LOWER                                 "capture_frames"
@@ -113,6 +116,8 @@ GFXRECON_BEGIN_NAMESPACE(encode)
 #define DISABLE_DXR_UPPER                                    "DISABLE_DXR"
 #define ACCEL_STRUCT_PADDING_LOWER                           "accel_struct_padding"
 #define ACCEL_STRUCT_PADDING_UPPER                           "ACCEL_STRUCT_PADDING"
+#define FORCE_COMMAND_SERIALIZATION_LOWER                    "force_command_serialization"
+#define FORCE_COMMAND_SERIALIZATION_UPPER                    "FORCE_COMMAND_SERIALIZATION"
 
 #if defined(__ANDROID__)
 // Android Properties
@@ -137,6 +142,7 @@ const char kLogOutputToConsoleEnvVar[]                       = GFXRECON_ENV_VAR_
 const char kLogOutputToOsDebugStringEnvVar[]                 = GFXRECON_ENV_VAR_PREFIX LOG_OUTPUT_TO_OS_DEBUG_STRING_LOWER;
 const char kMemoryTrackingModeEnvVar[]                       = GFXRECON_ENV_VAR_PREFIX MEMORY_TRACKING_MODE_LOWER;
 const char kScreenshotDirEnvVar[]                            = GFXRECON_ENV_VAR_PREFIX SCREENSHOT_DIR_LOWER;
+const char kScreenshotFormatEnvVar[]                         = GFXRECON_ENV_VAR_PREFIX SCREENSHOT_FORMAT_LOWER;
 const char kScreenshotFramesEnvVar[]                         = GFXRECON_ENV_VAR_PREFIX SCREENSHOT_FRAMES_LOWER;
 const char kCaptureFramesEnvVar[]                            = GFXRECON_ENV_VAR_PREFIX CAPTURE_FRAMES_LOWER;
 const char kCaptureTriggerEnvVar[]                           = GFXRECON_ENV_VAR_PREFIX CAPTURE_TRIGGER_LOWER;
@@ -156,6 +162,7 @@ const char kDebugDeviceLostEnvVar[]                          = GFXRECON_ENV_VAR_
 const char kCaptureAndroidTriggerEnvVar[]                    = GFXRECON_ENV_VAR_PREFIX CAPTURE_ANDROID_TRIGGER_LOWER;
 const char kDisableDxrEnvVar[]                               = GFXRECON_ENV_VAR_PREFIX DISABLE_DXR_LOWER;
 const char kAccelStructPaddingEnvVar[]                       = GFXRECON_ENV_VAR_PREFIX ACCEL_STRUCT_PADDING_LOWER;
+const char kForceCommandSerializationEnvVar[]                = GFXRECON_ENV_VAR_PREFIX FORCE_COMMAND_SERIALIZATION_LOWER;
 
 
 #else
@@ -181,6 +188,7 @@ const char kLogOutputToConsoleEnvVar[]                       = GFXRECON_ENV_VAR_
 const char kLogOutputToOsDebugStringEnvVar[]                 = GFXRECON_ENV_VAR_PREFIX LOG_OUTPUT_TO_OS_DEBUG_STRING_UPPER;
 const char kMemoryTrackingModeEnvVar[]                       = GFXRECON_ENV_VAR_PREFIX MEMORY_TRACKING_MODE_UPPER;
 const char kScreenshotDirEnvVar[]                            = GFXRECON_ENV_VAR_PREFIX SCREENSHOT_DIR_UPPER;
+const char kScreenshotFormatEnvVar[]                         = GFXRECON_ENV_VAR_PREFIX SCREENSHOT_FORMAT_UPPER;
 const char kScreenshotFramesEnvVar[]                         = GFXRECON_ENV_VAR_PREFIX SCREENSHOT_FRAMES_UPPER;
 const char kCaptureFramesEnvVar[]                            = GFXRECON_ENV_VAR_PREFIX CAPTURE_FRAMES_UPPER;
 const char kPageGuardCopyOnMapEnvVar[]                       = GFXRECON_ENV_VAR_PREFIX PAGE_GUARD_COPY_ON_MAP_UPPER;
@@ -199,6 +207,7 @@ const char kDebugLayerEnvVar[]                               = GFXRECON_ENV_VAR_
 const char kDebugDeviceLostEnvVar[]                          = GFXRECON_ENV_VAR_PREFIX DEBUG_DEVICE_LOST_UPPER;
 const char kDisableDxrEnvVar[]                               = GFXRECON_ENV_VAR_PREFIX DISABLE_DXR_UPPER;
 const char kAccelStructPaddingEnvVar[]                       = GFXRECON_ENV_VAR_PREFIX ACCEL_STRUCT_PADDING_UPPER;
+const char kForceCommandSerializationEnvVar[]                = GFXRECON_ENV_VAR_PREFIX FORCE_COMMAND_SERIALIZATION_UPPER;
 #endif
 
 // Capture options for settings file.
@@ -221,6 +230,7 @@ const std::string kOptionKeyLogOutputToConsole                       = std::stri
 const std::string kOptionKeyLogOutputToOsDebugString                 = std::string(kSettingsFilter) + std::string(LOG_OUTPUT_TO_OS_DEBUG_STRING_LOWER);
 const std::string kOptionKeyMemoryTrackingMode                       = std::string(kSettingsFilter) + std::string(MEMORY_TRACKING_MODE_LOWER);
 const std::string kOptionKeyScreenshotDir                            = std::string(kSettingsFilter) + std::string(SCREENSHOT_DIR_LOWER);
+const std::string kOptionKeyScreenshotFormat                         = std::string(kSettingsFilter) + std::string(SCREENSHOT_FORMAT_LOWER);
 const std::string kOptionKeyScreenshotFrames                         = std::string(kSettingsFilter) + std::string(SCREENSHOT_FRAMES_LOWER);
 const std::string kOptionKeyCaptureFrames                            = std::string(kSettingsFilter) + std::string(CAPTURE_FRAMES_LOWER);
 const std::string kOptionKeyCaptureTrigger                           = std::string(kSettingsFilter) + std::string(CAPTURE_TRIGGER_LOWER);
@@ -239,8 +249,9 @@ const std::string kDebugLayer                                        = std::stri
 const std::string kDebugDeviceLost                                   = std::string(kSettingsFilter) + std::string(DEBUG_DEVICE_LOST_LOWER);
 const std::string kOptionDisableDxr                                  = std::string(kSettingsFilter) + std::string(DISABLE_DXR_LOWER);
 const std::string kOptionAccelStructPadding                          = std::string(kSettingsFilter) + std::string(ACCEL_STRUCT_PADDING_LOWER);
+const std::string kOptionForceCommandSerialization                   = std::string(kSettingsFilter) + std::string(FORCE_COMMAND_SERIALIZATION_LOWER);
 
-#if defined(ENABLE_LZ4_COMPRESSION)
+#if defined(GFXRECON_ENABLE_LZ4_COMPRESSION)
 const format::CompressionType kDefaultCompressionType = format::CompressionType::kLz4;
 #else
 const format::CompressionType kDefaultCompressionType = format::CompressionType::kNone;
@@ -369,6 +380,7 @@ void CaptureSettings::LoadOptionsEnvVar(OptionsMap* options)
 
     // Screenshot environment variables
     LoadSingleOptionEnvVar(options, kScreenshotDirEnvVar, kOptionKeyScreenshotDir);
+    LoadSingleOptionEnvVar(options, kScreenshotFormatEnvVar, kOptionKeyScreenshotFormat);
     LoadSingleOptionEnvVar(options, kScreenshotFramesEnvVar, kOptionKeyScreenshotFrames);
 
     // DirectX environment variables
@@ -377,6 +389,8 @@ void CaptureSettings::LoadOptionsEnvVar(OptionsMap* options)
 
     // IUnknown wrapping environment variable
     LoadSingleOptionEnvVar(options, kCaptureIUnknownWrappingEnvVar, kOptionKeyCaptureIUnknownWrapping);
+
+    LoadSingleOptionEnvVar(options, kForceCommandSerializationEnvVar, kOptionForceCommandSerialization);
 }
 
 void CaptureSettings::LoadOptionsFile(OptionsMap* options)
@@ -479,6 +493,8 @@ void CaptureSettings::ProcessOptions(OptionsMap* options, CaptureSettings* setti
     settings->trace_settings_.screenshot_dir =
         FindOption(options, kOptionKeyScreenshotDir, settings->trace_settings_.screenshot_dir);
     ParseFramesList(FindOption(options, kOptionKeyScreenshotFrames), &settings->trace_settings_.screenshot_ranges);
+    settings->trace_settings_.screenshot_format = ParseScreenshotFormatString(
+        FindOption(options, kOptionKeyScreenshotFormat), settings->trace_settings_.screenshot_format);
 
     // DirectX options
     settings->trace_settings_.disable_dxr =
@@ -489,6 +505,9 @@ void CaptureSettings::ProcessOptions(OptionsMap* options, CaptureSettings* setti
     // IUnknown wrapping option
     settings->trace_settings_.iunknown_wrapping =
         ParseBoolString(FindOption(options, kOptionKeyCaptureIUnknownWrapping), settings->trace_settings_.disable_dxr);
+
+    settings->trace_settings_.force_command_serialization = ParseBoolString(
+        FindOption(options, kOptionForceCommandSerialization), settings->trace_settings_.force_command_serialization);
 }
 
 void CaptureSettings::ProcessLogOptions(OptionsMap* options, CaptureSettings* settings)
@@ -675,8 +694,7 @@ void CaptureSettings::ParseTrimRangeString(const std::string&                   
                 continue;
             }
 
-            // Remove whitespace.
-            range.erase(std::remove_if(range.begin(), range.end(), ::isspace), range.end());
+            util::strings::RemoveWhitespace(range);
 
             // Split string on '-' delimiter.
             bool                     invalid = false;
@@ -808,8 +826,7 @@ std::string CaptureSettings::ParseTrimKeyString(const std::string& value_string)
     if (!value_string.empty())
     {
         trim_key = value_string;
-        // Remove whitespace.
-        trim_key.erase(std::remove_if(trim_key.begin(), trim_key.end(), ::isspace), trim_key.end());
+        gfxrecon::util::strings::RemoveWhitespace(trim_key);
     }
     else
     {
@@ -839,5 +856,29 @@ uint32_t CaptureSettings::ParseTrimKeyFramesString(const std::string& value_stri
     return frames;
 }
 
+util::ScreenshotFormat CaptureSettings::ParseScreenshotFormatString(const std::string&     value_string,
+                                                                    util::ScreenshotFormat default_value)
+{
+    util::ScreenshotFormat result = default_value;
+
+    if (util::platform::StringCompareNoCase("bmp", value_string.c_str()) == 0)
+    {
+        result = util::ScreenshotFormat::kBmp;
+    }
+    else if (util::platform::StringCompareNoCase("png", value_string.c_str()) == 0)
+    {
+        result = util::ScreenshotFormat::kPng;
+    }
+    else
+    {
+        if (!value_string.empty())
+        {
+            GFXRECON_LOG_WARNING("Settings Loader: Ignoring unrecognized screenshot format option value \"%s\"",
+                                 value_string.c_str());
+        }
+    }
+
+    return result;
+}
 GFXRECON_END_NAMESPACE(encode)
 GFXRECON_END_NAMESPACE(gfxrecon)
