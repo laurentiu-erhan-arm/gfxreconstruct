@@ -82,6 +82,8 @@ def CreateReplayParser():
     parser.add_argument('--onhb', '--omit-null-hardware-buffers', action='store_true', default=False, help='Omit Vulkan calls that would pass a NULL AHardwareBuffer* (forwarded to replay tool)')
     parser.add_argument('--use-captured-swapchain-indices', action='store_true', default=False, help='Use the swapchain indices stored in the capture directly on the swapchain setup for replay. The default without this option is to use a Virtual Swapchain of images which match the swapchain in effect at capture time and which are copied to the underlying swapchain of the implementation being replayed on.')
     parser.add_argument('--vssb', '--virtual-swapchain-skip-blit', action='store_true', default=False, help='Skip blit to real swapchain to gain performance during replay.')
+    parser.add_argument('--sgfs', '--skip-get-fence-status', metavar='STATUS', default=0, help='Specify behaviour to skip calls to vkWaitForFences and vkGetFenceStatus. Default is 0 - No skip (forwarded to replay tool)')
+    parser.add_argument('--sgfr', '--skip-get-fence-ranges', metavar='FRAME-RANGES', default='', help='Frame ranges where --sgfs applies. Default is all frames (forwarded to replay tool)')
 
     parser.add_argument('-m', '--memory-translation', metavar='MODE', choices=['none', 'remap', 'realign', 'rebind'], help='Enable memory translation for replay on GPUs with memory types that are not compatible with the capture GPU\'s memory types.  Available modes are: none, remap, realign, rebind (forwarded to replay tool)')
     parser.add_argument('file', nargs='?', help='File on device to play (forwarded to replay tool)')
@@ -145,6 +147,14 @@ def MakeExtrasString(args):
 
     if args.vssb:
         arg_list.append('--vssb')
+        
+    if args.sgfs:
+        arg_list.append('--sgfs')
+        arg_list.append('{}'.format(args.sgfs))
+
+    if args.sgfr:
+        arg_list.append('--sgfr')
+        arg_list.append('{}'.format(args.sgfr))
 
     if args.memory_translation:
         arg_list.append('-m')

@@ -84,6 +84,8 @@ class Application final
 
     void StopRunning() { running_ = false; }
 
+    const decode::FileProcessor* GetFileProcessor() const { return file_processor_; }
+
   private:
     // clang-format off
     std::string                                                  name_;              ///< Application name to display in window title bar.
