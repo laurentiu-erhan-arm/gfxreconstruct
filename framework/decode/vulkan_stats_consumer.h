@@ -55,7 +55,8 @@ class VulkanStatsConsumer : public gfxrecon::decode::VulkanConsumer, public gfxr
     uint64_t                        GetAllocationCount() const { return allocation_count_; }
     uint64_t                        GetMinAllocationSize() const { return min_allocation_size_; }
     uint64_t                        GetMaxAllocationSize() const { return max_allocation_size_; }
-    uint64_t                        GetAnnotationCount() const { return annotation_count_; }
+    uint64_t GetAnnotationCount() const { return annotations_.size() + operation_annotation_datas_.size(); }
+    const std::unordered_map<std::string, std::string> GetAnnotations() const { return annotations_; }
     const std::vector<std::string>& GetOperationAnnotationDatas() const { return operation_annotation_datas_; }
 
     const std::set<gfxrecon::format::HandleId>& GetInstantiatedDevices() const { return used_physical_devices_; }
@@ -83,11 +84,14 @@ class VulkanStatsConsumer : public gfxrecon::decode::VulkanConsumer, public gfxr
                                    const std::string&               label,
                                    const std::string&               data) override
     {
-        ++annotation_count_;
         if (type == gfxrecon::format::AnnotationType::kJson &&
             label.compare(gfxrecon::format::kAnnotationLabelOperation) == 0)
         {
             operation_annotation_datas_.push_back(data);
+        }
+        else
+        {
+            annotations_[label] = data;
         }
     }
 
@@ -436,8 +440,8 @@ class VulkanStatsConsumer : public gfxrecon::decode::VulkanConsumer, public gfxr
     uint64_t max_allocation_size_{ 0 };
 
     // Annotation info.
+    std::unordered_map<std::string, std::string> annotations_;
     std::vector<std::string> operation_annotation_datas_;
-    uint64_t                 annotation_count_{ 0 };
 };
 
 GFXRECON_END_NAMESPACE(decode)

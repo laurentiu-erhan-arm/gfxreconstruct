@@ -34,6 +34,7 @@
 #include "util/argument_parser.h"
 #include "util/logging.h"
 #include "util/platform.h"
+#include "decode/replay_options_annotation.h"
 
 #include <android_native_app_glue.h>
 #include <android/log.h>
@@ -91,6 +92,7 @@ void android_main(struct android_app* app)
             const std::vector<std::string>& positional_arguments = arg_parser.GetPositionalArguments();
             filename                                             = positional_arguments[0];
         }
+        arg_parser.AddArguments(gfxrecon::decode::GetTraceReplayOptions(filename));
 
         try
         {

@@ -63,6 +63,8 @@ class FileProcessor
 
     FileProcessor(uint64_t block_limit);
 
+    void ProcessAnnotation();
+
     virtual ~FileProcessor();
 
     void WaitDecodersIdle();

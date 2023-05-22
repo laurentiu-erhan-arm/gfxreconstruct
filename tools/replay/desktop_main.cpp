@@ -33,6 +33,7 @@
 #include "graphics/fps_info.h"
 #include "util/argument_parser.h"
 #include "util/logging.h"
+#include "decode/replay_options_annotation.h"
 
 #if defined(D3D12_SUPPORT)
 #include "generated/generated_dx12_decoder.h"
@@ -118,6 +119,8 @@ int main(int argc, const char** argv)
     {
         const std::vector<std::string>& positional_arguments = arg_parser.GetPositionalArguments();
         std::string                     filename             = positional_arguments[0];
+
+        arg_parser.AddArguments(gfxrecon::decode::GetTraceReplayOptions(filename));
 
         gfxrecon::decode::FileProcessor file_processor;
         if (!file_processor.Initialize(filename))
