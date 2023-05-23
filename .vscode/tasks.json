@@ -1,0 +1,19 @@
+{
+    "tasks": [
+        {
+            "label": "build-x64",
+            "type": "shell",
+            "command": "/usr/bin/python",
+            "args": [
+                "${workspaceFolder}/scripts/build.py",
+                "-a",
+                "x64"
+            ],
+            "group": "build",
+            "problemMatcher": [
+                "$gcc"
+            ],
+        },
+    ],
+    "version": "2.0.0"
+}
