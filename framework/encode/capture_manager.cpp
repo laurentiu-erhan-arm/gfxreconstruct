@@ -249,6 +249,7 @@ bool CaptureManager::Initialize(std::string base_filename, const CaptureSettings
     accel_struct_padding_        = trace_settings.accel_struct_padding;
     iunknown_wrapping_           = trace_settings.iunknown_wrapping;
     force_command_serialization_ = trace_settings.force_command_serialization;
+    fence_query_delay_           = trace_settings.fence_query_delay;
 
     if (memory_tracking_mode_ == CaptureSettings::kPageGuard)
     {
