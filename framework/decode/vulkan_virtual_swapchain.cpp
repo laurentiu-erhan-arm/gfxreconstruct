@@ -29,6 +29,10 @@
 GFXRECON_BEGIN_NAMESPACE(gfxrecon)
 GFXRECON_BEGIN_NAMESPACE(decode)
 
+VulkanVirtualSwapchain::VulkanVirtualSwapchain(bool performance_mode) :
+    VulkanSwapchain(), performance_mode_(performance_mode)
+{}
+
 VkResult VulkanVirtualSwapchain::CreateSwapchainKHR(PFN_vkCreateSwapchainKHR        func,
                                                     const DeviceInfo*               device_info,
                                                     const VkSwapchainCreateInfoKHR* create_info,
@@ -410,6 +414,11 @@ VkResult VulkanVirtualSwapchain::QueuePresentKHR(PFN_vkQueuePresentKHR          
         return VK_ERROR_FEATURE_NOT_PRESENT;
     }
     queue = queue_info->handle;
+
+    if (performance_mode_)
+    {
+        return func(queue, present_info);
+    }
 
     // TODO: Note that this blit could also be used to scale the image, which would allow replay to support an option
     // for changing the window/swapchain size when the virtual swapchain mode is active.  The virtual image would

@@ -100,6 +100,7 @@ const char kMeasurementRangeArgument[]           = "--measurement-frame-range";
 const char kQuitAfterMeasurementRangeOption[]    = "--quit-after-measurement-range";
 const char kFlushMeasurementRangeOption[]        = "--flush-measurement-range";
 const char kEnableUseCapturedSwapchainIndices[]  = "--use-captured-swapchain-indices";
+const char kVirtualSwapchainSkipBlit[]           = "--vssb";
 const char kFormatArgument[]                     = "--format";
 const char kIncludeBinariesOption[]              = "--include-binaries";
 const char kExpandFlagsOption[]                  = "--expand-flags";
@@ -761,6 +762,11 @@ GetVulkanReplayOptions(const gfxrecon::util::ArgumentParser&           arg_parse
     if (arg_parser.IsOptionSet(kEnableUseCapturedSwapchainIndices))
     {
         replay_options.enable_use_captured_swapchain_indices = true;
+    }
+
+    if (arg_parser.IsOptionSet(kVirtualSwapchainSkipBlit))
+    {
+        replay_options.virtual_swapchain_skip_blit = true;
     }
 
     replay_options.replace_dir = arg_parser.GetArgumentValue(kShaderReplaceArgument);

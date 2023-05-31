@@ -29,9 +29,9 @@
 const char kOptions[] =
     "-h|--help,--version,--log-debugview,--no-debug-popup,--paused,--sync,--sfa|--skip-failed-allocations,--"
     "opcd|--omit-pipeline-cache-data,--remove-unsupported,--validate,--debug-device-lost,--create-dummy-allocations,--"
-    "screenshot-all,--onhb|--omit-null-hardware-buffers,--qamr|--quit-after-measurement-"
-    "range,--fmr|--flush-measurement-range,--use-captured-swapchain-indices,--dcp,--discard-cached-psos,"
-    "--dx12-override-object-names";
+    "screenshot-all,--onhb|--omit-null-hardware-buffers,--qamr|--quit-after-measurement-range,--"
+    "fmr|--flush-measurement-range,--use-captured-swapchain-indices,--vssb|--virtual-swapchain-skip-blit,--"
+    "dcp,--discard-cached-psos,--dx12-override-object-names";
 const char kArguments[] =
     "--log-level,--log-file,--gpu,--gpu-group,--pause-frame,--wsi,--surface-index,-m|--memory-translation,"
     "--replace-shaders,--screenshots,--denied-messages,--allowed-messages,--screenshot-format,--"
@@ -60,6 +60,7 @@ static void PrintUsage(const char* exe_name)
     GFXRECON_WRITE_CONSOLE("\t\t\t[--onhb | --omit-null-hardware-buffers]");
     GFXRECON_WRITE_CONSOLE("\t\t\t[-m <mode> | --memory-translation <mode>]");
     GFXRECON_WRITE_CONSOLE("\t\t\t[--use-captured-swapchain-indices]");
+    GFXRECON_WRITE_CONSOLE("\t\t\t[--vssb | --virtual-swapchain-skip-blit]");
     GFXRECON_WRITE_CONSOLE("\t\t\t[--fw <width,height> | --force-windowed <width,height>]");
 #if defined(WIN32)
     GFXRECON_WRITE_CONSOLE("\t\t\t[--log-level <level>] [--log-file <file>] [--log-debugview]");
@@ -176,6 +177,8 @@ static void PrintUsage(const char* exe_name)
         "          \t\tsetup for replay. The default without this option is to use a Virtual Swapchain");
     GFXRECON_WRITE_CONSOLE("          \t\tof images which match the swapchain in effect at capture time and which are");
     GFXRECON_WRITE_CONSOLE("          \t\tcopied to the underlying swapchain of the implementation being replayed on.");
+    GFXRECON_WRITE_CONSOLE("  --vssb");
+    GFXRECON_WRITE_CONSOLE("          \t\tSkip blit to real swapchain to gain performance during replay.");
     GFXRECON_WRITE_CONSOLE("  --measurement-frame-range <start_frame>-<end_frame>");
     GFXRECON_WRITE_CONSOLE("          \t\tCustom framerange to measure FPS for.");
     GFXRECON_WRITE_CONSOLE("          \t\tThis range will include the start frame but not the end frame.");

@@ -176,7 +176,7 @@ VulkanReplayConsumerBase::VulkanReplayConsumerBase(std::shared_ptr<application::
     }
     else
     {
-        swapchain_ = std::make_unique<VulkanVirtualSwapchain>();
+        swapchain_ = std::make_unique<VulkanVirtualSwapchain>(options.virtual_swapchain_skip_blit);
     }
 
     if (options_.enable_debug_device_lost)
