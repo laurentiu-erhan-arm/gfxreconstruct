@@ -145,6 +145,8 @@ class CaptureManager
     bool GetIUnknownWrappingSetting() const { return iunknown_wrapping_; }
     auto GetForceCommandSerialization() const { return force_command_serialization_; }
 
+    uint32_t GetFenceQueryDelay() const { return fence_query_delay_; }
+
   protected:
     enum CaptureModeFlags : uint32_t
     {
@@ -319,6 +321,7 @@ class CaptureManager
     uint32_t                                accel_struct_padding_;
     bool                                    iunknown_wrapping_;
     bool                                    force_command_serialization_;
+    uint32_t                                fence_query_delay_;
 };
 
 GFXRECON_END_NAMESPACE(encode)

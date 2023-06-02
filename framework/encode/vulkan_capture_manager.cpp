@@ -713,11 +713,11 @@ VkResult VulkanCaptureManager::OverrideCreateBuffer(VkDevice                    
                                                     const VkAllocationCallbacks* pAllocator,
                                                     VkBuffer*                    pBuffer)
 {
-    VkResult                  result                = VK_SUCCESS;
-    auto                      device_wrapper        = GetWrapper<DeviceWrapper>(device);
-    VkDevice                  device_unwrapped      = device_wrapper->handle;
-    auto                      device_table          = GetDeviceTable(device);
-    auto                      handle_unwrap_memory  = VulkanCaptureManager::Get()->GetHandleUnwrapMemory();
+    VkResult result               = VK_SUCCESS;
+    auto     device_wrapper       = GetWrapper<DeviceWrapper>(device);
+    VkDevice device_unwrapped     = device_wrapper->handle;
+    auto     device_table         = GetDeviceTable(device);
+    auto     handle_unwrap_memory = VulkanCaptureManager::Get()->GetHandleUnwrapMemory();
 
     VkBufferCreateInfo modified_create_info = (*pCreateInfo);
 
@@ -1233,6 +1233,37 @@ VulkanCaptureManager::OverrideCreateRayTracingPipelinesKHR(VkDevice             
     }
 
     return result;
+}
+
+VkResult VulkanCaptureManager::OverrideWaitForFences(
+    VkDevice device, uint32_t fenceCount, const VkFence* pFences, VkBool32 waitAll, uint64_t timeout)
+{
+    if (timeout == UINT64_MAX)
+    {
+        // If the caller signals that it explicitly intends to wait until success, then it is less likely to handle a
+        // timeout return value here.
+        return GetDeviceTable(device)->WaitForFences(device, fenceCount, pFences, waitAll, timeout);
+    }
+
+    bool delay = false;
+    for (uint32_t i = 0; i < fenceCount; ++i)
+    {
+        FenceWrapper* wrapper = GetWrapper<FenceWrapper>(pFences[i]);
+        assert(wrapper != nullptr);
+        if (wrapper->query_delay != 0)
+        {
+            // Make sure we decrement every fence, if multiple.
+            delay = true;
+            --wrapper->query_delay;
+        }
+    }
+
+    if (delay)
+    {
+        return VK_TIMEOUT;
+    }
+
+    return GetDeviceTable(device)->WaitForFences(device, fenceCount, pFences, waitAll, timeout);
 }
 
 void VulkanCaptureManager::ProcessEnumeratePhysicalDevices(VkResult          result,
@@ -2060,8 +2091,8 @@ void VulkanCaptureManager::PreProcess_vkQueueSubmit(VkQueue             queue,
     GFXRECON_UNREFERENCED_PARAMETER(queue);
     GFXRECON_UNREFERENCED_PARAMETER(submitCount);
     GFXRECON_UNREFERENCED_PARAMETER(pSubmits);
-    GFXRECON_UNREFERENCED_PARAMETER(fence);
 
+    ProcessFenceSubmit(fence);
     QueueSubmitWriteFillMemoryCmd();
 }
 
@@ -2073,9 +2104,19 @@ void VulkanCaptureManager::PreProcess_vkQueueSubmit2(VkQueue              queue,
     GFXRECON_UNREFERENCED_PARAMETER(queue);
     GFXRECON_UNREFERENCED_PARAMETER(submitCount);
     GFXRECON_UNREFERENCED_PARAMETER(pSubmits);
-    GFXRECON_UNREFERENCED_PARAMETER(fence);
 
+    ProcessFenceSubmit(fence);
     QueueSubmitWriteFillMemoryCmd();
+}
+
+void VulkanCaptureManager::ProcessFenceSubmit(VkFence fence)
+{
+    if (fence != VK_NULL_HANDLE)
+    {
+        FenceWrapper* wrapper = GetWrapper<FenceWrapper>(fence);
+        assert(wrapper != nullptr);
+        wrapper->query_delay = GetFenceQueryDelay();
+    }
 }
 
 void VulkanCaptureManager::QueueSubmitWriteFillMemoryCmd()

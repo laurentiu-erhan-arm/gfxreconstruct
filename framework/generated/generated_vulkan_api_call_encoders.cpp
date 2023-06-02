@@ -1297,7 +1297,7 @@ VKAPI_ATTR VkResult VKAPI_CALL WaitForFences(
 
     CustomEncoderPreCall<format::ApiCallId::ApiCall_vkWaitForFences>::Dispatch(VulkanCaptureManager::Get(), device, fenceCount, pFences, waitAll, timeout);
 
-    VkResult result = GetDeviceTable(device)->WaitForFences(device, fenceCount, pFences, waitAll, timeout);
+    VkResult result = VulkanCaptureManager::Get()->OverrideWaitForFences(device, fenceCount, pFences, waitAll, timeout);
 
     auto encoder = VulkanCaptureManager::Get()->BeginApiCallCapture(format::ApiCallId::ApiCall_vkWaitForFences);
     if (encoder)
