@@ -66,6 +66,7 @@ const size_t   kAdapterDescriptionSize    = 128;
 /// Label for operation annotation, which captures parameters used by tools
 /// operating on a capture file.
 const char* const kAnnotationLabelOperation = "operation";
+const char* const kAnnotationLabelReplayOptions = "replayopts";
 
 constexpr uint32_t MakeCompressedBlockType(uint32_t block_type)
 {

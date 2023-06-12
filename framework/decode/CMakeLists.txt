@@ -77,6 +77,8 @@ target_sources(gfxrecon_decode
                     ${CMAKE_CURRENT_LIST_DIR}/referenced_object_table.h
                     ${CMAKE_CURRENT_LIST_DIR}/referenced_object_table.cpp
                     ${CMAKE_CURRENT_LIST_DIR}/replay_options.h
+                    ${CMAKE_CURRENT_LIST_DIR}/replay_options_annotation.h
+                    ${CMAKE_CURRENT_LIST_DIR}/replay_options_annotation.cpp
                     ${CMAKE_CURRENT_LIST_DIR}/resource_util.h
                     ${CMAKE_CURRENT_LIST_DIR}/resource_util.cpp
                     ${CMAKE_CURRENT_LIST_DIR}/screenshot_handler.h

@@ -28,6 +28,8 @@ target_sources(gfxrecon_decode
                    ${GFXRECON_SOURCE_DIR}/framework/decode/referenced_resource_table.h
                    ${GFXRECON_SOURCE_DIR}/framework/decode/referenced_resource_table.cpp
                    ${GFXRECON_SOURCE_DIR}/framework/decode/replay_options.h
+                   ${GFXRECON_SOURCE_DIR}/framework/decode/replay_options_annotation.h
+                   ${GFXRECON_SOURCE_DIR}/framework/decode/replay_options_annotation.cpp
                    ${GFXRECON_SOURCE_DIR}/framework/decode/resource_util.h
                    ${GFXRECON_SOURCE_DIR}/framework/decode/resource_util.cpp
                    ${GFXRECON_SOURCE_DIR}/framework/decode/screenshot_handler.h

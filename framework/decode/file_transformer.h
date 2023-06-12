@@ -70,7 +70,7 @@ class FileTransformer
     bool Initialize(const std::string& input_filename, const std::string& output_filename);
 
     // Returns false if processing failed.  Use GetErrorState() to determine error condition for failure case.
-    bool Process();
+    virtual bool Process();
 
     const format::FileHeader& GetFileHeader() const { return file_header_; }
 
@@ -135,6 +135,11 @@ class FileTransformer
     virtual bool ProcessMetaData(const format::BlockHeader& block_header, format::MetaDataId meta_data_id);
 
     virtual bool ProcessStateMarker(const format::BlockHeader& block_header, format::MarkerType marker_type);
+
+    virtual bool ProcessAnnotation(const format::BlockHeader& block_header,
+                                   format::AnnotationType     annotation_type,
+                                   std::string                label,
+                                   std::string                data);
 
     uint64_t GetCurrentBlockIndex() { return block_index_; }
 

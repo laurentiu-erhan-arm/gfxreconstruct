@@ -33,6 +33,10 @@ target_sources(gfxrecon-optimize
                    ${CMAKE_CURRENT_LIST_DIR}/main.cpp
                    ${CMAKE_CURRENT_LIST_DIR}/file_optimizer.h
                    ${CMAKE_CURRENT_LIST_DIR}/file_optimizer.cpp
+                   ${CMAKE_CURRENT_LIST_DIR}/replay_options_editor.h
+                   ${CMAKE_CURRENT_LIST_DIR}/replay_options_editor.cpp
+                   ${CMAKE_CURRENT_LIST_DIR}/annotation_editor.h
+                   ${CMAKE_CURRENT_LIST_DIR}/annotation_editor.cpp
                    $<$<BOOL:${D3D12_SUPPORT}>:${CMAKE_CURRENT_LIST_DIR}/dx12_file_optimizer.h>
                    $<$<BOOL:${D3D12_SUPPORT}>:${CMAKE_CURRENT_LIST_DIR}/dx12_file_optimizer.cpp>
                    $<$<BOOL:${D3D12_SUPPORT}>:${CMAKE_CURRENT_LIST_DIR}/dx12_optimize_util.h>

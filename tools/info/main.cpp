@@ -326,6 +326,16 @@ void PrintVulkanStats(const gfxrecon::decode::VulkanStatsConsumer& vulkan_stats_
                     GFXRECON_WRITE_CONSOLE(tabbed.c_str());
                 }
             }
+
+            if (vulkan_stats_consumer.GetAnnotations().size() > 0)
+            {
+                GFXRECON_WRITE_CONSOLE("\tOther annotations: %" PRIu64 "\n", operation_annotation_datas.size());
+                for (const auto& annotation : vulkan_stats_consumer.GetAnnotations())
+                {
+                    auto tabbed = gfxrecon::util::strings::TabRight(annotation.first + ": " + annotation.second);
+                    GFXRECON_WRITE_CONSOLE(tabbed.c_str());
+                }
+            }
         }
 
         // TODO: This is the number of recorded draw calls, which will not reflect the number of draw calls
@@ -377,6 +387,7 @@ void GatherVulkanStats(const std::string& input_filename)
         file_processor.AddDecoder(&stat_decoder);
         vulkan_decoder.AddConsumer(&vulkan_stats_consumer);
         file_processor.AddDecoder(&vulkan_decoder);
+        file_processor.SetAnnotationProcessor(&vulkan_stats_consumer);
 
         file_processor.ProcessAllFrames();
         if (file_processor.GetErrorState() == gfxrecon::decode::FileProcessor::kErrorNone)
