@@ -80,6 +80,9 @@ struct IndirectCommandsLayoutNVWrapper      : public HandleWrapper<VkIndirectCom
 struct PerformanceConfigurationINTELWrapper : public HandleWrapper<VkPerformanceConfigurationINTEL> {};
 struct MicromapEXTWrapper                   : public HandleWrapper<VkMicromapEXT> {};
 struct OpticalFlowSessionNVWrapper          : public HandleWrapper<VkOpticalFlowSessionNV> {};
+struct VideoSessionKHRWrapper               : public HandleWrapper<VkVideoSessionKHR> {};
+struct VideoSessionParametersKHRWrapper     : public HandleWrapper<VkVideoSessionParametersKHR> {};
+struct ShaderEXTWrapper                     : public HandleWrapper<VkShaderEXT> {};
 
 
 // This handle type has a create function, but no destroy function. The handle wrapper will be owned by its parent VkDisplayKHR
@@ -149,6 +152,11 @@ struct FenceWrapper : public HandleWrapper<VkFence>
     // create parameters will need to be modified to reflect the state at snapshot write.
     bool           created_signaled{ false };
     DeviceWrapper* device{ nullptr };
+
+    // The fence cannot be "validated" until a certain number of queries (that might correspond to a number of frames)
+    // to the fence have been called. So if query_delay is not zero but the fence is validated by Vulkan,
+    // vkGetFenceStatus will still return VK_NOT_READY.
+    uint32_t query_delay{ 0 };
 };
 
 struct EventWrapper : public HandleWrapper<VkEvent>

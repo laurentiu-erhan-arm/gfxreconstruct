@@ -1,6 +1,6 @@
 ###############################################################################
-# Copyright (c) 2018-2020 LunarG, Inc.
-# Copyright (c) 2018-2022 Advanced Micro Devices, Inc. All rights reserved
+# Copyright (c) 2018-2020,2023 LunarG, Inc.
+# Copyright (c) 2018-2023 Advanced Micro Devices, Inc. All rights reserved
 # All rights reserved
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -50,6 +50,8 @@ target_sources(gfxrecon_util
                     ${CMAKE_CURRENT_LIST_DIR}/keyboard.cpp
                     ${CMAKE_CURRENT_LIST_DIR}/logging.h
                     ${CMAKE_CURRENT_LIST_DIR}/logging.cpp
+                    ${CMAKE_CURRENT_LIST_DIR}/measurement_manager.h
+                    ${CMAKE_CURRENT_LIST_DIR}/measurement_manager.cpp
                     ${CMAKE_CURRENT_LIST_DIR}/lz4_compressor.h
                     ${CMAKE_CURRENT_LIST_DIR}/lz4_compressor.cpp
                     ${CMAKE_CURRENT_LIST_DIR}/zlib_compressor.h
@@ -71,6 +73,8 @@ target_sources(gfxrecon_util
                     ${CMAKE_CURRENT_LIST_DIR}/options.cpp
                     $<$<BOOL:${D3D12_SUPPORT}>:${CMAKE_CURRENT_LIST_DIR}/interception/hooking_detours.h>
                     $<$<BOOL:${D3D12_SUPPORT}>:${CMAKE_CURRENT_LIST_DIR}/interception/hooking_detours.cpp>
+                    $<$<BOOL:${D3D12_SUPPORT}>:${CMAKE_CURRENT_LIST_DIR}/interception/interception_util.h>
+                    $<$<BOOL:${D3D12_SUPPORT}>:${CMAKE_CURRENT_LIST_DIR}/interception/interception_util.cpp>
                     $<$<BOOL:${BUILD_LAUNCHER_AND_INTERCEPTOR}>:${CMAKE_CURRENT_LIST_DIR}/interception/injection.h>
                     $<$<BOOL:${BUILD_LAUNCHER_AND_INTERCEPTOR}>:${CMAKE_CURRENT_LIST_DIR}/interception/injection.cpp>
                     $<$<BOOL:${BUILD_LAUNCHER_AND_INTERCEPTOR}>:${CMAKE_CURRENT_LIST_DIR}/interception/load_library.h>
@@ -86,8 +90,6 @@ target_sources(gfxrecon_util
                     $<$<BOOL:${D3D12_SUPPORT}>:${CMAKE_CURRENT_LIST_DIR}/gpu_va_map.cpp>
                     $<$<BOOL:${D3D12_SUPPORT}>:${CMAKE_CURRENT_LIST_DIR}/gpu_va_range.h>
                     $<$<BOOL:${D3D12_SUPPORT}>:${CMAKE_CURRENT_LIST_DIR}/gpu_va_range.cpp>
-                    ${CMAKE_CURRENT_LIST_DIR}/shared_mutex.h
-                    ${CMAKE_CURRENT_LIST_DIR}/shared_mutex.cpp
                     ${CMAKE_CURRENT_LIST_DIR}/strings.h
                     ${CMAKE_CURRENT_LIST_DIR}/strings.cpp
                     ${CMAKE_CURRENT_LIST_DIR}/to_string.h
@@ -95,13 +97,8 @@ target_sources(gfxrecon_util
                     ${CMAKE_CURRENT_LIST_DIR}/options.cpp
                     ${CMAKE_CURRENT_LIST_DIR}/custom_common_to_string.h
                     ${CMAKE_CURRENT_LIST_DIR}/custom_common_to_string.cpp
-                    ${CMAKE_CURRENT_LIST_DIR}/custom_vulkan_to_string.h
-                    ${CMAKE_CURRENT_LIST_DIR}/custom_vulkan_to_string.cpp
                     ${CMAKE_SOURCE_DIR}/framework/generated/generated_vulkan_enum_to_string.h
                     ${CMAKE_SOURCE_DIR}/framework/generated/generated_vulkan_enum_to_string.cpp
-                    ${CMAKE_SOURCE_DIR}/framework/generated/generated_vulkan_pnext_to_string.cpp
-                    ${CMAKE_SOURCE_DIR}/framework/generated/generated_vulkan_struct_to_string.h
-                    ${CMAKE_SOURCE_DIR}/framework/generated/generated_vulkan_struct_to_string.cpp
                     $<$<BOOL:${XCB_FOUND}>:${CMAKE_CURRENT_LIST_DIR}/xcb_loader.h>
                     $<$<BOOL:${XCB_FOUND}>:${CMAKE_CURRENT_LIST_DIR}/xcb_loader.cpp>
                     $<$<BOOL:${XCB_FOUND}>:${CMAKE_CURRENT_LIST_DIR}/xcb_keysyms_loader.h>
@@ -113,17 +110,12 @@ target_sources(gfxrecon_util
 )
 
 
-target_include_directories(gfxrecon_util 
-                           PUBLIC 
+target_include_directories(gfxrecon_util
+                           PUBLIC
                                ${CMAKE_SOURCE_DIR}/framework
                                $<$<BOOL:${D3D12_SUPPORT}>:${CMAKE_SOURCE_DIR}/external/AgilitySDK/inc>)
-target_link_libraries(gfxrecon_util platform_specific vulkan_registry ${CMAKE_DL_LIBS})
+target_link_libraries(gfxrecon_util platform_specific vulkan_registry nlohmann_json::nlohmann_json ${CMAKE_DL_LIBS})
 target_link_libraries(gfxrecon_util $<$<BOOL:${WIN32}>:version.lib>)
-
-if (MSVC)
-    # These files may fail to compile with VS2017 and older, requiring the default section limit of 2^16 to be increased.
-    set_source_files_properties(${CMAKE_SOURCE_DIR}/framework/generated/generated_vulkan_struct_to_string.cpp PROPERTIES COMPILE_FLAGS /bigobj)
-endif()
 
 if (UNIX AND NOT APPLE)
     # Check for clock_gettime in libc
@@ -161,8 +153,7 @@ if (WAYLAND_LIBRARY)
     target_compile_definitions(gfxrecon_util PUBLIC "WAYLAND_LIBRARY=\"${WAYLAND_LIBRARY}\"")
 endif()
 
-if (TARGET AGS::AGS)
-    target_compile_definitions(gfxrecon_util PUBLIC ENABLE_AGS)
+if (${GFXRECON_AGS_SUPPORT_FINAL})
     target_link_libraries(gfxrecon_util AGS::AGS)
 endif()
 
@@ -172,20 +163,25 @@ if (TARGET Detours::Detours)
 endif()
 
 if (TARGET LZ4::LZ4)
-    target_compile_definitions(gfxrecon_util PUBLIC ENABLE_LZ4_COMPRESSION)
+    target_compile_definitions(gfxrecon_util PUBLIC GFXRECON_ENABLE_LZ4_COMPRESSION)
     target_link_libraries(gfxrecon_util LZ4::LZ4)
 endif()
 
 if (TARGET ZLIB::ZLIB)
     target_compile_definitions(gfxrecon_util
                                PUBLIC
-                                   ENABLE_ZLIB_COMPRESSION
+                                   GFXRECON_ENABLE_ZLIB_COMPRESSION
+                                   GFXRECON_ENABLE_PNG_SCREENSHOT
                                    $<$<BOOL:${WIN32}>:ZLIB_WINAPI>)
     target_link_libraries(gfxrecon_util ZLIB::ZLIB)
+
+    target_include_directories(gfxrecon_util
+                               PUBLIC
+                                   ${CMAKE_SOURCE_DIR}/external/stb)
 endif()
 
 if (TARGET ZSTD::ZSTD)
-    target_compile_definitions(gfxrecon_util PUBLIC ENABLE_ZSTD_COMPRESSION)
+    target_compile_definitions(gfxrecon_util PUBLIC GFXRECON_ENABLE_ZSTD_COMPRESSION)
     target_link_libraries(gfxrecon_util ZSTD::ZSTD)
 endif()
 
@@ -195,6 +191,7 @@ if (${RUN_TESTS})
     add_executable(gfxrecon_util_test "")
     target_sources(gfxrecon_util_test PRIVATE
             ${CMAKE_CURRENT_LIST_DIR}/test/main.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/../../tools/platform_debug_helper.cpp
             $<$<BOOL:${D3D12_SUPPORT}>:${CMAKE_CURRENT_LIST_DIR}/test/dx_pointers.h>
             $<$<BOOL:${D3D12_SUPPORT}>:${CMAKE_CURRENT_LIST_DIR}/test/dx12_utils.cpp>
             $<$<BOOL:${D3D12_SUPPORT}>:${CMAKE_CURRENT_LIST_DIR}/test/gpu_va_map_tests.cpp>
@@ -206,6 +203,15 @@ if (${RUN_TESTS})
                             gfxrecon_util
                             $<$<BOOL:${D3D12_SUPPORT}>:d3d12.lib>
                             $<$<BOOL:${D3D12_SUPPORT}>:dxgi.lib>)
+    if (MSVC)
+        # Force inclusion of "gfxrecon_disable_popup_result" variable in linking.
+        # On 32-bit windows, MSVC prefixes symbols with "_" but on 64-bit windows it doesn't.
+        if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+            target_link_options(gfxrecon_util_test PUBLIC "LINKER:/Include:_gfxrecon_disable_popup_result")
+        else()
+            target_link_options(gfxrecon_util_test PUBLIC "LINKER:/Include:gfxrecon_disable_popup_result")
+        endif()
+    endif()
     common_build_directives(gfxrecon_util_test)
     common_test_directives(gfxrecon_util_test)
 endif()

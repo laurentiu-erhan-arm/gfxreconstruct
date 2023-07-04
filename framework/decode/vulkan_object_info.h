@@ -75,6 +75,10 @@ enum PhysicalDeviceArrayIndices : uint32_t
     kPhysicalDeviceArrayGetPhysicalDeviceFragmentShadingRatesKHR                        = 16,
     kFramebufferArrayGetFramebufferTilePropertiesQCOM                                   = 17,
     kPhysicalDeviceArrayGetPhysicalDeviceOpticalFlowImageFormatsNV                      = 18,
+    kPhysicalDeviceArrayGetPhysicalDeviceVideoFormatPropertiesKHR                       = 19,
+    kVideoSessionKHRArrayGetVideoSessionMemoryRequirementsKHR                           = 20,
+    kShaderEXTArrayGetShaderBinaryDataEXT                                               = 21,
+
     // Aliases for extensions functions that were promoted to core.
     kPhysicalDeviceArrayGetPhysicalDeviceQueueFamilyProperties2KHR =
         kPhysicalDeviceArrayGetPhysicalDeviceQueueFamilyProperties2,
@@ -202,6 +206,7 @@ typedef VulkanObjectInfo<VkAccelerationStructureNV>       AccelerationStructureN
 typedef VulkanObjectInfo<VkPerformanceConfigurationINTEL> PerformanceConfigurationINTELInfo;
 typedef VulkanObjectInfo<VkMicromapEXT>                   MicromapEXTInfo;
 typedef VulkanObjectInfo<VkOpticalFlowSessionNV>          OpticalFlowSessionNVInfo;
+typedef VulkanObjectInfo<VkVideoSessionParametersKHR>     VideoSessionParametersKHRInfo;
 
 //
 // Declarations for Vulkan objects with additional replay state info.
@@ -438,6 +443,16 @@ struct DeferredOperationKHRInfo : public VulkanObjectInfo<VkDeferredOperationKHR
     // Record CreateRayTracingPipelinesKHR parameters for safety.
     std::vector<VkRayTracingPipelineCreateInfoKHR>                 record_modified_create_infos;
     std::vector<std::vector<VkRayTracingShaderGroupCreateInfoKHR>> record_modified_pgroups;
+};
+
+struct VideoSessionKHRInfo : VulkanObjectInfo<VkVideoSessionKHR>
+{
+    std::unordered_map<uint32_t, size_t> array_counts;
+};
+
+struct ShaderEXTInfo : VulkanObjectInfo<VkShaderEXT>
+{
+    std::unordered_map<uint32_t, size_t> array_counts;
 };
 
 //

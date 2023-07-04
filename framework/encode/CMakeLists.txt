@@ -1,6 +1,6 @@
 ###############################################################################
 # Copyright (c) 2018-2022 LunarG, Inc.
-# Copyright (c) 2019-2022 Advanced Micro Devices, Inc.
+# Copyright (c) 2019-2023 Advanced Micro Devices, Inc.
 # All rights reserved
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -69,8 +69,19 @@ target_sources(gfxrecon_encode
                     $<$<BOOL:${D3D12_SUPPORT}>:${CMAKE_CURRENT_LIST_DIR}/dx12_state_writer.h>
                     $<$<BOOL:${D3D12_SUPPORT}>:${CMAKE_CURRENT_LIST_DIR}/dx12_state_writer.cpp>
                     $<$<BOOL:${D3D12_SUPPORT}>:${CMAKE_CURRENT_LIST_DIR}/dxgi_dispatch_table.h>
+                    $<$<BOOL:${GFXRECON_AGS_SUPPORT_FINAL}>:${CMAKE_CURRENT_LIST_DIR}/ags_dispatch_table.h>
+                    $<$<BOOL:${GFXRECON_AGS_SUPPORT_FINAL}>:${CMAKE_CURRENT_LIST_DIR}/custom_ags_wrappers.h>
+                    $<$<BOOL:${GFXRECON_AGS_SUPPORT_FINAL}>:${CMAKE_CURRENT_LIST_DIR}/custom_ags_wrappers.cpp>
+                    $<$<BOOL:${GFXRECON_AGS_SUPPORT_FINAL}>:${CMAKE_CURRENT_LIST_DIR}/custom_ags_api_call_encoders.h>
+                    $<$<BOOL:${GFXRECON_AGS_SUPPORT_FINAL}>:${CMAKE_CURRENT_LIST_DIR}/custom_ags_api_call_encoders.cpp>
+                    $<$<BOOL:${GFXRECON_AGS_SUPPORT_FINAL}>:${CMAKE_CURRENT_LIST_DIR}/custom_ags_state_table.h>
+                    $<$<BOOL:${GFXRECON_AGS_SUPPORT_FINAL}>:${CMAKE_CURRENT_LIST_DIR}/custom_ags_state_table.cpp>
                     $<$<BOOL:${D3D12_SUPPORT}>:${CMAKE_CURRENT_LIST_DIR}/iunknown_wrapper.h>
                     $<$<BOOL:${D3D12_SUPPORT}>:${CMAKE_CURRENT_LIST_DIR}/iunknown_wrapper.cpp>
+                    $<$<BOOL:${D3D12_SUPPORT}>:${CMAKE_CURRENT_LIST_DIR}/dx12_rv_annotator.h>
+                    $<$<BOOL:${D3D12_SUPPORT}>:${CMAKE_CURRENT_LIST_DIR}/dx12_rv_annotator.cpp>
+                    $<$<BOOL:${D3D12_SUPPORT}>:${CMAKE_CURRENT_LIST_DIR}/dx12_rv_annotation_util.h>
+                    $<$<BOOL:${D3D12_SUPPORT}>:${CMAKE_CURRENT_LIST_DIR}/dx12_rv_annotation_util.cpp>
                     ${CMAKE_CURRENT_LIST_DIR}/handle_unwrap_memory.h
                     ${CMAKE_CURRENT_LIST_DIR}/parameter_buffer.h
                     ${CMAKE_CURRENT_LIST_DIR}/parameter_encoder.h
@@ -115,15 +126,11 @@ target_sources(gfxrecon_encode
 
 )
 
-if (MSVC AND (MSVC_VERSION LESS 1920))
-    # This file may fail to compile with VS2017 and older, requiring the default section limit of 2^16 to be increased.
-    set_source_files_properties(${CMAKE_SOURCE_DIR}/framework/generated/generated_vulkan_api_call_encoders.cpp PROPERTIES COMPILE_FLAGS /bigobj)
-endif()
-
 if (MSVC)
     # Increase object size limit to handle large numbers of template function instantiations.
     set_source_files_properties(${CMAKE_SOURCE_DIR}/framework/generated/generated_dx12_api_call_encoders.cpp PROPERTIES COMPILE_FLAGS /bigobj)
     set_source_files_properties(${CMAKE_SOURCE_DIR}/framework/generated/generated_dx12_wrappers.cpp PROPERTIES COMPILE_FLAGS /bigobj)
+    set_source_files_properties(${CMAKE_SOURCE_DIR}/framework/generated/generated_vulkan_api_call_encoders.cpp PROPERTIES COMPILE_FLAGS /bigobj)
 endif()
 
 target_include_directories(gfxrecon_encode
@@ -139,8 +146,18 @@ common_build_directives(gfxrecon_encode)
 if (${RUN_TESTS})
     add_executable(gfxrecon_encode_test "")
     target_sources(gfxrecon_encode_test PRIVATE
-        ${CMAKE_CURRENT_LIST_DIR}/test/main.cpp)
+        ${CMAKE_CURRENT_LIST_DIR}/test/main.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/../../tools/platform_debug_helper.cpp)
     target_link_libraries(gfxrecon_encode_test PRIVATE gfxrecon_encode)
+    if (MSVC)
+        # Force inclusion of "gfxrecon_disable_popup_result" variable in linking.
+        # On 32-bit windows, MSVC prefixes symbols with "_" but on 64-bit windows it doesn't.
+        if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+            target_link_options(gfxrecon_encode_test PUBLIC "LINKER:/Include:_gfxrecon_disable_popup_result")
+        else()
+            target_link_options(gfxrecon_encode_test PUBLIC "LINKER:/Include:gfxrecon_disable_popup_result")
+        endif()
+    endif()
     common_build_directives(gfxrecon_encode_test)
     common_test_directives(gfxrecon_encode_test)
 endif()

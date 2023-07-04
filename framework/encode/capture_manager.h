@@ -1,7 +1,7 @@
 /*
 ** Copyright (c) 2018-2022 Valve Corporation
 ** Copyright (c) 2018-2022 LunarG, Inc.
-** Copyright (c) 2019-2021 Advanced Micro Devices, Inc. All rights reserved.
+** Copyright (c) 2019-2023 Advanced Micro Devices, Inc. All rights reserved.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -36,7 +36,6 @@
 #include "util/defines.h"
 #include "util/file_output_stream.h"
 #include "util/keyboard.h"
-#include "util/shared_mutex.h"
 
 #include <atomic>
 #include <cassert>
@@ -53,17 +52,13 @@ GFXRECON_BEGIN_NAMESPACE(encode)
 class CaptureManager
 {
   public:
+    typedef std::shared_mutex ApiCallMutexT;
+
     static format::HandleId GetUniqueId() { return ++unique_id_counter_; }
 
-    std::shared_lock<util::SharedMutex> AcquireSharedStateLock()
-    {
-        return std::shared_lock<util::SharedMutex>(state_mutex_);
-    }
+    static auto AcquireSharedApiCallLock() { return std::move(std::shared_lock<ApiCallMutexT>(api_call_mutex_)); }
 
-    std::unique_lock<util::SharedMutex> AcquireUniqueStateLock()
-    {
-        return std::move(std::unique_lock<util::SharedMutex>(state_mutex_));
-    }
+    static auto AcquireExclusiveApiCallLock() { return std::move(std::unique_lock<ApiCallMutexT>(api_call_mutex_)); }
 
     HandleUnwrapMemory* GetHandleUnwrapMemory()
     {
@@ -121,6 +116,8 @@ class CaptureManager
 
     bool ShouldTriggerScreenshot();
 
+    util::ScreenshotFormat GetScreenshotFormat() { return screenshot_format_; }
+
     void CheckContinueCaptureForWriteMode();
 
     void CheckStartCaptureForTrackMode();
@@ -145,7 +142,14 @@ class CaptureManager
 
     virtual CaptureSettings::TraceSettings GetDefaultTraceSettings();
 
-    bool GetIUnknownWrappingSetting() const { return iunknown_wrapping_; }
+    bool     GetIUnknownWrappingSetting() const { return iunknown_wrapping_; }
+    auto     GetForceCommandSerialization() const { return force_command_serialization_; }
+    auto     GetQueueZeroOnly() const { return queue_zero_only_; }
+    bool     IsAnnotated() const { return rv_annotation_info_.rv_annotation; }
+    uint16_t GetGPUVAMask() const { return rv_annotation_info_.gpuva_mask; }
+    uint16_t GetDescriptorMask() const { return rv_annotation_info_.descriptor_mask; }
+    uint64_t GetShaderIDMask() const { return rv_annotation_info_.shaderid_mask; }
+    uint32_t GetFenceQueryDelay() const { return fence_query_delay_; }
 
   protected:
     enum CaptureModeFlags : uint32_t
@@ -236,10 +240,10 @@ class CaptureManager
     bool                                GetDisableDxrSetting() const { return disable_dxr_; }
     auto                                GetAccelStructPaddingSetting() const { return accel_struct_padding_; }
 
-    std::string  CreateTrimFilename(const std::string& base_filename, const CaptureSettings::TrimRange& trim_range);
-    virtual bool CreateCaptureFile(const std::string& base_filename);
-    virtual void ActivateTrimming();
-    virtual void DeactivateTrimming();
+    std::string CreateTrimFilename(const std::string& base_filename, const CaptureSettings::TrimRange& trim_range);
+    bool        CreateCaptureFile(const std::string& base_filename);
+    void        ActivateTrimming();
+    void        DeactivateTrimming();
 
     void WriteFileHeader();
     void BuildOptionList(const format::EnabledOptions&        enabled_options,
@@ -260,6 +264,7 @@ class CaptureManager
     std::mutex                        mapped_memory_lock_;
     util::Keyboard                    keyboard_;
     std::string                       screenshot_prefix_;
+    util::ScreenshotFormat            screenshot_format_;
     uint32_t                          global_frame_count_;
 
     void WriteToFile(const void* data, size_t size);
@@ -287,7 +292,7 @@ class CaptureManager
     static std::mutex                               instance_lock_;
     static thread_local std::unique_ptr<ThreadData> thread_data_;
     static std::atomic<format::HandleId>            unique_id_counter_;
-    static util::SharedMutex                        state_mutex_;
+    static ApiCallMutexT                            api_call_mutex_;
 
     const format::ApiFamilyId api_family_;
 
@@ -319,6 +324,17 @@ class CaptureManager
     bool                                    disable_dxr_;
     uint32_t                                accel_struct_padding_;
     bool                                    iunknown_wrapping_;
+    bool                                    force_command_serialization_;
+    uint32_t                                fence_query_delay_;
+    bool                                    queue_zero_only_;
+
+    struct
+    {
+        bool     rv_annotation{ false };
+        uint16_t gpuva_mask{ RvAnnotationUtil::kGPUVAMask };
+        uint16_t descriptor_mask{ RvAnnotationUtil::kDescriptorMask };
+        uint64_t shaderid_mask{ RvAnnotationUtil::kShaderIDMask };
+    } rv_annotation_info_;
 };
 
 GFXRECON_END_NAMESPACE(encode)

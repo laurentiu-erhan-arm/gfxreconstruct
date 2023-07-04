@@ -255,6 +255,51 @@ bool FileTransformer::ProcessNextBlock()
                 HandleBlockReadError(kErrorReadingBlockHeader, "Failed to read method call block header");
             }
         }
+        else if (block_header.type == format::BlockType::kAnnotation)
+        {
+            format::AnnotationType                           annotation_type = format::AnnotationType::kUnknown;
+            decltype(format::AnnotationHeader::label_length) label_length    = 0;
+            decltype(format::AnnotationHeader::data_length)  data_length     = 0;
+
+            success = ReadBytes(&annotation_type, sizeof(annotation_type));
+            success = success && ReadBytes(&label_length, sizeof(label_length));
+            success = success && ReadBytes(&data_length, sizeof(data_length));
+
+            if (success)
+            {
+                if ((label_length > 0) || (data_length > 0))
+                {
+                    std::string label;
+                    std::string data;
+                    const auto  size_sum = label_length + data_length;
+                    GFXRECON_CHECK_CONVERSION_DATA_LOSS(size_t, size_sum);
+                    const size_t total_length = static_cast<size_t>(size_sum);
+
+                    success = ReadParameterBuffer(total_length);
+                    if (success)
+                    {
+                        if (label_length > 0)
+                        {
+                            auto label_start = parameter_buffer_.begin();
+                            label.assign(label_start, std::next(label_start, label_length));
+                        }
+
+                        if (data_length > 0)
+                        {
+                            auto data_start = std::next(parameter_buffer_.begin(), label_length);
+                            GFXRECON_CHECK_CONVERSION_DATA_LOSS(size_t, data_length);
+                            data.assign(data_start, std::next(data_start, static_cast<size_t>(data_length)));
+                        }
+
+                        ProcessAnnotation(block_header, annotation_type, label, data);
+                    }
+                    else
+                    {
+                        HandleBlockReadError(kErrorReadingBlockData, "Failed to read annotation block");
+                    }
+                }
+            }
+        }
         else
         {
             // Copy the block to the output file.
@@ -564,6 +609,26 @@ bool FileTransformer::ProcessStateMarker(const format::BlockHeader& block_header
     }
 
     return true;
+}
+
+bool FileTransformer::ProcessAnnotation(const format::BlockHeader& block_header,
+                                        format::AnnotationType     annotation_type,
+                                        std::string                label,
+                                        std::string                data)
+{
+    bool success = true;
+
+    format::AnnotationHeader annotation_header;
+    annotation_header.block_header    = block_header;
+    annotation_header.annotation_type = annotation_type;
+    annotation_header.data_length     = data.length();
+    annotation_header.label_length    = static_cast<uint32_t>(label.length());
+
+    success = WriteBytes(&annotation_header, sizeof(annotation_header));
+    success = success && WriteBytes(label.c_str(), label.length());
+    success = success && WriteBytes(data.c_str(), data.length());
+
+    return success;
 }
 
 GFXRECON_END_NAMESPACE(decode)

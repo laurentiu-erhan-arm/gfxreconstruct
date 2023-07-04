@@ -31,6 +31,8 @@ GFXRECON_BEGIN_NAMESPACE(decode)
 class VulkanVirtualSwapchain : public VulkanSwapchain
 {
   public:
+    VulkanVirtualSwapchain(bool performance_mode);
+
     virtual ~VulkanVirtualSwapchain() override {}
 
     virtual VkResult CreateSwapchainKHR(PFN_vkCreateSwapchainKHR        func,
@@ -127,6 +129,8 @@ class VulkanVirtualSwapchain : public VulkanSwapchain
     int32_t FindFirstPresentSrcLayout(const VkRenderPassCreateInfo2* create_info) const;
 
     int32_t FindFirstPresentSrcLayout(uint32_t count, const VkImageMemoryBarrier* barriers) const;
+
+    bool performance_mode_{ false };
 };
 
 GFXRECON_END_NAMESPACE(decode)

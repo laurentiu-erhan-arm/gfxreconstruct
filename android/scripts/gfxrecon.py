@@ -70,7 +70,7 @@ def CreateReplayParser():
     parser.add_argument('--paused', action='store_true', default=False, help='Pause after replaying the first frame (same as "--pause-frame 1"; forwarded to replay tool)')
     parser.add_argument('--screenshot-all', action='store_true', default=False, help='Generate screenshots for all frames.  When this option is specified, --screenshots is ignored (forwarded to replay tool)')
     parser.add_argument('--screenshots', metavar='RANGES', help='Generate screenshots for the specified frames.  Target frames are specified as a comma separated list of frame ranges.  A frame range can be specified as a single value, to specify a single frame, or as two hyphenated values, to specify the first and last frames to process.  Frame ranges should be specified in ascending order and cannot overlap.  Note that frame numbering is 1-based (i.e. the first frame is frame 1).  Example: 200,301-305 will generate six screenshots (forwarded to replay tool)')
-    parser.add_argument('--screenshot-format', metavar='FORMAT', choices=['bmp'], help='Image file format to use for screenshot generation.  Available formats are: bmp (forwarded to replay tool)')
+    parser.add_argument('--screenshot-format', metavar='FORMAT', choices=['bmp', 'png'], help='Image file format to use for screenshot generation.  Available formats are: bmp, png (forwarded to replay tool)')
     parser.add_argument('--screenshot-dir', metavar='DIR', help='Directory to write screenshots. Default is "/sdcard" (forwarded to replay tool)')
     parser.add_argument('--screenshot-prefix', metavar='PREFIX', help='Prefix to apply to the screenshot file name.  Default is "screenshot" (forwarded to replay tool)')
     parser.add_argument('--sfa', '--skip-failed-allocations', action='store_true', default=False, help='Skip vkAllocateMemory, vkAllocateCommandBuffers, and vkAllocateDescriptorSets calls that failed during capture (forwarded to replay tool)')
@@ -81,6 +81,13 @@ def CreateReplayParser():
     parser.add_argument('--validate', action='store_true', default=False, help='Enables the Khronos Vulkan validation layer (forwarded to replay tool)')
     parser.add_argument('--onhb', '--omit-null-hardware-buffers', action='store_true', default=False, help='Omit Vulkan calls that would pass a NULL AHardwareBuffer* (forwarded to replay tool)')
     parser.add_argument('--use-captured-swapchain-indices', action='store_true', default=False, help='Use the swapchain indices stored in the capture directly on the swapchain setup for replay. The default without this option is to use a Virtual Swapchain of images which match the swapchain in effect at capture time and which are copied to the underlying swapchain of the implementation being replayed on.')
+    parser.add_argument('--mfr', '--measurement-frame-range', metavar='START-END', help='Custom framerange to measure FPS for. This range will include the start frame but not the end frame. The measurement frame range defaults to all frames except the loading frame but can be configured for any range. If the end frame is past the last frame in the trace it will be clamped to the frame after the last (so in that case the results would include the last frame). (forwarded to replay tool)')
+    parser.add_argument('--measurement-file', metavar='DEVICE_FILE', help='Write measurements to a file at the specified path. Default is: \'/sdcard/gfxrecon-measurements.json\' on android and \'./gfxrecon-measurements.json\' on desktop. (forwarded to replay tool)')
+    parser.add_argument('--quit-after-measurement-range', action='store_true', default=False, help='If this is specified the replayer will abort when it reaches the <end_frame> specified in the --measurement-frame-range argument. (forwarded to replay tool)')
+    parser.add_argument('--flush-measurement-range', action='store_true', default=False, help='If this is specified the replayer will flush and wait for all current GPU work to finish at the start and end of the measurement range. (forwarded to replay tool)')
+    parser.add_argument('--vssb', '--virtual-swapchain-skip-blit', action='store_true', default=False, help='Skip blit to real swapchain to gain performance during replay. (forwarded to replay tool)')
+    parser.add_argument('--sgfs', '--skip-get-fence-status', metavar='STATUS', default=0, help='Specify behaviour to skip calls to vkWaitForFences and vkGetFenceStatus. Default is 0 - No skip (forwarded to replay tool)')
+    parser.add_argument('--sgfr', '--skip-get-fence-ranges', metavar='FRAME-RANGES', default='', help='Frame ranges where --sgfs applies. Default is all frames (forwarded to replay tool)')
 
     parser.add_argument('-m', '--memory-translation', metavar='MODE', choices=['none', 'remap', 'realign', 'rebind'], help='Enable memory translation for replay on GPUs with memory types that are not compatible with the capture GPU\'s memory types.  Available modes are: none, remap, realign, rebind (forwarded to replay tool)')
     parser.add_argument('file', nargs='?', help='File on device to play (forwarded to replay tool)')
@@ -141,6 +148,33 @@ def MakeExtrasString(args):
 
     if args.use_captured_swapchain_indices:
         arg_list.append('--use-captured-swapchain-indices')
+
+    if args.vssb:
+        arg_list.append('--vssb')
+        
+    if args.mfr:
+        arg_list.append('--mfr')
+        arg_list.append('{}'.format(args.mfr))
+
+    if args.measurement_file:
+        arg_list.append('--measurement-file')
+        arg_list.append('{}'.format(args.measurement_file))
+
+    if args.quit_after_measurement_range:
+        arg_list.append('--quit-after-measurement-range')
+        arg_list.append('{}'.format(args.quit_after_measurement_range))
+
+    if args.flush_measurement_range:
+        arg_list.append('--flush-measurement-range')
+        arg_list.append('{}'.format(args.flush_measurement_range))
+
+    if args.sgfs:
+        arg_list.append('--sgfs')
+        arg_list.append('{}'.format(args.sgfs))
+
+    if args.sgfr:
+        arg_list.append('--sgfr')
+        arg_list.append('{}'.format(args.sgfr))
 
     if args.memory_translation:
         arg_list.append('-m')

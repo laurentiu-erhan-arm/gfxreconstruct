@@ -1,6 +1,7 @@
 /*
 ** Copyright (c) 2018-2021 Valve Corporation
 ** Copyright (c) 2018-2021 LunarG, Inc.
+** Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -53,6 +54,7 @@ enum ApiFamilyId : uint16_t
     ApiFamily_Vulkan = 1,
     ApiFamily_Dxgi   = 2,
     ApiFamily_D3D12  = 3,
+    ApiFamily_AGS    = 4,
 };
 
 enum ApiCallId : uint32_t
@@ -657,6 +659,30 @@ enum ApiCallId : uint32_t
     ApiCall_vkReleaseSwapchainImagesEXT                                                           = MakeApiCallId(ApiFamily_Vulkan, 0x12b1),
     ApiCall_vkCmdDrawClusterHUAWEI                                                                = MakeApiCallId(ApiFamily_Vulkan, 0x12b2),
     ApiCall_vkCmdDrawClusterIndirectHUAWEI                                                        = MakeApiCallId(ApiFamily_Vulkan, 0x12b3),
+    ApiCall_vkGetPhysicalDeviceVideoCapabilitiesKHR                                               = MakeApiCallId(ApiFamily_Vulkan, 0x12b4),
+    ApiCall_vkGetPhysicalDeviceVideoFormatPropertiesKHR                                           = MakeApiCallId(ApiFamily_Vulkan, 0x12b5),
+    ApiCall_vkCreateVideoSessionKHR                                                               = MakeApiCallId(ApiFamily_Vulkan, 0x12b6),
+    ApiCall_vkDestroyVideoSessionKHR                                                              = MakeApiCallId(ApiFamily_Vulkan, 0x12b7),
+    ApiCall_vkGetVideoSessionMemoryRequirementsKHR                                                = MakeApiCallId(ApiFamily_Vulkan, 0x12b8),
+    ApiCall_vkBindVideoSessionMemoryKHR                                                           = MakeApiCallId(ApiFamily_Vulkan, 0x12b9),
+    ApiCall_vkCreateVideoSessionParametersKHR                                                     = MakeApiCallId(ApiFamily_Vulkan, 0x12ba),
+    ApiCall_vkUpdateVideoSessionParametersKHR                                                     = MakeApiCallId(ApiFamily_Vulkan, 0x12bb),
+    ApiCall_vkDestroyVideoSessionParametersKHR                                                    = MakeApiCallId(ApiFamily_Vulkan, 0x12bc),
+    ApiCall_vkCmdBeginVideoCodingKHR                                                              = MakeApiCallId(ApiFamily_Vulkan, 0x12bd),
+    ApiCall_vkCmdEndVideoCodingKHR                                                                = MakeApiCallId(ApiFamily_Vulkan, 0x12be),
+    ApiCall_vkCmdControlVideoCodingKHR                                                            = MakeApiCallId(ApiFamily_Vulkan, 0x12bf),
+    ApiCall_vkCmdDecodeVideoKHR                                                                   = MakeApiCallId(ApiFamily_Vulkan, 0x12c0),
+    ApiCall_vkCmdEncodeVideoKHR                                                                   = MakeApiCallId(ApiFamily_Vulkan, 0x12c1),
+    ApiCall_vkCmdSetDiscardRectangleEnableEXT                                                     = MakeApiCallId(ApiFamily_Vulkan, 0x12c2),
+    ApiCall_vkCmdSetDiscardRectangleModeEXT                                                       = MakeApiCallId(ApiFamily_Vulkan, 0x12c3),
+    ApiCall_vkCmdSetExclusiveScissorEnableNV                                                      = MakeApiCallId(ApiFamily_Vulkan, 0x12c4),
+    ApiCall_vkMapMemory2KHR                                                                       = MakeApiCallId(ApiFamily_Vulkan, 0x12c5),
+    ApiCall_vkUnmapMemory2KHR                                                                     = MakeApiCallId(ApiFamily_Vulkan, 0x12c6),
+    ApiCall_vkCreateShadersEXT                                                                    = MakeApiCallId(ApiFamily_Vulkan, 0x12c7),
+    ApiCall_vkDestroyShaderEXT                                                                    = MakeApiCallId(ApiFamily_Vulkan, 0x12c8),
+    ApiCall_vkGetShaderBinaryDataEXT                                                              = MakeApiCallId(ApiFamily_Vulkan, 0x12c9),
+    ApiCall_vkCmdBindShadersEXT                                                                   = MakeApiCallId(ApiFamily_Vulkan, 0x12ca),
+    ApiCall_vkCmdSetAttachmentFeedbackLoopEnableEXT                                               = MakeApiCallId(ApiFamily_Vulkan, 0x12cb),
 
     ApiCall_VulkanLast,
 
@@ -1168,6 +1194,19 @@ enum ApiCallId : uint32_t
     ApiCall_ID3D12DebugCommandQueue1_AssertTextureLayout                                          = MakeApiCallId(ApiFamily_D3D12, 0x1142),
     ApiCall_ID3D12DebugCommandList3_AssertResourceAccess                                          = MakeApiCallId(ApiFamily_D3D12, 0x1143),
     ApiCall_ID3D12DebugCommandList3_AssertTextureLayout                                           = MakeApiCallId(ApiFamily_D3D12, 0x1144),
+
+    // AGS API
+    // amd_ags.h
+    ApiCall_Ags_agsInitialize_6_0_1                                                               = MakeApiCallId(ApiFamily_AGS, 0x1000),
+    ApiCall_Ags_agsDeInitialize_6_0_1                                                             = MakeApiCallId(ApiFamily_AGS, 0x1001),
+    ApiCall_Ags_agsDriverExtensionsDX12_CreateDevice_6_0_1                                        = MakeApiCallId(ApiFamily_AGS, 0x1002),
+    ApiCall_Ags_agsDriverExtensionsDX12_DestroyDevice_6_0_1                                       = MakeApiCallId(ApiFamily_AGS, 0x1003),
+    ApiCall_Ags_agsCheckDriverVersion_6_0_1                                                       = MakeApiCallId(ApiFamily_AGS, 0x1004),
+    ApiCall_Ags_agsGetVersionNumber_6_0_1                                                         = MakeApiCallId(ApiFamily_AGS, 0x1005),
+    ApiCall_Ags_agsSetDisplayMode_6_0_1                                                           = MakeApiCallId(ApiFamily_AGS, 0x1006),
+    ApiCall_Ags_agsDriverExtensionsDX12_PushMarker_6_0_1                                          = MakeApiCallId(ApiFamily_AGS, 0x1007),
+    ApiCall_Ags_agsDriverExtensionsDX12_PopMarker_6_0_1                                           = MakeApiCallId(ApiFamily_AGS, 0x1008),
+    ApiCall_Ags_agsDriverExtensionsDX12_SetMarker_6_0_1                                           = MakeApiCallId(ApiFamily_AGS, 0x1009),
 
     ApiCall_D3D12Last,
 

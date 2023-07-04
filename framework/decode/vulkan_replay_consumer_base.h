@@ -73,7 +73,7 @@ class VulkanReplayConsumerBase : public VulkanConsumer
 
     virtual ~VulkanReplayConsumerBase() override;
 
-    virtual void Process_ExeFileInfo(util::filepath::FileInfo& info_record)
+    virtual void Process_ExeFileInfo(util::filepath::FileInfo& info_record) override
     {
         gfxrecon::util::filepath::CheckReplayerName(info_record.AppName);
     }
@@ -475,6 +475,13 @@ class VulkanReplayConsumerBase : public VulkanConsumer
         PhysicalDeviceInfo*                                            physical_device_info,
         StructPointerDecoder<Decoded_VkPhysicalDeviceSurfaceInfo2KHR>* pSurfaceInfo,
         StructPointerDecoder<Decoded_VkSurfaceCapabilities2KHR>*       pSurfaceCapabilities);
+
+    VkResult OverrideGetPhysicalDeviceToolProperties(
+        PFN_vkGetPhysicalDeviceToolProperties                         func,
+        VkResult                                                      original_result,
+        const PhysicalDeviceInfo*                                     physical_device_info,
+        PointerDecoder<uint32_t>*                                     pToolCount,
+        StructPointerDecoder<Decoded_VkPhysicalDeviceToolProperties>* pToolProperties);
 
     VkResult OverrideWaitForFences(PFN_vkWaitForFences                  func,
                                    VkResult                             original_result,
@@ -1069,7 +1076,7 @@ class VulkanReplayConsumerBase : public VulkanConsumer
     std::shared_ptr<application::Application>                        application_;
     VulkanObjectInfoTable                                            object_info_table_;
     ActiveWindows                                                    active_windows_;
-    VulkanReplayOptions                                              options_;
+    const VulkanReplayOptions                                        options_;
     bool                                                             loading_trim_state_;
     bool                                                             have_imported_semaphores_;
     SwapchainImageTracker                                            swapchain_image_tracker_;
@@ -1087,6 +1094,17 @@ class VulkanReplayConsumerBase : public VulkanConsumer
 
     // Used to track allocated external memory if replay uses VkImportMemoryHostPointerInfoEXT
     std::unordered_map<VkDeviceMemory, std::pair<void*, size_t>> external_memory_;
+
+    // Temporary data used by OverrideQueuePresentKHR
+    std::vector<VkSwapchainKHR>       valid_swapchains_;
+    std::vector<uint32_t>             modified_image_indices_;
+    std::vector<uint32_t>             modified_device_masks_;
+    std::vector<VkPresentRegionKHR>   modified_regions_;
+    std::vector<VkPresentTimeGOOGLE>  modified_times_;
+    std::vector<const SemaphoreInfo*> removed_semaphores_;
+    std::unordered_set<uint32_t>      removed_swapchain_indices_;
+    std::vector<uint32_t>             capture_image_indices_;
+    std::vector<SwapchainKHRInfo*>    swapchain_infos_;
 };
 
 GFXRECON_END_NAMESPACE(decode)

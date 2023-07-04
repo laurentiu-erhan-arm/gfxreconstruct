@@ -1,6 +1,6 @@
 /*
 ** Copyright (c) 2021 LunarG, Inc.
-** Copyright (c) 2021 Advanced Micro Devices, Inc. All rights reserved.
+** Copyright (c) 2021-2023 Advanced Micro Devices, Inc. All rights reserved.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -26,6 +26,7 @@
 
 #include "util/defines.h"
 #include "util/logging.h"
+#include "util/options.h"
 #include "util/platform.h"
 #include "graphics/dx12_image_renderer.h"
 #include "format/format.h"
@@ -66,6 +67,7 @@ typedef _com_ptr_t<_com_IIID<ID3D12StateObjectProperties, &__uuidof(ID3D12StateO
 typedef _com_ptr_t<
     _com_IIID<ID3D12VersionedRootSignatureDeserializer, &__uuidof(ID3D12VersionedRootSignatureDeserializer)>>
     ID3D12VersionedRootSignatureDeserializerComPtr;
+typedef _com_ptr_t<_com_IIID<ID3D12Object, &__uuidof(ID3D12Object)>> ID3D12ObjectComPtr;
 
 struct ActiveAdapterInfo
 {
@@ -76,6 +78,19 @@ struct ActiveAdapterInfo
 };
 
 typedef std::map<int64_t, ActiveAdapterInfo> ActiveAdapterMap;
+
+static const uint8_t  kAdapterTypeMask  = 0x3;
+static const uint32_t kAdapterTypeShift = 0;
+static const uint32_t kAdapterIdMask    = 0xFFFFFFFc;
+static const uint32_t kAdapterIdShift   = 2;
+
+struct AdapterSubmissionMapping
+{
+    std::unordered_map<format::HandleId, format::HandleId> queue_to_device_map;
+    std::unordered_map<format::HandleId, format::HandleId> device_to_adapter_map;
+    std::unordered_map<format::HandleId, int64_t>          adapter_to_luid_map;
+    std::unordered_map<format::HandleId, uint64_t>         adapter_submit_counts;
+};
 
 struct ResourceStateInfo
 {
@@ -91,10 +106,15 @@ void TakeScreenshot(std::unique_ptr<gfxrecon::graphics::DX12ImageRenderer>& imag
                     ID3D12CommandQueue*                                     queue,
                     IDXGISwapChain*                                         swapchain,
                     uint32_t                                                frame_num,
-                    const std::string&                                      filename_prefix);
+                    const std::string&                                      filename_prefix,
+                    gfxrecon::util::ScreenshotFormat                        screenshot_format);
 
 // Maps a given sub resource and returns a pointer to the mapped region in data_ptr.
-HRESULT MapSubresource(ID3D12Resource* resource, UINT subresource, const D3D12_RANGE* read_range, uint8_t*& data_ptr);
+HRESULT MapSubresource(ID3D12Resource*    resource,
+                       UINT               subresource,
+                       const D3D12_RANGE* read_range,
+                       uint8_t*&          data_ptr,
+                       bool               is_texture_with_unknown_layout = false);
 
 // Waits for the given queue to complete all pending tasks.
 HRESULT WaitForQueue(ID3D12CommandQueue* queue, ID3D12Fence* fence = nullptr, uint64_t fence_value = 0);
@@ -170,6 +190,8 @@ uint64_t GetSubresourceWriteDataSize(
 
 void TrackAdapters(HRESULT result, void** ppfactory, graphics::dx12::ActiveAdapterMap& adapters);
 
+void RemoveDeactivatedAdapters(graphics::dx12::ActiveAdapterMap& adapters);
+
 format::DxgiAdapterDesc* MarkActiveAdapter(ID3D12Device* device, graphics::dx12::ActiveAdapterMap& adapters);
 
 // Query adapter and index by LUID
@@ -178,31 +200,69 @@ bool GetAdapterAndIndexbyLUID(LUID                              luid,
                               uint32_t&                         index,
                               graphics::dx12::ActiveAdapterMap& adapters);
 
+// Get list of active adapters
+void GetActiveAdapterLuids(graphics::dx12::ActiveAdapterMap adapters, std::vector<LUID>& adapter_luids);
+
 // Qeury the D3D12Device's IDXGIAdatper3 interface and the adapter's index
 bool GetAdapterAndIndexbyDevice(ID3D12Device*                     device,
                                 IDXGIAdapter3*&                   adapter3_ptr,
                                 uint32_t&                         index,
                                 graphics::dx12::ActiveAdapterMap& adapters);
 
+format::DxgiAdapterDesc* GetAdapterDescByLUID(LUID parent_adapter_luid, graphics::dx12::ActiveAdapterMap& adapters);
+
 // Get the adapter at specified index
 IDXGIAdapter* GetAdapterbyIndex(graphics::dx12::ActiveAdapterMap& adapters, int32_t index);
 
+// Returns whether the device passed represents a unified memory architecture
+// (UMA) GPU as with most integrated graphics / APUs and mobile SOCs.
+// The pointer is assumed to be valid.
+// If the underlying D3D call fails, the function will also return false and the
+// error will be logged.
+bool IsUma(ID3D12Device* device);
+
 // This function is used to get available GPU virtual memory.
 // The input is current adapter which created current device.
-uint64_t GetAvailableGpuAdapterMemory(IDXGIAdapter3* adapter);
+uint64_t GetAvailableGpuAdapterMemory(IDXGIAdapter3* adapter, bool is_uma);
 
 // This function is used to get available CPU memory.
 uint64_t GetAvailableCpuMemory(double max_usage);
 
 // Give require memory size to check if there are enough CPU&GPU memory to allocate the resource. If max_cpu_mem_usage
 // > 1.0, the result is not limited by available physical memory.
-bool IsMemoryAvailable(uint64_t requried_memory, IDXGIAdapter3* adapter, double max_cpu_mem_usage);
+bool IsMemoryAvailable(uint64_t requried_memory, IDXGIAdapter3* adapter, double max_cpu_mem_usage, bool is_uma);
 
 // Get GPU memory usage by resource desc
 uint64_t GetResourceSizeInBytes(ID3D12Device* device, const D3D12_RESOURCE_DESC* desc);
 uint64_t GetResourceSizeInBytes(ID3D12Device8* device, const D3D12_RESOURCE_DESC1* desc);
 
 bool IsSoftwareAdapter(const format::DxgiAdapterDesc& adapter_desc);
+
+bool IsTextureWithUnknownLayout(D3D12_RESOURCE_DIMENSION dimension, D3D12_TEXTURE_LAYOUT layout);
+
+bool VerifyAgilitySDKRuntime();
+
+inline void InjectAdapterCaptureId(uint32_t& extra_info, format::HandleId capture_id)
+{
+    extra_info &= ~(kAdapterIdMask);
+    extra_info |= static_cast<format::HandleId>(capture_id) << kAdapterIdShift;
+}
+
+inline void InjectAdapterType(uint32_t& extra_info, format::AdapterType type)
+{
+    extra_info &= ~(kAdapterTypeMask);
+    extra_info |= static_cast<format::AdapterType>(type) << kAdapterTypeShift;
+}
+
+inline format::HandleId ExtractAdapterCaptureId(uint32_t extra_info)
+{
+    return static_cast<format::HandleId>((extra_info & kAdapterIdMask) >> kAdapterIdShift);
+}
+
+inline format::AdapterType ExtractAdapterType(uint32_t extra_info)
+{
+    return static_cast<format::AdapterType>((extra_info & kAdapterTypeMask));
+}
 
 GFXRECON_END_NAMESPACE(dx12)
 GFXRECON_END_NAMESPACE(graphics)

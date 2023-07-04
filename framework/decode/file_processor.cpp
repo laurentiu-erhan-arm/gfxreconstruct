@@ -1,6 +1,7 @@
 /*
 ** Copyright (c) 2018-2020,2022 Valve Corporation
 ** Copyright (c) 2018-2020,2022 LunarG, Inc.
+** Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -230,6 +231,37 @@ bool FileProcessor::ProcessFileHeader()
     }
 
     return success;
+}
+
+void FileProcessor::ProcessAnnotation()
+{
+    format::BlockHeader block_header;
+    bool                success = ReadBlockHeader(&block_header);
+    if (block_header.type == format::BlockType::kAnnotation)
+    {
+        if (annotation_handler_ != nullptr)
+        {
+            format::AnnotationType annotation_type = format::AnnotationType::kUnknown;
+
+            success = ReadBytes(&annotation_type, sizeof(annotation_type));
+
+            if (success)
+            {
+                success = ProcessAnnotation(block_header, annotation_type);
+            }
+            else
+            {
+                HandleBlockReadError(kErrorReadingBlockHeader, "Failed to read annotation block header");
+            }
+        }
+        else
+        {
+            // If there is no annotation handler to process the annotation, we can skip the annotation
+            // block.
+            GFXRECON_CHECK_CONVERSION_DATA_LOSS(size_t, block_header.size);
+            success = SkipBytes(static_cast<size_t>(block_header.size));
+        }
+    }
 }
 
 bool FileProcessor::ProcessBlocks()
@@ -1668,8 +1700,8 @@ bool FileProcessor::ProcessMetaData(const format::BlockHeader& block_header, for
                                        sizeof(adapter_info_header.adapter_desc.LuidLowPart));
         success = success && ReadBytes(&adapter_info_header.adapter_desc.LuidHighPart,
                                        sizeof(adapter_info_header.adapter_desc.LuidHighPart));
-        success = success && ReadBytes(&adapter_info_header.adapter_desc.type, 
-                                       sizeof(adapter_info_header.adapter_desc.type));
+        success = success && ReadBytes(&adapter_info_header.adapter_desc.extra_info,
+                                       sizeof(adapter_info_header.adapter_desc.extra_info));
 
         if (success)
         {

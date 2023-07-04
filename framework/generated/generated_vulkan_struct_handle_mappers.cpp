@@ -1,6 +1,6 @@
 /*
-** Copyright (c) 2018-2021 Valve Corporation
-** Copyright (c) 2018-2022 LunarG, Inc.
+** Copyright (c) 2018-2023 Valve Corporation
+** Copyright (c) 2018-2023 LunarG, Inc.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -184,17 +184,6 @@ void MapStructHandles(Decoded_VkBindSparseInfo* wrapper, const VulkanObjectInfoT
     }
 }
 
-void MapStructHandles(Decoded_VkBufferCreateInfo* wrapper, const VulkanObjectInfoTable& object_info_table)
-{
-    if (wrapper != nullptr)
-    {
-        if (wrapper->pNext)
-        {
-            MapPNextStructHandles(wrapper->pNext->GetPointer(), wrapper->pNext->GetMetaStructPointer(), object_info_table);
-        }
-    }
-}
-
 void MapStructHandles(Decoded_VkBufferViewCreateInfo* wrapper, const VulkanObjectInfoTable& object_info_table)
 {
     if ((wrapper != nullptr) && (wrapper->decoded_value != nullptr))
@@ -262,11 +251,6 @@ void MapStructHandles(Decoded_VkComputePipelineCreateInfo* wrapper, const Vulkan
     if ((wrapper != nullptr) && (wrapper->decoded_value != nullptr))
     {
         VkComputePipelineCreateInfo* value = wrapper->decoded_value;
-
-        if (wrapper->pNext)
-        {
-            MapPNextStructHandles(wrapper->pNext->GetPointer(), wrapper->pNext->GetMetaStructPointer(), object_info_table);
-        }
 
         MapStructHandles(wrapper->stage, object_info_table);
 
@@ -758,14 +742,6 @@ void MapStructHandles(Decoded_VkRenderingInfo* wrapper, const VulkanObjectInfoTa
     }
 }
 
-void MapStructHandles(Decoded_VkDeviceBufferMemoryRequirements* wrapper, const VulkanObjectInfoTable& object_info_table)
-{
-    if (wrapper != nullptr)
-    {
-        MapStructArrayHandles<Decoded_VkBufferCreateInfo>(wrapper->pCreateInfo->GetMetaStructPointer(), 1, object_info_table);
-    }
-}
-
 void MapStructHandles(Decoded_VkDeviceImageMemoryRequirements* wrapper, const VulkanObjectInfoTable& object_info_table)
 {
     if (wrapper != nullptr)
@@ -874,6 +850,76 @@ void MapStructHandles(Decoded_VkDisplaySurfaceCreateInfoKHR* wrapper, const Vulk
         VkDisplaySurfaceCreateInfoKHR* value = wrapper->decoded_value;
 
         value->displayMode = handle_mapping::MapHandle<DisplayModeKHRInfo>(wrapper->displayMode, object_info_table, &VulkanObjectInfoTable::GetDisplayModeKHRInfo);
+    }
+}
+
+void MapStructHandles(Decoded_VkVideoPictureResourceInfoKHR* wrapper, const VulkanObjectInfoTable& object_info_table)
+{
+    if ((wrapper != nullptr) && (wrapper->decoded_value != nullptr))
+    {
+        VkVideoPictureResourceInfoKHR* value = wrapper->decoded_value;
+
+        value->imageViewBinding = handle_mapping::MapHandle<ImageViewInfo>(wrapper->imageViewBinding, object_info_table, &VulkanObjectInfoTable::GetImageViewInfo);
+    }
+}
+
+void MapStructHandles(Decoded_VkVideoReferenceSlotInfoKHR* wrapper, const VulkanObjectInfoTable& object_info_table)
+{
+    if (wrapper != nullptr)
+    {
+        MapStructArrayHandles<Decoded_VkVideoPictureResourceInfoKHR>(wrapper->pPictureResource->GetMetaStructPointer(), 1, object_info_table);
+    }
+}
+
+void MapStructHandles(Decoded_VkBindVideoSessionMemoryInfoKHR* wrapper, const VulkanObjectInfoTable& object_info_table)
+{
+    if ((wrapper != nullptr) && (wrapper->decoded_value != nullptr))
+    {
+        VkBindVideoSessionMemoryInfoKHR* value = wrapper->decoded_value;
+
+        value->memory = handle_mapping::MapHandle<DeviceMemoryInfo>(wrapper->memory, object_info_table, &VulkanObjectInfoTable::GetDeviceMemoryInfo);
+    }
+}
+
+void MapStructHandles(Decoded_VkVideoSessionParametersCreateInfoKHR* wrapper, const VulkanObjectInfoTable& object_info_table)
+{
+    if ((wrapper != nullptr) && (wrapper->decoded_value != nullptr))
+    {
+        VkVideoSessionParametersCreateInfoKHR* value = wrapper->decoded_value;
+
+        value->videoSessionParametersTemplate = handle_mapping::MapHandle<VideoSessionParametersKHRInfo>(wrapper->videoSessionParametersTemplate, object_info_table, &VulkanObjectInfoTable::GetVideoSessionParametersKHRInfo);
+
+        value->videoSession = handle_mapping::MapHandle<VideoSessionKHRInfo>(wrapper->videoSession, object_info_table, &VulkanObjectInfoTable::GetVideoSessionKHRInfo);
+    }
+}
+
+void MapStructHandles(Decoded_VkVideoBeginCodingInfoKHR* wrapper, const VulkanObjectInfoTable& object_info_table)
+{
+    if ((wrapper != nullptr) && (wrapper->decoded_value != nullptr))
+    {
+        VkVideoBeginCodingInfoKHR* value = wrapper->decoded_value;
+
+        value->videoSession = handle_mapping::MapHandle<VideoSessionKHRInfo>(wrapper->videoSession, object_info_table, &VulkanObjectInfoTable::GetVideoSessionKHRInfo);
+
+        value->videoSessionParameters = handle_mapping::MapHandle<VideoSessionParametersKHRInfo>(wrapper->videoSessionParameters, object_info_table, &VulkanObjectInfoTable::GetVideoSessionParametersKHRInfo);
+
+        MapStructArrayHandles<Decoded_VkVideoReferenceSlotInfoKHR>(wrapper->pReferenceSlots->GetMetaStructPointer(), wrapper->pReferenceSlots->GetLength(), object_info_table);
+    }
+}
+
+void MapStructHandles(Decoded_VkVideoDecodeInfoKHR* wrapper, const VulkanObjectInfoTable& object_info_table)
+{
+    if ((wrapper != nullptr) && (wrapper->decoded_value != nullptr))
+    {
+        VkVideoDecodeInfoKHR* value = wrapper->decoded_value;
+
+        value->srcBuffer = handle_mapping::MapHandle<BufferInfo>(wrapper->srcBuffer, object_info_table, &VulkanObjectInfoTable::GetBufferInfo);
+
+        MapStructHandles(wrapper->dstPictureResource, object_info_table);
+
+        MapStructArrayHandles<Decoded_VkVideoReferenceSlotInfoKHR>(wrapper->pSetupReferenceSlot->GetMetaStructPointer(), 1, object_info_table);
+
+        MapStructArrayHandles<Decoded_VkVideoReferenceSlotInfoKHR>(wrapper->pReferenceSlots->GetMetaStructPointer(), wrapper->pReferenceSlots->GetLength(), object_info_table);
     }
 }
 
@@ -1073,6 +1119,26 @@ void MapStructHandles(Decoded_VkPipelineExecutableInfoKHR* wrapper, const Vulkan
     }
 }
 
+void MapStructHandles(Decoded_VkMemoryMapInfoKHR* wrapper, const VulkanObjectInfoTable& object_info_table)
+{
+    if ((wrapper != nullptr) && (wrapper->decoded_value != nullptr))
+    {
+        VkMemoryMapInfoKHR* value = wrapper->decoded_value;
+
+        value->memory = handle_mapping::MapHandle<DeviceMemoryInfo>(wrapper->memory, object_info_table, &VulkanObjectInfoTable::GetDeviceMemoryInfo);
+    }
+}
+
+void MapStructHandles(Decoded_VkMemoryUnmapInfoKHR* wrapper, const VulkanObjectInfoTable& object_info_table)
+{
+    if ((wrapper != nullptr) && (wrapper->decoded_value != nullptr))
+    {
+        VkMemoryUnmapInfoKHR* value = wrapper->decoded_value;
+
+        value->memory = handle_mapping::MapHandle<DeviceMemoryInfo>(wrapper->memory, object_info_table, &VulkanObjectInfoTable::GetDeviceMemoryInfo);
+    }
+}
+
 void MapStructHandles(Decoded_VkPipelineLibraryCreateInfoKHR* wrapper, const VulkanObjectInfoTable& object_info_table)
 {
     if ((wrapper != nullptr) && (wrapper->decoded_value != nullptr))
@@ -1080,6 +1146,22 @@ void MapStructHandles(Decoded_VkPipelineLibraryCreateInfoKHR* wrapper, const Vul
         VkPipelineLibraryCreateInfoKHR* value = wrapper->decoded_value;
 
         value->pLibraries = handle_mapping::MapHandleArray<PipelineInfo>(&wrapper->pLibraries, object_info_table, &VulkanObjectInfoTable::GetPipelineInfo);
+    }
+}
+
+void MapStructHandles(Decoded_VkVideoEncodeInfoKHR* wrapper, const VulkanObjectInfoTable& object_info_table)
+{
+    if ((wrapper != nullptr) && (wrapper->decoded_value != nullptr))
+    {
+        VkVideoEncodeInfoKHR* value = wrapper->decoded_value;
+
+        value->dstBuffer = handle_mapping::MapHandle<BufferInfo>(wrapper->dstBuffer, object_info_table, &VulkanObjectInfoTable::GetBufferInfo);
+
+        MapStructHandles(wrapper->srcPictureResource, object_info_table);
+
+        MapStructArrayHandles<Decoded_VkVideoReferenceSlotInfoKHR>(wrapper->pSetupReferenceSlot->GetMetaStructPointer(), 1, object_info_table);
+
+        MapStructArrayHandles<Decoded_VkVideoReferenceSlotInfoKHR>(wrapper->pReferenceSlots->GetMetaStructPointer(), wrapper->pReferenceSlots->GetLength(), object_info_table);
     }
 }
 
@@ -1495,6 +1577,16 @@ void MapStructHandles(Decoded_VkAccelerationStructureTrianglesOpacityMicromapEXT
     }
 }
 
+void MapStructHandles(Decoded_VkAccelerationStructureTrianglesDisplacementMicromapNV* wrapper, const VulkanObjectInfoTable& object_info_table)
+{
+    if ((wrapper != nullptr) && (wrapper->decoded_value != nullptr))
+    {
+        VkAccelerationStructureTrianglesDisplacementMicromapNV* value = wrapper->decoded_value;
+
+        value->micromap = handle_mapping::MapHandle<MicromapEXTInfo>(wrapper->micromap, object_info_table, &VulkanObjectInfoTable::GetMicromapEXTInfo);
+    }
+}
+
 void MapStructHandles(Decoded_VkDescriptorSetBindingReferenceVALVE* wrapper, const VulkanObjectInfoTable& object_info_table)
 {
     if ((wrapper != nullptr) && (wrapper->decoded_value != nullptr))
@@ -1502,6 +1594,16 @@ void MapStructHandles(Decoded_VkDescriptorSetBindingReferenceVALVE* wrapper, con
         VkDescriptorSetBindingReferenceVALVE* value = wrapper->decoded_value;
 
         value->descriptorSetLayout = handle_mapping::MapHandle<DescriptorSetLayoutInfo>(wrapper->descriptorSetLayout, object_info_table, &VulkanObjectInfoTable::GetDescriptorSetLayoutInfo);
+    }
+}
+
+void MapStructHandles(Decoded_VkShaderCreateInfoEXT* wrapper, const VulkanObjectInfoTable& object_info_table)
+{
+    if ((wrapper != nullptr) && (wrapper->decoded_value != nullptr))
+    {
+        VkShaderCreateInfoEXT* value = wrapper->decoded_value;
+
+        value->pSetLayouts = handle_mapping::MapHandleArray<DescriptorSetLayoutInfo>(&wrapper->pSetLayouts, object_info_table, &VulkanObjectInfoTable::GetDescriptorSetLayoutInfo);
     }
 }
 
@@ -1670,6 +1772,9 @@ void MapPNextStructHandles(const void* value, void* wrapper, const VulkanObjectI
             break;
         case VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_TRIANGLES_OPACITY_MICROMAP_EXT:
             MapStructHandles(reinterpret_cast<Decoded_VkAccelerationStructureTrianglesOpacityMicromapEXT*>(wrapper), object_info_table);
+            break;
+        case VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_TRIANGLES_DISPLACEMENT_MICROMAP_NV:
+            MapStructHandles(reinterpret_cast<Decoded_VkAccelerationStructureTrianglesDisplacementMicromapNV*>(wrapper), object_info_table);
             break;
         case VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR:
             MapStructHandles(reinterpret_cast<Decoded_VkWriteDescriptorSetAccelerationStructureKHR*>(wrapper), object_info_table);

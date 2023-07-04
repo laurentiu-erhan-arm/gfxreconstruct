@@ -1,6 +1,6 @@
 /*
-** Copyright (c) 2019-2022 LunarG, Inc.
-** Copyright (c) 2021 Advanced Micro Devices, Inc. All rights reserved.
+** Copyright (c) 2019-2023 LunarG, Inc.
+** Copyright (c) 2021-2023 Advanced Micro Devices, Inc. All rights reserved.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -41,6 +41,7 @@
 #include "util/logging.h"
 #include "util/platform.h"
 #include "util/options.h"
+#include "util/strings.h"
 
 #include "vulkan/vulkan_core.h"
 
@@ -96,12 +97,24 @@ const char kForceWindowedShortArgument[]         = "--fw";
 const char kForceWindowedLongArgument[]          = "--force-windowed";
 const char kOutput[]                             = "--output";
 const char kMeasurementRangeArgument[]           = "--measurement-frame-range";
+const char kMeasurementFileArgument[]            = "--measurement-file";
 const char kQuitAfterMeasurementRangeOption[]    = "--quit-after-measurement-range";
 const char kFlushMeasurementRangeOption[]        = "--flush-measurement-range";
 const char kEnableUseCapturedSwapchainIndices[]  = "--use-captured-swapchain-indices";
+const char kVirtualSwapchainSkipBlit[]           = "--vssb";
+const char kFormatArgument[]                     = "--format";
+const char kIncludeBinariesOption[]              = "--include-binaries";
+const char kExpandFlagsOption[]                  = "--expand-flags";
+const char kFilePerFrameOption[]                 = "--file-per-frame";
+const char kPreloadMeasurementRangeOption[]      = "--preload-measurement-range";
+const char kWaitBeforePresent[]                  = "--wait-before-present";
+const char kSkipGetFenceStatus[]                 = "--skip-get-fence-status";
+const char kSkipGetFenceRanges[]                 = "--skip-get-fence-ranges";
+
 #if defined(WIN32)
-const char kApiFamilyOption[] = "--api";
-const char kDxTwoPassReplay[] = "--dx12-two-pass-replay";
+const char kApiFamilyOption[]       = "--api";
+const char kDxTwoPassReplay[]       = "--dx12-two-pass-replay";
+const char kDxOverrideObjectNames[] = "--dx12-override-object-names";
 #endif
 
 enum class WsiPlatform
@@ -135,6 +148,7 @@ const char kApiFamilyAll[]    = "all";
 #endif
 
 const char kScreenshotFormatBmp[] = "bmp";
+const char kScreenshotFormatPng[] = "png";
 
 #if defined(__ANDROID__)
 const char kDefaultScreenshotDir[] = "/sdcard";
@@ -420,16 +434,33 @@ static void GetLogSettings(const gfxrecon::util::ArgumentParser& arg_parser,
     log_settings.output_to_os_debug_string = arg_parser.IsOptionSet(kLogDebugView);
 }
 
-static gfxrecon::decode::ScreenshotFormat GetScreenshotFormat(const gfxrecon::util::ArgumentParser& arg_parser)
+static void GetMeasurementFilename(const gfxrecon::util::ArgumentParser& arg_parser, std::string& file_name)
 {
-    gfxrecon::decode::ScreenshotFormat format = gfxrecon::decode::ScreenshotFormat::kBmp;
-    const auto&                        value  = arg_parser.GetArgumentValue(kScreenshotFormatArgument);
+    file_name = arg_parser.GetArgumentValue(kMeasurementFileArgument);
+    if (file_name.empty())
+    {
+#if defined(__ANDROID__)
+        file_name = "/sdcard/gfxrecon-measurements.json";
+#else
+        file_name = "./gfxrecon-measurements.json";
+#endif
+    }
+}
+
+static gfxrecon::util::ScreenshotFormat GetScreenshotFormat(const gfxrecon::util::ArgumentParser& arg_parser)
+{
+    gfxrecon::util::ScreenshotFormat format = gfxrecon::util::ScreenshotFormat::kBmp;
+    const auto&                      value  = arg_parser.GetArgumentValue(kScreenshotFormatArgument);
 
     if (!value.empty())
     {
         if (gfxrecon::util::platform::StringCompareNoCase(kScreenshotFormatBmp, value.c_str()) == 0)
         {
-            format = gfxrecon::decode::ScreenshotFormat::kBmp;
+            format = gfxrecon::util::ScreenshotFormat::kBmp;
+        }
+        else if (gfxrecon::util::platform::StringCompareNoCase(kScreenshotFormatPng, value.c_str()) == 0)
+        {
+            format = gfxrecon::util::ScreenshotFormat::kPng;
         }
         else
         {
@@ -494,54 +525,31 @@ GetMeasurementFrameRange(const gfxrecon::util::ArgumentParser& arg_parser, uint3
     const auto& value = arg_parser.GetArgumentValue(kMeasurementRangeArgument);
     if (!value.empty())
     {
-        std::string range = value;
+        std::vector<std::string> values  = gfxrecon::util::strings::SplitString(value, '-');
+        bool                     invalid = false;
 
-        if (std::count(range.begin(), range.end(), '-') != 1)
+        if (values.size() != 2)
         {
             GFXRECON_LOG_WARNING(
                 "Ignoring invalid measurement frame range \"%s\". Must have format: <start_frame>-<end_frame>",
-                range.c_str());
-            return false;
+                value.c_str());
+            invalid = true;
         }
 
-        // Remove whitespace.
-        range.erase(std::remove_if(range.begin(), range.end(), ::isspace), range.end());
-
-        // Split string on '-' delimiter.
-        bool                     invalid = false;
-        std::vector<std::string> values;
-        std::istringstream       range_input;
-        range_input.str(range);
-
-        for (std::string token; std::getline(range_input, token, '-');)
+        for (std::string& num : values)
         {
-            if (token.empty())
-            {
-                break;
-            }
+            gfxrecon::util::strings::RemoveWhitespace(num);
 
             // Check that the range string only contains numbers.
-            size_t count = std::count_if(token.begin(), token.end(), ::isdigit);
-            if (count == token.length())
-            {
-                values.push_back(token);
-            }
-            else
+            const size_t count = std::count_if(num.begin(), num.end(), ::isdigit);
+            if (count != num.length())
             {
                 GFXRECON_LOG_WARNING(
                     "Ignoring invalid measurement frame range \"%s\", which contains non-numeric values",
-                    range.c_str());
+                    value.c_str());
                 invalid = true;
                 break;
             }
-        }
-
-        if (values.size() < 2)
-        {
-            GFXRECON_LOG_WARNING("Ignoring invalid measurement frame range \"%s\", does not have two values.",
-                                 range.c_str());
-
-            invalid = true;
         }
 
         if (!invalid)
@@ -553,7 +561,7 @@ GetMeasurementFrameRange(const gfxrecon::util::ArgumentParser& arg_parser, uint3
             {
                 GFXRECON_LOG_WARNING("Ignoring invalid measurement frame range \"%s\", where first frame is "
                                      "greater than or equal to the last frame",
-                                     range.c_str());
+                                     value.c_str());
 
                 return false;
             }
@@ -561,10 +569,6 @@ GetMeasurementFrameRange(const gfxrecon::util::ArgumentParser& arg_parser, uint3
             start_frame = start_frame_arg;
             end_frame   = end_frame_arg;
             return true;
-        }
-        else
-        {
-            GFXRECON_LOG_WARNING("Ignoring invalid measurement frame range \"%s\".", range.c_str());
         }
     }
 
@@ -777,6 +781,11 @@ GetVulkanReplayOptions(const gfxrecon::util::ArgumentParser&           arg_parse
         replay_options.enable_use_captured_swapchain_indices = true;
     }
 
+    if (arg_parser.IsOptionSet(kVirtualSwapchainSkipBlit))
+    {
+        replay_options.virtual_swapchain_skip_blit = true;
+    }
+
     replay_options.replace_dir = arg_parser.GetArgumentValue(kShaderReplaceArgument);
     replay_options.create_resource_allocator =
         GetCreateResourceAllocatorFunc(arg_parser, filename, replay_options, tracked_object_info_table);
@@ -801,6 +810,46 @@ GetVulkanReplayOptions(const gfxrecon::util::ArgumentParser&           arg_parse
         replay_options.surface_index = std::stoi(surface_index);
     }
 
+    if (arg_parser.IsOptionSet(kWaitBeforePresent))
+    {
+        replay_options.wait_before_present = true;
+    }
+
+    const std::string& skip_get_fence_status = arg_parser.GetArgumentValue(kSkipGetFenceStatus);
+    if (!skip_get_fence_status.empty())
+    {
+        const int i_skip_get_fence_status = std::stoi(skip_get_fence_status);
+        if (i_skip_get_fence_status < static_cast<int>(gfxrecon::decode::SkipGetFenceStatus::COUNT))
+        {
+            replay_options.skip_get_fence_status =
+                static_cast<gfxrecon::decode::SkipGetFenceStatus>(i_skip_get_fence_status);
+        }
+        else
+        {
+            GFXRECON_LOG_FATAL("Unexpected value after '--skip-get-fence-status' : '%s'. Closing the program.",
+                               skip_get_fence_status.c_str());
+            abort();
+        }
+    }
+
+    const std::string& skip_get_fence_ranges = arg_parser.GetArgumentValue(kSkipGetFenceRanges);
+    if (skip_get_fence_ranges.empty())
+    {
+        gfxrecon::util::FrameRange range;
+        range.first = 1;
+        range.last  = std::numeric_limits<uint32_t>::max();
+        replay_options.skip_get_fence_ranges.push_back(range);
+    }
+    else
+    {
+        replay_options.skip_get_fence_ranges = gfxrecon::util::GetFrameRanges(skip_get_fence_ranges);
+    }
+
+    if (arg_parser.IsOptionSet(kPreloadMeasurementRangeOption))
+    {
+        replay_options.preload_measurement_range = true;
+    }
+
     return replay_options;
 }
 
@@ -822,6 +871,11 @@ static gfxrecon::decode::DxReplayOptions GetDxReplayOptions(const gfxrecon::util
     if (arg_parser.IsOptionSet(kDiscardCachedPsosLongOption) || arg_parser.IsOptionSet(kDiscardCachedPsosShortOption))
     {
         replay_options.discard_cached_psos = true;
+    }
+
+    if (arg_parser.IsOptionSet(kDxOverrideObjectNames))
+    {
+        replay_options.override_object_names = true;
     }
 
     replay_options.screenshot_ranges      = GetScreenshotRanges(arg_parser);

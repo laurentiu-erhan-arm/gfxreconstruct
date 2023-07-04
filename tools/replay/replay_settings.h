@@ -1,5 +1,6 @@
 /*
 ** Copyright (c) 2019-2022 LunarG, Inc.
+** Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -28,12 +29,14 @@
 const char kOptions[] =
     "-h|--help,--version,--log-debugview,--no-debug-popup,--paused,--sync,--sfa|--skip-failed-allocations,--"
     "opcd|--omit-pipeline-cache-data,--remove-unsupported,--validate,--debug-device-lost,--create-dummy-allocations,--"
-    "screenshot-all,--onhb|--omit-null-hardware-buffers,--qamr|--quit-after-measurement-"
-    "range,--fmr|--flush-measurement-range,--use-captured-swapchain-indices,--dcp,--discard-cached-psos";
+    "screenshot-all,--onhb|--omit-null-hardware-buffers,--qamr|--quit-after-measurement-range,--"
+    "fmr|--flush-measurement-range,--use-captured-swapchain-indices,--vssb|--virtual-swapchain-skip-blit,--"
+    "dcp,--discard-cached-psos,--dx12-override-object-names,--preload-measurement-range";
 const char kArguments[] =
     "--log-level,--log-file,--gpu,--gpu-group,--pause-frame,--wsi,--surface-index,-m|--memory-translation,"
     "--replace-shaders,--screenshots,--denied-messages,--allowed-messages,--screenshot-format,--"
-    "screenshot-dir,--screenshot-prefix,--mfr|--measurement-frame-range,--fw|--force-windowed";
+    "screenshot-dir,--screenshot-prefix,--mfr|--measurement-frame-range,--measurements-file,--fw|--force-windowed,"
+    "--sgfs|--skip-get-fence-status,--sgfr|--skip-get-fence-ranges";
 
 static void PrintUsage(const char* exe_name)
 {
@@ -58,7 +61,13 @@ static void PrintUsage(const char* exe_name)
     GFXRECON_WRITE_CONSOLE("\t\t\t[--onhb | --omit-null-hardware-buffers]");
     GFXRECON_WRITE_CONSOLE("\t\t\t[-m <mode> | --memory-translation <mode>]");
     GFXRECON_WRITE_CONSOLE("\t\t\t[--use-captured-swapchain-indices]");
+    GFXRECON_WRITE_CONSOLE("\t\t\t[--mfr|--measurement-frame-range <start-frame>-<end-frame>]");
+    GFXRECON_WRITE_CONSOLE("\t\t\t[--measurement-file <file>] [--quit-after-measurement-range]");
+    GFXRECON_WRITE_CONSOLE("\t\t\t[--flush-measurement-range]");
+    GFXRECON_WRITE_CONSOLE("\t\t\t[--vssb | --virtual-swapchain-skip-blit]");
     GFXRECON_WRITE_CONSOLE("\t\t\t[--fw <width,height> | --force-windowed <width,height>]");
+    GFXRECON_WRITE_CONSOLE("\t\t\t[--sgfs <status> | --skip-get-fence-status <status>]");
+    GFXRECON_WRITE_CONSOLE("\t\t\t[--sgfr <frame-ranges> | --skip-get-fence-ranges <frame-ranges>]");
 #if defined(WIN32)
     GFXRECON_WRITE_CONSOLE("\t\t\t[--log-level <level>] [--log-file <file>] [--log-debugview]");
 #if defined(_DEBUG)
@@ -104,6 +113,7 @@ static void PrintUsage(const char* exe_name)
     GFXRECON_WRITE_CONSOLE("          \t\tAvailable formats are:");
     GFXRECON_WRITE_CONSOLE("          \t\t    %s\t\tBitmap file format.  This is the default format.",
                            kScreenshotFormatBmp);
+    GFXRECON_WRITE_CONSOLE("          \t\t    %s\t\tPortable Network Graphics file format.", kScreenshotFormatPng);
     GFXRECON_WRITE_CONSOLE("  --screenshot-dir <dir>");
     GFXRECON_WRITE_CONSOLE("          \t\tDirectory to write screenshots.  Default is the current");
     GFXRECON_WRITE_CONSOLE("          \t\tworking directory.");
@@ -116,8 +126,8 @@ static void PrintUsage(const char* exe_name)
     GFXRECON_WRITE_CONSOLE("            \t\tDirect3D 12 capture.");
     GFXRECON_WRITE_CONSOLE("  --gpu <index>\t\tUse the specified device for replay, where index");
     GFXRECON_WRITE_CONSOLE("          \t\tis the zero-based index to the array of physical devices");
-    GFXRECON_WRITE_CONSOLE("          \t\treturned by vkEnumeratePhysicalDevices.  Replay may fail");
-    GFXRECON_WRITE_CONSOLE("          \t\tif the specified device is not compatible with the");
+    GFXRECON_WRITE_CONSOLE("          \t\treturned by vkEnumeratePhysicalDevices or IDXGIFactory1::EnumAdapters1.");
+    GFXRECON_WRITE_CONSOLE("          \t\tReplay may fail if the specified device is not compatible with the");
     GFXRECON_WRITE_CONSOLE("          \t\toriginal capture devices.");
 #if defined(WIN32)
     GFXRECON_WRITE_CONSOLE("")
@@ -173,6 +183,8 @@ static void PrintUsage(const char* exe_name)
         "          \t\tsetup for replay. The default without this option is to use a Virtual Swapchain");
     GFXRECON_WRITE_CONSOLE("          \t\tof images which match the swapchain in effect at capture time and which are");
     GFXRECON_WRITE_CONSOLE("          \t\tcopied to the underlying swapchain of the implementation being replayed on.");
+    GFXRECON_WRITE_CONSOLE("  --vssb");
+    GFXRECON_WRITE_CONSOLE("          \t\tSkip blit to real swapchain to gain performance during replay.");
     GFXRECON_WRITE_CONSOLE("  --measurement-frame-range <start_frame>-<end_frame>");
     GFXRECON_WRITE_CONSOLE("          \t\tCustom framerange to measure FPS for.");
     GFXRECON_WRITE_CONSOLE("          \t\tThis range will include the start frame but not the end frame.");
@@ -180,6 +192,10 @@ static void PrintUsage(const char* exe_name)
     GFXRECON_WRITE_CONSOLE("          \t\tframe but can be configured for any range. If the end frame is past the");
     GFXRECON_WRITE_CONSOLE("          \t\tlast frame in the trace it will be clamped to the frame after the last");
     GFXRECON_WRITE_CONSOLE("          \t\t(so in that case the results would include the last frame).");
+    GFXRECON_WRITE_CONSOLE("  --measurement-file <file>");
+    GFXRECON_WRITE_CONSOLE("          \t\tWrite measurements to a file at the specified path.");
+    GFXRECON_WRITE_CONSOLE("          \t\tDefault is: '/sdcard/gfxrecon-measurements.json' on android and");
+    GFXRECON_WRITE_CONSOLE("          \t\t'./gfxrecon-measurements.json' on desktop.");
     GFXRECON_WRITE_CONSOLE("  --quit-after-measurement-range");
     GFXRECON_WRITE_CONSOLE("          \t\tIf this is specified the replayer will abort");
     GFXRECON_WRITE_CONSOLE("          \t\twhen it reaches the <end_frame> specified in");
@@ -193,6 +209,16 @@ static void PrintUsage(const char* exe_name)
     GFXRECON_WRITE_CONSOLE("          \t\treturned by vkEnumeratePhysicalDeviceGroups.  Replay may fail");
     GFXRECON_WRITE_CONSOLE("          \t\tif the specified device group is not compatible with the");
     GFXRECON_WRITE_CONSOLE("          \t\toriginal capture device group.");
+    GFXRECON_WRITE_CONSOLE("  --sgfs <status>");
+    GFXRECON_WRITE_CONSOLE("          \t\tSpecify behaviour to skip calls to vkWaitForFences and vkGetFenceStatus:");
+    GFXRECON_WRITE_CONSOLE("          \t\t\tstatus=0 : Don't skip");
+    GFXRECON_WRITE_CONSOLE("          \t\t\tstatus=1 : Skip unsuccessful calls");
+    GFXRECON_WRITE_CONSOLE("          \t\t\tstatus=2 : Allways skip");
+    GFXRECON_WRITE_CONSOLE("          \t\tIf no skip frame range is specified (--sgfr), the status applies to all");
+    GFXRECON_WRITE_CONSOLE("          \t\tframes.");
+    GFXRECON_WRITE_CONSOLE("  --sgfr <frame-ranges>");
+    GFXRECON_WRITE_CONSOLE("          \t\tFrame ranges where --sgfs applies. The format is:");
+    GFXRECON_WRITE_CONSOLE("          \t\t\t<frame-start-1>-<frame-end-1>[,<frame-start-1>-<frame-end-1>]*");
 
 #if defined(WIN32)
     GFXRECON_WRITE_CONSOLE("")
@@ -207,6 +233,9 @@ static void PrintUsage(const char* exe_name)
     GFXRECON_WRITE_CONSOLE("                     \t(Same as --force-windowed)");
     GFXRECON_WRITE_CONSOLE("  --create-dummy-allocations Enables creation of dummy heaps and resources");
     GFXRECON_WRITE_CONSOLE("                             for replay validation.");
+    GFXRECON_WRITE_CONSOLE("  --dx12-override-object-names Generates unique names for all ID3D12Objects and");
+    GFXRECON_WRITE_CONSOLE("                               assigns each object the generated name.");
+    GFXRECON_WRITE_CONSOLE("                               This is intended to assist replay debugging.");
 
 #endif
 

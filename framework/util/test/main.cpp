@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2021 Advanced Micro Devices, Inc. All rights reserved.
 // Copyright (c) 2022 Valve Corporation
-// Copyright (c) 2022 LunarG, Inc.
+// Copyright (c) 2022-2023 LunarG, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -36,85 +36,11 @@
 using namespace gfxrecon::util::strings;
 using namespace gfxrecon::util::datetime;
 
-TEST_CASE("JSONEscape", "[to_string]")
-{
-    gfxrecon::util::Log::Init(gfxrecon::util::Log::kDebugSeverity);
-
-    std::string escaped;
-
-    escaped = "";
-    gfxrecon::util::JSONEscape("", escaped);
-    REQUIRE(escaped == "");
-
-    escaped = "";
-    gfxrecon::util::JSONEscape("a", escaped);
-    REQUIRE(escaped == "a");
-
-    escaped = "";
-    gfxrecon::util::JSONEscape("a.b", escaped);
-    REQUIRE(escaped == "a.b");
-
-    escaped = "";
-    gfxrecon::util::JSONEscape("\"", escaped);
-    REQUIRE(escaped == "\\\"");
-
-    escaped = "";
-    gfxrecon::util::JSONEscape("\"\"", escaped);
-    REQUIRE(escaped == "\\\"\\\"");
-
-    escaped = "";
-    gfxrecon::util::JSONEscape("\"\"\"", escaped);
-    REQUIRE(escaped == "\\\"\\\"\\\"");
-
-    escaped = "";
-    gfxrecon::util::JSONEscape("\"\"\"\"", escaped);
-    REQUIRE(escaped == "\\\"\\\"\\\"\\\"");
-
-    escaped = "";
-    gfxrecon::util::JSONEscape("\t", escaped);
-    REQUIRE(escaped == "\\t");
-
-    escaped = "";
-    gfxrecon::util::JSONEscape("\r", escaped);
-    REQUIRE(escaped == "\\r");
-
-    escaped = "";
-    gfxrecon::util::JSONEscape("\n", escaped);
-    REQUIRE(escaped == "\\n");
-
-    escaped = "";
-    gfxrecon::util::JSONEscape("\f", escaped);
-    REQUIRE(escaped == "\\f");
-
-    escaped = "";
-    gfxrecon::util::JSONEscape("\b", escaped);
-    REQUIRE(escaped == "\\b");
-
-    escaped = "";
-    gfxrecon::util::JSONEscape("/", escaped);
-    REQUIRE(escaped == "/");
-
-    escaped = "";
-    gfxrecon::util::JSONEscape("\\", escaped);
-    REQUIRE(escaped == "\\\\");
-
-    escaped = "";
-    gfxrecon::util::JSONEscape("/home/tracer/captures/app1/capture.gfxr", escaped);
-    REQUIRE(escaped == "/home/tracer/captures/app1/capture.gfxr");
-
-    escaped = "";
-    gfxrecon::util::JSONEscape("\\home\\tracer\\captures\\app1\\capture.gfxr", escaped);
-    REQUIRE(escaped == "\\\\home\\\\tracer\\\\captures\\\\app1\\\\capture.gfxr");
-
-    gfxrecon::util::Log::Release();
-}
-
 TEST_CASE("Quote", "[to_string]")
 {
     using namespace gfxrecon::util;
     gfxrecon::util::Log::Init(gfxrecon::util::Log::kDebugSeverity);
 
-    REQUIRE(gfxrecon::util::Quote(nullptr) == "\"\"");
     REQUIRE(gfxrecon::util::Quote("") == "\"\"");
     REQUIRE(gfxrecon::util::Quote(std::string("")) == "\"\"");
 
@@ -201,41 +127,116 @@ TEST_CASE("TabRight", "[strings]")
     gfxrecon::util::Log::Release();
 }
 
+TEST_CASE("SplitString", "[strings]")
+{
+    using std::string;
+    auto s = [](auto x) { return string{ x }; };
+
+    gfxrecon::util::Log::Init(gfxrecon::util::Log::kDebugSeverity);
+
+    REQUIRE(gfxrecon::util::strings::SplitString("", '+') == std::vector<string>());
+    REQUIRE(gfxrecon::util::strings::SplitString("a", '.') == std::vector<string>({ s("a") }));
+    REQUIRE(gfxrecon::util::strings::SplitString("foobar", '.') == std::vector<string>({ s("foobar") }));
+    REQUIRE(gfxrecon::util::strings::SplitString("+", '+') == std::vector<string>());
+    REQUIRE(gfxrecon::util::strings::SplitString("++", '+') == std::vector<string>());
+    REQUIRE(gfxrecon::util::strings::SplitString("+++", '+') == std::vector<string>());
+    REQUIRE(gfxrecon::util::strings::SplitString("++++++++++++++++++++", '+') == std::vector<string>());
+    REQUIRE(gfxrecon::util::strings::SplitString("+++++++++++++++++++++", '+') == std::vector<string>());
+    REQUIRE(gfxrecon::util::strings::SplitString(" + ", '+') == std::vector<string>({ s(" "), s(" ") }));
+    REQUIRE(gfxrecon::util::strings::SplitString("z+y", '+') == std::vector<string>({ s("z"), s("y") }));
+    REQUIRE(gfxrecon::util::strings::SplitString(".a..b...c....d.....", '.') ==
+            std::vector<string>({ s('a'), s('b'), s('c'), s('d') }));
+    REQUIRE(gfxrecon::util::strings::SplitString(".a..b...c....d.....", ',') ==
+            std::vector<string>({ s(".a..b...c....d.....") }));
+    REQUIRE(gfxrecon::util::strings::SplitString(".a..b...c,,,,d.....", ',') ==
+            std::vector<string>({ s(".a..b...c"), s("d.....") }));
+
+    gfxrecon::util::Log::Release();
+}
+
+TEST_CASE("RemoveWhitespace", "[strings]")
+{
+    using std::string;
+    auto s = [](auto x) { return string{ x }; };
+
+    gfxrecon::util::Log::Init(gfxrecon::util::Log::kDebugSeverity);
+
+    string s1{ "1 2 3 4 5 6 7 8 9 10" };
+    gfxrecon::util::strings::RemoveWhitespace(s1);
+    REQUIRE(s1 == "12345678910");
+
+    string s2{ "    left" };
+    gfxrecon::util::strings::RemoveWhitespace(s2);
+    REQUIRE(s2 == "left");
+
+    {
+        string s{ "right      " };
+        gfxrecon::util::strings::RemoveWhitespace(s);
+        REQUIRE(s == "right");
+    }
+    {
+        string s{ " \t\n\n\n\t   £$%Keep_Me+*&  \r\f\t\f\t \f\r\t\n\n\n\n " };
+        gfxrecon::util::strings::RemoveWhitespace(s);
+        REQUIRE(s == "£$%Keep_Me+*&");
+        // Check that repeated applications don't change an already-shrunk string:
+        for (int i = 0; i < 100; ++i)
+        {
+            gfxrecon::util::strings::RemoveWhitespace(s);
+            REQUIRE(s == "£$%Keep_Me+*&");
+        }
+    }
+    {
+        string s{ " \t\n\n\n\t   £$%\t\tK  e\n\n\n\n\re \f\rp_\nM\t e+*&  \r\f\t\f\t \f\r\t\n\n\n\n " };
+        gfxrecon::util::strings::RemoveWhitespace(s);
+        REQUIRE(s == "£$%Keep_Me+*&");
+    }
+
+    gfxrecon::util::Log::Release();
+}
+
 TEST_CASE("UtcString", "[datetime]")
 {
     gfxrecon::util::Log::Init(gfxrecon::util::Log::kDebugSeverity);
 
-    auto zero         = UtcString(0);
-    auto one          = UtcString(1);
-    auto two          = UtcString(2);
+    // Looking for clean output like zero: 1970-01-01T00:00:00Z
+    REQUIRE(UtcString(0) == "1970-01-01T00:00:00Z");
+    REQUIRE(UtcString(1) == "1970-01-01T00:00:01Z");
+    REQUIRE(UtcString(60 * 60) == "1970-01-01T01:00:00Z");
+    REQUIRE(UtcString(60 * 60 + 1) == "1970-01-01T01:00:01Z");
+    REQUIRE(UtcString(60 * 60 + 61) == "1970-01-01T01:01:01Z");
+    REQUIRE(UtcString(60 * 60 + 61) == "1970-01-01T01:01:01Z");
+
+    const unsigned min       = 60;
+    const unsigned hour      = min * 60;
+    const unsigned day       = hour * 24;
+    const unsigned year      = 525600 * min;
+    const unsigned leap_year = year + day;
+
+    REQUIRE(UtcString(year) == "1971-01-01T00:00:00Z");
+    REQUIRE(UtcString(year * 2) == "1972-01-01T00:00:00Z");
+    REQUIRE(UtcString(year * 8 + leap_year * 2) == "1980-01-01T00:00:00Z");
+    REQUIRE(UtcString(year * 11 + leap_year * 3 + 31 * 3 * day + 28 * day + 17 * day + 11 * hour + 28 * min + 59) ==
+            "1984-05-18T11:28:59Z");
+    REQUIRE(UtcString(year * 23 + leap_year * 7) == "2000-01-01T00:00:00Z");
+    REQUIRE(UtcString(year * 23 + leap_year * 7 + 29 * day + 31 * day * 4 + 30 * day * 2) == "2000-08-01T00:00:00Z");
+    REQUIRE(UtcString(year * 23 + leap_year * 7 + 29 * day + 31 * day * 4 + 30 * day * 2 + 30 * day) ==
+            "2000-08-31T00:00:00Z");
+    REQUIRE(UtcString(year * 23 + leap_year * 7 + 29 * day + 31 * day * 4 + 30 * day * 2 + 30 * day + 23 * hour) ==
+            "2000-08-31T23:00:00Z");
+    REQUIRE(UtcString(year * 23 + leap_year * 7 + 29 * day + 31 * day * 4 + 30 * day * 2 + 30 * day + 23 * hour +
+                      47 * min) == "2000-08-31T23:47:00Z");
+    REQUIRE(UtcString(year * 23 + leap_year * 7 + 29 * day + 31 * day * 4 + 30 * day * 2 + 30 * day + 23 * hour +
+                      47 * min + 54) == "2000-08-31T23:47:54Z");
+
     auto one_thousand = UtcString(1000);
     auto two_thousand = UtcString(2000);
-
-    // Looking for clean output like zero: 1970-00-01T00:00:00Z
-    REQUIRE(zero[18] == '0');
-    REQUIRE(zero[19] == 'Z');
-    REQUIRE(zero[4] == '-');
-    REQUIRE(zero[7] == '-');
-    REQUIRE(zero[10] == 'T');
-    REQUIRE(zero[16] == ':');
-    REQUIRE(zero[13] == ':');
-
-    REQUIRE(one[18] == '1');
-    REQUIRE(one[19] == 'Z');
-
-    REQUIRE(two[18] == '2');
-    REQUIRE(two[19] == 'Z');
-
     REQUIRE(one_thousand[19] == 'Z');
     REQUIRE(two_thousand[19] == 'Z');
-
-    REQUIRE(zero.length() == 20);
-    REQUIRE(one.length() == 20);
-    REQUIRE(two.length() == 20);
     REQUIRE(one_thousand.length() == 20);
     REQUIRE(two_thousand.length() == 20);
 
-    // Pump some random time points between -2'147'483'648 and 2'147'483'647 through conversion:
+    // Pump some random time points between -2'147'483'648 and 2'147'483'647 through conversion
+    // and check that they have the correct length and punctuation:
     const time_t time_points[]{
         1110797,    1490769,    3976212,    5465697,    6237413,    9351446,    10731844,   12202301,   15533617,
         21337614,   22327966,   24650085,   27246781,   29010007,   30729052,   32154271,   34620851,   37834780,

@@ -16,6 +16,8 @@ target_sources(gfxrecon_decode
                    ${GFXRECON_SOURCE_DIR}/framework/decode/descriptor_update_template_decoder.cpp
                    ${GFXRECON_SOURCE_DIR}/framework/decode/file_processor.h
                    ${GFXRECON_SOURCE_DIR}/framework/decode/file_processor.cpp
+                   ${GFXRECON_SOURCE_DIR}/framework/decode/preload_file_processor.h
+                   ${GFXRECON_SOURCE_DIR}/framework/decode/preload_file_processor.cpp
                    ${GFXRECON_SOURCE_DIR}/framework/decode/file_transformer.h
                    ${GFXRECON_SOURCE_DIR}/framework/decode/file_transformer.cpp
                    ${GFXRECON_SOURCE_DIR}/framework/decode/handle_pointer_decoder.h
@@ -28,6 +30,8 @@ target_sources(gfxrecon_decode
                    ${GFXRECON_SOURCE_DIR}/framework/decode/referenced_resource_table.h
                    ${GFXRECON_SOURCE_DIR}/framework/decode/referenced_resource_table.cpp
                    ${GFXRECON_SOURCE_DIR}/framework/decode/replay_options.h
+                   ${GFXRECON_SOURCE_DIR}/framework/decode/replay_options_annotation.h
+                   ${GFXRECON_SOURCE_DIR}/framework/decode/replay_options_annotation.cpp
                    ${GFXRECON_SOURCE_DIR}/framework/decode/resource_util.h
                    ${GFXRECON_SOURCE_DIR}/framework/decode/resource_util.cpp
                    ${GFXRECON_SOURCE_DIR}/framework/decode/screenshot_handler.h
@@ -39,8 +43,6 @@ target_sources(gfxrecon_decode
                    ${GFXRECON_SOURCE_DIR}/framework/decode/struct_pointer_decoder.h
                    ${GFXRECON_SOURCE_DIR}/framework/decode/swapchain_image_tracker.h
                    ${GFXRECON_SOURCE_DIR}/framework/decode/value_decoder.h
-                   ${GFXRECON_SOURCE_DIR}/framework/decode/vulkan_ascii_consumer_base.h
-                   ${GFXRECON_SOURCE_DIR}/framework/decode/vulkan_ascii_consumer_base.cpp
                    ${GFXRECON_SOURCE_DIR}/framework/decode/vulkan_consumer_base.h
                    ${GFXRECON_SOURCE_DIR}/framework/decode/vulkan_decoder_base.h
                    ${GFXRECON_SOURCE_DIR}/framework/decode/vulkan_decoder_base.cpp
@@ -82,8 +84,6 @@ target_sources(gfxrecon_decode
                    ${GFXRECON_SOURCE_DIR}/framework/decode/vulkan_virtual_swapchain.h
                    ${GFXRECON_SOURCE_DIR}/framework/decode/vulkan_virtual_swapchain.cpp
                    ${GFXRECON_SOURCE_DIR}/framework/decode/window.h
-                   ${GFXRECON_SOURCE_DIR}/framework/generated/generated_vulkan_ascii_consumer.h
-                   ${GFXRECON_SOURCE_DIR}/framework/generated/generated_vulkan_ascii_consumer.cpp
                    ${GFXRECON_SOURCE_DIR}/framework/generated/generated_vulkan_consumer.h
                    ${GFXRECON_SOURCE_DIR}/framework/generated/generated_vulkan_decoder.h
                    ${GFXRECON_SOURCE_DIR}/framework/generated/generated_vulkan_decoder.cpp

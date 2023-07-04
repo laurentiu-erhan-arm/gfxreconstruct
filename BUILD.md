@@ -8,7 +8,7 @@ Windows, and Android platforms.
 [1]: https://i.creativecommons.org/l/by-nd/4.0/88x31.png "Creative Commons License"
 [2]: https://creativecommons.org/licenses/by-nd/4.0/
 
-Copyright &copy; 2018-2022 LunarG, Inc.
+Copyright &copy; 2018-2023 LunarG, Inc.
 
 ## Index
 
@@ -123,6 +123,14 @@ For example, to use eight processes from within Bash:
 CMAKE_BUILD_PARALLEL_LEVEL=8 python scripts/build.py --skip-check-code-style --skip-tests
 ```
 
+By default, the script builds support for capturing and replaying
+Direct3D 12.  To omit Direct3D 12 components, specify
+`--skip-d3d12-support`.  For example:
+
+```bash
+python scripts/build.py --skip-d3d12-support
+```
+
 Run the script with the `-h` option for additional usage information.
 
 ## Building for Windows
@@ -135,7 +143,7 @@ Run the script with the `-h` option for additional usage information.
     - [2019](https://www.visualstudio.com/vs/older-downloads/)
     - [2017](https://www.visualstudio.com/vs/older-downloads/)
   - The Community Edition for each of the above versions is sufficient
-- [CMake](http://www.cmake.org/download/) (Version 3.1 or better)
+- [CMake](http://www.cmake.org/download/) (Version 3.16.3 or newer)
   - The build instructions assume that CMake has been added to the system PATH
 - Git Client Support
   - [Git for Windows](http://git-scm.com/download/win) is a popular solution
@@ -169,16 +177,18 @@ cmake -H. -Bbuild -G "Visual Studio 15 Win64"
 The following commands can be used to generate project files for different
 variations of the Visual Studio 2017 WIN32 and x64 build configurations:
 
-- 64-bit for VS 2017: cmake -H. -Bbuild -G "Visual Studio 15 Win64"
-- 32-bit for VS 2017: cmake -H. -Bbuild -G "Visual Studio 15"
+- 64-bit for VS 2017: `cmake -H. -Bbuild -G "Visual Studio 15 Win64"`
+- 32-bit for VS 2017: `cmake -H. -Bbuild -G "Visual Studio 15"`
 
 Running any of the above commands will create a Windows solution file named
 `GFXReconstruct.sln` in the build directory.
 
+Visual Studio configuration will include support for capturing and replaying Direct3D 12 by default.  To omit Direct3D 12 components, specify `-DD3D12_SUPPORT=OFF` to cmake.
+
 At this point, you can build the solution from the command line or open the
 generated solution with Visual Studio.
 
-**Note: the build uses Windows 10 SDK 10.0.20348.0. Windows 11 SDK 10.0.22000.194 is not compatible at the present time. If you need to specify a Windows 10 SDK, please use `-DCMAKE_SYSTEM_VERSION=10.0.20348.0` .**
+**Note: The D3D12 build uses Windows 10 SDK 10.0.20348.0. Other Windows SDK versions may not be compatible. If you need to specify a Windows SDK, please use `-DCMAKE_SYSTEM_VERSION=10.0.20348.0`. If Python code generation is required, the shell used to run it should set the environment variable `WindowsSDKVersion=10.0.20348.0`.**
 
 When generating a native build on an ARM64 Windows host the Visual Studio
 Installer can be used to install the required Windows SDK version, `10.0.20348.0`.
@@ -225,6 +235,8 @@ Building on Linux requires the installation of the following packages:
 - X11 + XCB and/or Wayland development libraries
 
 #### Ubuntu
+
+GFXReconstruct is built and tested for SDK development using Ubuntu 20.04 and 22.04.  Older Ubuntu releases are unsupported.
 
 For Ubuntu, the required packages can be installed with the following command:
 
@@ -328,6 +340,29 @@ from gfxreconstruct's root source directory. Then install with `make install`.
   - The [Android Platform tools](https://developer.android.com/studio/releases/platform-tools) for your specific platform
   - [Android SDK 26 (8.0 Oreo) or newer](https://guides.codepath.com/android/installing-android-sdk-tools)
   - [Android NDK 21.3.6528147 (r21d)](https://developer.android.com/ndk/guides/)
+- [Java JDK 1.11](https://jdk.java.net/11)
+
+#### Additional Linux Command-Linux Prerequisites
+
+Additional requirements for building from the Linux command-line:
+- Define `ANDROID_HOME`to be the path to the SDK installed on your system by Android Studio.
+  - Refer to Android Studio to find out where the files are installed
+    - **NOTE:** For older Android Stud io's you may also have to set `ANDROID_SDK_ROOT` to the same value
+  - For example:
+
+```bash
+        export ANDROID_HOME=$HOME/Android/Sdk`
+```
+
+- Define JAVA_HOME to the path to the directory of the JDK.
+  - For example:
+
+```bash
+      export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-11.0.18.0.10-1.fc37.x86_64
+```
+
+- Make the `gradlew` script executable
+  - `chmod +x android/gradlew`
 
 ### Android Build
 
@@ -388,6 +423,10 @@ Next, add the following lines to the application's `build.gradle` file:
     }
 ```
 
+**NOTE:** Make sure it is the app version of `build.gradle` (usually found in an
+app folder).
+This may not necessarily be the top `build.gradle` in the tree.
+
 #### Adding the Vulkan Validation Layer to `gfxrecon-replay`
 
 1. Download the latest Android Vulkan Validation Layer binaries from the [GitHub release page](https://github.com/KhronosGroup/Vulkan-ValidationLayers/releases)
@@ -406,3 +445,9 @@ gfxreconstruct/android/tools/replay/src/main/jniLibs/
 3. Rebuild and deploy `gfxrecon-replay`
 
 The [Android Vulkan Validation Guide](https://developer.android.com/ndk/guides/graphics/validation-layer) has further instructions for advanced validation layer usage on Android
+
+
+#### Android Detailed Examples
+
+For more information and detailed examples on building and using GFXReconstruct
+on Android can be found in the [HOWTO_android.md](./HOWTO_android.md) document.

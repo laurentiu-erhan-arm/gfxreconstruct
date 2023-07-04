@@ -29,6 +29,7 @@
 
 #include <cassert>
 #include <array>
+#include <mutex>
 #include <string>
 #include <windows.h>
 
@@ -75,10 +76,23 @@ static void LoadD3D12CaptureProcs(HMODULE system_dll, encode::D3D12DispatchTable
 
 static bool Initialize()
 {
-    std::string module_path = gfxrecon::encode::SetupCaptureModule(kSystemDllName, kSystemDllNameRenamed);
+    static bool       initialized = false;
+    static std::mutex initialization_mutex;
 
-    return dll_initializer.Initialize(
-        module_path.c_str(), kCaptureDllName, kCaptureDllInitProcName, LoadD3D12CaptureProcs);
+    // Check `initialized` before locking to avoid locking unnecessarily.
+    if (initialized == false)
+    {
+        std::unique_lock<std::mutex> initialization_lock(initialization_mutex);
+        if (initialized == false)
+        {
+            std::string module_path = gfxrecon::encode::SetupCaptureModule(kSystemDllName, kSystemDllNameRenamed);
+
+            initialized = dll_initializer.Initialize(
+                module_path.c_str(), kCaptureDllName, kCaptureDllInitProcName, LoadD3D12CaptureProcs);
+        }
+    }
+
+    return initialized;
 }
 
 static void Destroy()

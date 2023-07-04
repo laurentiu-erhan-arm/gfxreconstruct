@@ -33,6 +33,10 @@ target_sources(gfxrecon-optimize
                    ${CMAKE_CURRENT_LIST_DIR}/main.cpp
                    ${CMAKE_CURRENT_LIST_DIR}/file_optimizer.h
                    ${CMAKE_CURRENT_LIST_DIR}/file_optimizer.cpp
+                   ${CMAKE_CURRENT_LIST_DIR}/replay_options_editor.h
+                   ${CMAKE_CURRENT_LIST_DIR}/replay_options_editor.cpp
+                   ${CMAKE_CURRENT_LIST_DIR}/annotation_editor.h
+                   ${CMAKE_CURRENT_LIST_DIR}/annotation_editor.cpp
                    $<$<BOOL:${D3D12_SUPPORT}>:${CMAKE_CURRENT_LIST_DIR}/dx12_file_optimizer.h>
                    $<$<BOOL:${D3D12_SUPPORT}>:${CMAKE_CURRENT_LIST_DIR}/dx12_file_optimizer.cpp>
                    $<$<BOOL:${D3D12_SUPPORT}>:${CMAKE_CURRENT_LIST_DIR}/dx12_optimize_util.h>
@@ -47,7 +51,7 @@ target_sources(gfxrecon-optimize
 if (MSVC)
     # Force inclusion of "gfxrecon_disable_popup_result" variable in linking.
     # On 32-bit windows, MSVC prefixes symbols with "_" but on 64-bit windows it doesn't.
-    if(NOT CMAKE_CL_64)
+    if(CMAKE_SIZEOF_VOID_P EQUAL 4)
       target_link_options(gfxrecon-replay PUBLIC "LINKER:/Include:_gfxrecon_disable_popup_result")
     else()
       target_link_options(gfxrecon-replay PUBLIC "LINKER:/Include:gfxrecon_disable_popup_result")

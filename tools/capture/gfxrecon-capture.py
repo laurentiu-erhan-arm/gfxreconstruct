@@ -35,6 +35,10 @@ import sys
 import subprocess
 import platform
 
+if sys.version_info < (3, 7):
+    print("Error: Python 3.7 or later is required; you're using:", sys.version)
+    sys.exit(1)
+
 argv = sys.argv
 argc = len(sys.argv)
 
@@ -46,5 +50,5 @@ if __name__ == '__main__':
         sys.exit(1)
 
     print("Warning: the 'gfxrecon-capture.py' script is deprecated and will be removed in a future update. Use 'gfxrecon-capture-vulkan.py' instead.", flush=True)
-    result = subprocess.run(["gfxrecon-capture-vulkan.py",] + argv[1:])
+    result = subprocess.run(["gfxrecon-capture-vulkan.py",] + argv[1:], shell = True)
     sys.exit(result.returncode)

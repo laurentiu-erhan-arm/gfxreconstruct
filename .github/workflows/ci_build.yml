@@ -38,6 +38,9 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y libx11-xcb-dev libxcb-keysyms1-dev libwayland-dev libxrandr-dev liblz4-dev libzstd-dev
+    - uses: lukka/get-cmake@latest
+      with:
+        cmakeVersion: 3.16.3
     - name: Run build script
       run: |
         if [ "${{ matrix.config.type }}" == "release" ]
@@ -45,6 +48,8 @@ jobs:
           clang-format --version # A check for version 9 should be added.
           git fetch origin ${{ github.base_ref }} # Fetch target branch to FETCH_HEAD for code style check.
           python3 scripts/build.py --skip-tests --config ${{ matrix.config.type }} --check-code-style-base FETCH_HEAD
+          python3 framework/generated/generate_vulkan.py # check generated code isn't out of date
+          git diff --exit-code
         else
           python3 scripts/build.py --skip-tests --config ${{ matrix.config.type }} --skip-check-code-style
         fi

@@ -1,7 +1,7 @@
 /*
 ** Copyright (c) 2018-2020 Valve Corporation
 ** Copyright (c) 2018-2021 LunarG, Inc.
-** Copyright (c) 2021 Advanced Micro Devices, Inc. All rights reserved.
+** Copyright (c) 2021-2023 Advanced Micro Devices, Inc. All rights reserved.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -46,11 +46,16 @@ D3D12CaptureManager::D3D12CaptureManager() :
 
 bool D3D12CaptureManager::CreateInstance()
 {
-    return CaptureManager::CreateInstance([]() -> CaptureManager* { return instance_; },
-                                          []() {
-                                              assert(instance_ == nullptr);
-                                              instance_ = new D3D12CaptureManager();
-                                          });
+    bool ret = CaptureManager::CreateInstance([]() -> CaptureManager* { return instance_; },
+                                              []() {
+                                                  assert(instance_ == nullptr);
+                                                  instance_ = new D3D12CaptureManager();
+                                              });
+    if (instance_->IsAnnotated() == true && instance_->resource_value_annotator_ == nullptr)
+    {
+        instance_->resource_value_annotator_ = std::make_unique<Dx12ResourceValueAnnotator>();
+    }
+    return ret;
 }
 
 void D3D12CaptureManager::DestroyInstance()
@@ -61,27 +66,6 @@ void D3D12CaptureManager::DestroyInstance()
                                         delete instance_;
                                         instance_ = nullptr;
                                     });
-}
-
-bool D3D12CaptureManager::CreateCaptureFile(const std::string& base_filename)
-{
-    auto state_lock = AcquireUniqueStateLock();
-
-    return CaptureManager::CreateCaptureFile(base_filename);
-}
-
-void D3D12CaptureManager::ActivateTrimming()
-{
-    auto state_lock = AcquireUniqueStateLock();
-
-    CaptureManager::ActivateTrimming();
-}
-
-void D3D12CaptureManager::DeactivateTrimming()
-{
-    auto state_lock = AcquireUniqueStateLock();
-
-    CaptureManager::DeactivateTrimming();
 }
 
 void D3D12CaptureManager::EndCreateApiCallCapture(HRESULT result, REFIID riid, void** handle)
@@ -102,6 +86,43 @@ void D3D12CaptureManager::EndCreateApiCallCapture(HRESULT result, REFIID riid, v
 
     EndApiCallCapture();
 }
+
+#ifdef GFXRECON_AGS_SUPPORT
+void D3D12CaptureManager::EndAgsApiCallCapture(HRESULT result, void* object_ptr)
+{
+    if ((GetCaptureMode() & kModeTrack) == kModeTrack)
+    {
+        if (SUCCEEDED(result))
+        {
+            GFXRECON_ASSERT(state_tracker_ != nullptr);
+
+            auto thread_data = GetThreadData();
+            GFXRECON_ASSERT(thread_data != nullptr);
+
+            state_tracker_->TrackAgsCalls(object_ptr, thread_data->call_id_, thread_data->parameter_buffer_.get());
+        }
+    }
+
+    EndApiCallCapture();
+}
+
+void D3D12CaptureManager::EndAgsApiCallCapture(ID3D12GraphicsCommandList_Wrapper* list_wrapper)
+{
+    if ((GetCaptureMode() & kModeTrack) == kModeTrack)
+    {
+        assert(state_tracker_ != nullptr);
+
+        auto thread_data = GetThreadData();
+        assert(thread_data != nullptr);
+
+        state_tracker_->TrackCommand(list_wrapper, thread_data->call_id_, thread_data->parameter_buffer_.get());
+    }
+    else
+    {
+        EndApiCallCapture();
+    }
+}
+#endif // GFXRECON_AGS_SUPPORT
 
 void D3D12CaptureManager::EndCreateDescriptorMethodCallCapture(D3D12_CPU_DESCRIPTOR_HANDLE dest_descriptor,
                                                                ID3D12Device_Wrapper*       create_object_wrapper)
@@ -265,13 +286,16 @@ void D3D12CaptureManager::ResizeSwapChainImages(IDXGISwapChain_Wrapper* wrapper,
 void D3D12CaptureManager::InitializeID3D12ResourceInfo(ID3D12Device_Wrapper*    device_wrapper,
                                                        ID3D12Resource_Wrapper*  resource_wrapper,
                                                        D3D12_RESOURCE_DIMENSION dimension,
+                                                       D3D12_TEXTURE_LAYOUT     layout,
                                                        UINT64                   width,
                                                        UINT64                   size,
                                                        D3D12_HEAP_TYPE          heap_type,
                                                        D3D12_CPU_PAGE_PROPERTY  page_property,
                                                        D3D12_MEMORY_POOL        memory_pool,
                                                        D3D12_RESOURCE_STATES    initial_state,
-                                                       bool                     has_write_watch)
+                                                       bool                     has_write_watch,
+                                                       ID3D12Heap_Wrapper*      heap_wrapper,
+                                                       uint64_t                 heap_offset)
 {
     assert(resource_wrapper != nullptr);
 
@@ -284,6 +308,10 @@ void D3D12CaptureManager::InitializeID3D12ResourceInfo(ID3D12Device_Wrapper*    
     info->memory_pool     = memory_pool;
     info->has_write_watch = has_write_watch;
     info->size_in_bytes   = size;
+    info->dimension       = dimension;
+    info->layout          = layout;
+    info->heap_offset     = heap_offset;
+    info->heap_wrapper    = heap_wrapper;
 
     if (dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
     {
@@ -367,14 +395,24 @@ void D3D12CaptureManager::InitializeID3D12DeviceInfo(IUnknown* adapter, void** d
 
     if ((device != nullptr) && (*device != nullptr))
     {
-        auto info = reinterpret_cast<ID3D12Device_Wrapper*>(*device)->GetObjectInfo();
+        auto device_wrapper = reinterpret_cast<ID3D12Device_Wrapper*>(*device);
+        auto info           = device_wrapper->GetObjectInfo();
 
         if (info != nullptr)
         {
             graphics::dx12::GetAdapterAndIndexbyDevice(
                 reinterpret_cast<ID3D12Device*>(*device), info->adapter3, info->adapter_node_index, adapters_);
+
+            // Cache info on device features:
+            auto wrapped_device = device_wrapper->GetWrappedObjectAs<ID3D12Device>();
+            info->is_uma        = graphics::dx12::IsUma(wrapped_device);
         }
     }
+}
+
+bool D3D12CaptureManager::IsAccelerationStructureResource(format::HandleId id)
+{
+    return state_tracker_->IsAccelerationStructureResource(id);
 }
 
 void D3D12CaptureManager::CheckWriteWatchIgnored(D3D12_HEAP_FLAGS flags, format::HandleId id)
@@ -429,14 +467,14 @@ bool D3D12CaptureManager::IsUploadResource(D3D12_HEAP_TYPE type, D3D12_CPU_PAGE_
 uint64_t D3D12CaptureManager::GetResourceSizeInBytes(ID3D12Device_Wrapper*      device_wrapper,
                                                      const D3D12_RESOURCE_DESC* desc)
 {
-    auto device      = device_wrapper->GetWrappedObjectAs<ID3D12Device>();
+    auto device = device_wrapper->GetWrappedObjectAs<ID3D12Device>();
     return graphics::dx12::GetResourceSizeInBytes(device, desc);
 }
 
 uint64_t D3D12CaptureManager::GetResourceSizeInBytes(ID3D12Device8_Wrapper*      device_wrapper,
                                                      const D3D12_RESOURCE_DESC1* desc)
 {
-    auto device      = device_wrapper->GetWrappedObjectAs<ID3D12Device8>();
+    auto device = device_wrapper->GetWrappedObjectAs<ID3D12Device8>();
     return graphics::dx12::GetResourceSizeInBytes(device, desc);
 }
 
@@ -546,7 +584,8 @@ void D3D12CaptureManager::PrePresent(IDXGISwapChain_Wrapper* swapchain_wrapper)
                                                      swapchain_info->command_queue,
                                                      swapchain,
                                                      global_frame_count_ + 1,
-                                                     screenshot_prefix_);
+                                                     screenshot_prefix_,
+                                                     screenshot_format_);
         }
         else
         {
@@ -703,7 +742,14 @@ void D3D12CaptureManager::PostProcess_ID3D12Device_CreateDescriptorHeap(
 
         size_t offset    = 0;
         auto   cpu_start = descriptor_heap->GetCPUDescriptorHandleForHeapStart();
-        auto   gpu_start = descriptor_heap->GetGPUDescriptorHandleForHeapStart();
+        D3D12_GPU_DESCRIPTOR_HANDLE gpu_start{ 0 };
+
+        // D3D12 validation layer states GetGPUDescriptorHandleForHeapStart() should only be used for heaps
+        // with D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE flag set.
+        if (desc->Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
+        {
+            gpu_start = descriptor_heap->GetGPUDescriptorHandleForHeapStart();
+        }
 
         for (uint32_t i = 0; i < num_descriptors; ++i)
         {
@@ -712,7 +758,10 @@ void D3D12CaptureManager::PostProcess_ID3D12Device_CreateDescriptorHeap(
             current->heap_id     = heap_wrapper->GetCaptureId();
             current->index       = i;
             current->cpu_address = cpu_start.ptr + offset;
-            current->gpu_address = gpu_start.ptr + offset;
+            if (gpu_start.ptr != 0)
+            {
+                current->gpu_address = gpu_start.ptr + offset;
+            }
 
             // The increment isn't required to be a multiple of sizeof(void*), so copy the address of the current item
             // instead of dereferencing a potentially unaligned address for assignment.
@@ -738,6 +787,7 @@ void D3D12CaptureManager::PostProcess_ID3D12Device_CreateHeap(
         info->page_property   = desc->Properties.CPUPageProperty;
         info->memory_pool     = desc->Properties.MemoryPoolPreference;
         info->has_write_watch = UseWriteWatch(info->heap_type, desc->Flags, info->page_property);
+        info->heap_size       = desc->SizeInBytes;
 
         CheckWriteWatchIgnored(desc->Flags, heap_wrapper->GetCaptureId());
     }
@@ -764,17 +814,19 @@ void D3D12CaptureManager::PostProcess_ID3D12Device_CreateCommittedResource(
 
         uint64_t total_size_in_bytes = GetResourceSizeInBytes(wrapper, desc);
 
-        InitializeID3D12ResourceInfo(
-            wrapper,
-            resource_wrapper,
-            desc->Dimension,
-            desc->Width,
-            total_size_in_bytes,
-            heap_properties->Type,
-            heap_properties->CPUPageProperty,
-            heap_properties->MemoryPoolPreference,
-            initial_resource_state,
-            UseWriteWatch(heap_properties->Type, heap_flags, heap_properties->CPUPageProperty));
+        InitializeID3D12ResourceInfo(wrapper,
+                                     resource_wrapper,
+                                     desc->Dimension,
+                                     desc->Layout,
+                                     desc->Width,
+                                     total_size_in_bytes,
+                                     heap_properties->Type,
+                                     heap_properties->CPUPageProperty,
+                                     heap_properties->MemoryPoolPreference,
+                                     initial_resource_state,
+                                     UseWriteWatch(heap_properties->Type, heap_flags, heap_properties->CPUPageProperty),
+                                     nullptr,
+                                     0);
 
         CheckWriteWatchIgnored(heap_flags, resource_wrapper->GetCaptureId());
     }
@@ -807,13 +859,16 @@ void D3D12CaptureManager::PostProcess_ID3D12Device_CreatePlacedResource(ID3D12De
         InitializeID3D12ResourceInfo(wrapper,
                                      resource_wrapper,
                                      desc->Dimension,
+                                     desc->Layout,
                                      desc->Width,
                                      total_size_in_bytes,
                                      heap_info->heap_type,
                                      heap_info->page_property,
                                      heap_info->memory_pool,
                                      initial_state,
-                                     heap_info->has_write_watch);
+                                     heap_info->has_write_watch,
+                                     heap_wrapper,
+                                     heap_offset);
     }
 }
 
@@ -839,13 +894,53 @@ void D3D12CaptureManager::PostProcess_ID3D12Device_CreateReservedResource(
         InitializeID3D12ResourceInfo(wrapper,
                                      resource_wrapper,
                                      desc->Dimension,
+                                     desc->Layout,
                                      desc->Width,
                                      total_size_in_bytes,
                                      D3D12_HEAP_TYPE_DEFAULT,
                                      D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
                                      D3D12_MEMORY_POOL_UNKNOWN,
                                      initial_state,
-                                     false);
+                                     false,
+                                     nullptr,
+                                     0);
+    }
+}
+
+void D3D12CaptureManager::PostProcess_ID3D12Device4_CreateReservedResource1(
+    ID3D12Device4_Wrapper*          wrapper,
+    HRESULT                         result,
+    const D3D12_RESOURCE_DESC*      desc,
+    D3D12_RESOURCE_STATES           initial_state,
+    const D3D12_CLEAR_VALUE*        optimized_clear_value,
+    ID3D12ProtectedResourceSession* protected_session,
+    REFIID                          riid,
+    void**                          resource)
+{
+    GFXRECON_UNREFERENCED_PARAMETER(optimized_clear_value);
+    GFXRECON_UNREFERENCED_PARAMETER(protected_session);
+    GFXRECON_UNREFERENCED_PARAMETER(riid);
+
+    if (SUCCEEDED(result) && (wrapper != nullptr) && (desc != nullptr) && (resource != nullptr) &&
+        ((*resource) != nullptr))
+    {
+        auto resource_wrapper = reinterpret_cast<ID3D12Resource_Wrapper*>(*resource);
+
+        uint64_t total_size_in_bytes = GetResourceSizeInBytes(wrapper, desc);
+
+        InitializeID3D12ResourceInfo(wrapper,
+                                     resource_wrapper,
+                                     desc->Dimension,
+                                     desc->Layout,
+                                     desc->Width,
+                                     total_size_in_bytes,
+                                     D3D12_HEAP_TYPE_DEFAULT,
+                                     D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+                                     D3D12_MEMORY_POOL_UNKNOWN,
+                                     initial_state,
+                                     false,
+                                     nullptr,
+                                     0);
     }
 }
 
@@ -939,17 +1034,19 @@ void D3D12CaptureManager::PostProcess_ID3D12Device4_CreateCommittedResource1(
 
         uint64_t total_size_in_bytes = GetResourceSizeInBytes(wrapper, desc);
 
-        InitializeID3D12ResourceInfo(
-            wrapper,
-            resource_wrapper,
-            desc->Dimension,
-            desc->Width,
-            total_size_in_bytes,
-            heap_properties->Type,
-            heap_properties->CPUPageProperty,
-            heap_properties->MemoryPoolPreference,
-            initial_resource_state,
-            UseWriteWatch(heap_properties->Type, heap_flags, heap_properties->CPUPageProperty));
+        InitializeID3D12ResourceInfo(wrapper,
+                                     resource_wrapper,
+                                     desc->Dimension,
+                                     desc->Layout,
+                                     desc->Width,
+                                     total_size_in_bytes,
+                                     heap_properties->Type,
+                                     heap_properties->CPUPageProperty,
+                                     heap_properties->MemoryPoolPreference,
+                                     initial_resource_state,
+                                     UseWriteWatch(heap_properties->Type, heap_flags, heap_properties->CPUPageProperty),
+                                     nullptr,
+                                     0);
 
         CheckWriteWatchIgnored(heap_flags, resource_wrapper->GetCaptureId());
     }
@@ -978,17 +1075,19 @@ void D3D12CaptureManager::PostProcess_ID3D12Device8_CreateCommittedResource2(
 
         uint64_t total_size_in_bytes = GetResourceSizeInBytes(wrapper, desc);
 
-        InitializeID3D12ResourceInfo(
-            wrapper,
-            resource_wrapper,
-            desc->Dimension,
-            desc->Width,
-            total_size_in_bytes,
-            heap_properties->Type,
-            heap_properties->CPUPageProperty,
-            heap_properties->MemoryPoolPreference,
-            initial_resource_state,
-            UseWriteWatch(heap_properties->Type, heap_flags, heap_properties->CPUPageProperty));
+        InitializeID3D12ResourceInfo(wrapper,
+                                     resource_wrapper,
+                                     desc->Dimension,
+                                     desc->Layout,
+                                     desc->Width,
+                                     total_size_in_bytes,
+                                     heap_properties->Type,
+                                     heap_properties->CPUPageProperty,
+                                     heap_properties->MemoryPoolPreference,
+                                     initial_resource_state,
+                                     UseWriteWatch(heap_properties->Type, heap_flags, heap_properties->CPUPageProperty),
+                                     nullptr,
+                                     0);
 
         CheckWriteWatchIgnored(heap_flags, resource_wrapper->GetCaptureId());
     }
@@ -1022,13 +1121,16 @@ void D3D12CaptureManager::PostProcess_ID3D12Device8_CreatePlacedResource1(
         InitializeID3D12ResourceInfo(wrapper,
                                      resource_wrapper,
                                      desc->Dimension,
+                                     desc->Layout,
                                      desc->Width,
                                      total_size_in_bytes,
                                      heap_info->heap_type,
                                      heap_info->page_property,
                                      heap_info->memory_pool,
                                      initial_state,
-                                     heap_info->has_write_watch);
+                                     heap_info->has_write_watch,
+                                     heap_wrapper,
+                                     heap_offset);
     }
 }
 
@@ -1186,6 +1288,14 @@ void D3D12CaptureManager::PreProcess_ID3D12Resource_Unmap(ID3D12Resource_Wrapper
 
                             manager->ProcessMemoryEntry(
                                 memory_id, [this](uint64_t memory_id, void* start_address, size_t offset, size_t size) {
+                                    if (RvAnnotationActive() == true)
+                                    {
+                                        resource_value_annotator_->ScanForGPUVA(
+                                            memory_id,
+                                            reinterpret_cast<uint8_t*>(start_address) + offset,
+                                            size,
+                                            offset);
+                                    }
                                     WriteFillMemoryCmd(memory_id, offset, size, start_address);
                                 });
 
@@ -1201,7 +1311,14 @@ void D3D12CaptureManager::PreProcess_ID3D12Resource_Unmap(ID3D12Resource_Wrapper
                                 offset = written_range->Begin;
                                 size   = (written_range->End - written_range->Begin) + 1;
                             }
-
+                            if (RvAnnotationActive() == true)
+                            {
+                                resource_value_annotator_->ScanForGPUVA(
+                                    reinterpret_cast<uint64_t>(mapped_subresource.data),
+                                    reinterpret_cast<uint8_t*>(mapped_subresource.data) + offset,
+                                    size,
+                                    offset);
+                            }
                             WriteFillMemoryCmd(reinterpret_cast<uint64_t>(mapped_subresource.data),
                                                offset,
                                                size,
@@ -1321,6 +1438,85 @@ void D3D12CaptureManager::PostProcess_ID3D12Resource_GetGPUVirtualAddress(ID3D12
     {
         state_tracker_->TrackResourceGpuVa(wrapper, result);
     }
+
+    if (RvAnnotationActive() == true)
+    {
+        resource_value_annotator_->PostProcessGetGPUVirtualAddress(wrapper, result);
+    }
+}
+
+bool D3D12CaptureManager::AddFillMemoryResourceValueCommand(
+    const std::map<uint64_t, Dx12ResourceValueAnnotator::Dx12FillCommandResourceValue>& resource_values)
+{
+    bool success = true;
+    if ((GetCaptureMode() & kModeWrite) == kModeWrite)
+    {
+        std::vector<uint8_t>                         write_buffer;
+        format::FillMemoryResourceValueCommandHeader rv_header;
+        rv_header.meta_header.block_header.type = format::BlockType::kMetaDataBlock;
+        rv_header.meta_header.meta_data_id      = format::MakeMetaDataId(
+            format::ApiFamilyId::ApiFamily_D3D12, format::MetaDataType::kFillMemoryResourceValueCommand);
+        rv_header.thread_id            = 0;
+        rv_header.resource_value_count = resource_values.size();
+
+        size_t       header_size = sizeof(format::FillMemoryResourceValueCommandHeader);
+        const size_t uncompressed_size =
+            resource_values.size() * (sizeof(format::ResourceValueType) + sizeof(uint64_t));
+
+        write_buffer.clear();
+        write_buffer.resize(uncompressed_size);
+
+        // Write resource value data to uncompressed buffer.
+        auto type_data_pos = write_buffer.data();
+        auto offset_data_pos =
+            write_buffer.data() + (rv_header.resource_value_count * sizeof(format::ResourceValueType));
+        for (const auto& resource_value_pair : resource_values)
+        {
+            auto type   = resource_value_pair.second.type;
+            auto offset = resource_value_pair.second.offset;
+
+            util::platform::MemoryCopy(type_data_pos, sizeof(type), &type, sizeof(type));
+            util::platform::MemoryCopy(offset_data_pos, sizeof(offset), &offset, sizeof(offset));
+
+            type_data_pos += sizeof(resource_value_pair.second.type);
+            offset_data_pos += sizeof(resource_value_pair.second.offset);
+        }
+        GFXRECON_ASSERT(type_data_pos ==
+                        (write_buffer.data() + (rv_header.resource_value_count * sizeof(format::ResourceValueType))));
+        GFXRECON_ASSERT(offset_data_pos == (write_buffer.data() + uncompressed_size));
+
+        bool not_compressed = true;
+
+        std::vector<uint8_t> compressed_write_buffer;
+
+        if (compressor_ != nullptr)
+        {
+            size_t compressed_size =
+                compressor_->Compress(write_buffer.size(), write_buffer.data(), &compressed_write_buffer, 0);
+
+            if ((compressed_size > 0) && (compressed_size < uncompressed_size))
+            {
+                not_compressed = false;
+
+                // Calculate size of packet with compressed data size.
+                rv_header.meta_header.block_header.size = format::GetMetaDataBlockBaseSize(rv_header) + compressed_size;
+                rv_header.meta_header.block_header.type = format::BlockType::kCompressedMetaDataBlock;
+
+                CombineAndWriteToFile(
+                    { { &rv_header, header_size }, { compressed_write_buffer.data(), compressed_size } });
+            }
+        }
+
+        // If the data was not compressed, write the uncompressed data here.
+        if (not_compressed)
+        {
+            // Calculate size of packet with uncompressed data size.
+            rv_header.meta_header.block_header.size = format::GetMetaDataBlockBaseSize(rv_header) + uncompressed_size;
+
+            CombineAndWriteToFile({ { &rv_header, header_size }, { write_buffer.data(), uncompressed_size } });
+        }
+    }
+    return success;
 }
 
 void D3D12CaptureManager::Destroy_ID3D12Resource(ID3D12Resource_Wrapper* wrapper)
@@ -1416,6 +1612,11 @@ void D3D12CaptureManager::PreProcess_ID3D12CommandQueue_ExecuteCommandLists(ID3D
         assert(manager != nullptr);
 
         manager->ProcessMemoryEntries([this](uint64_t memory_id, void* start_address, size_t offset, size_t size) {
+            if (RvAnnotationActive() == true)
+            {
+                resource_value_annotator_->ScanForGPUVA(
+                    memory_id, reinterpret_cast<uint8_t*>(start_address) + offset, size, offset);
+            }
             WriteFillMemoryCmd(memory_id, offset, size, start_address);
         });
     }
@@ -1436,6 +1637,13 @@ void D3D12CaptureManager::PreProcess_ID3D12CommandQueue_ExecuteCommandLists(ID3D
                     // we only need to handle data != nullptr case because no mapped memory and shadow memory
                     // be tracked for data == nullptr, also no corresponding memory data for WriteFillMemoryCmd
                     // writing to trace file.
+                    if (RvAnnotationActive() == true)
+                    {
+                        resource_value_annotator_->ScanForGPUVA(reinterpret_cast<uint64_t>(mapped_subresource.data),
+                                                                reinterpret_cast<uint8_t*>(mapped_subresource.data),
+                                                                size,
+                                                                0);
+                    }
                     WriteFillMemoryCmd(
                         reinterpret_cast<uint64_t>(mapped_subresource.data), 0, size, mapped_subresource.data);
                 }
@@ -1783,6 +1991,11 @@ void D3D12CaptureManager::EnableDRED()
     }
 }
 
+bool D3D12CaptureManager::RvAnnotationActive()
+{
+    return (IsAnnotated() == true) && (resource_value_annotator_ != nullptr);
+}
+
 HRESULT D3D12CaptureManager::OverrideCreateDXGIFactory2(UINT Flags, REFIID riid, void** ppFactory)
 {
     HRESULT result = E_FAIL;
@@ -1859,9 +2072,22 @@ void D3D12CaptureManager::PostProcess_D3D12CreateDevice(
                 format::DxgiAdapterDesc* active_adapter = graphics::dx12::MarkActiveAdapter(device, adapters_);
 
                 // Write adapter desc to file if it was marked active, and has not already been seen
+                auto adapter_id = GetDx12WrappedId<IUnknown>(pAdapter);
                 if (active_adapter != nullptr)
                 {
+                    graphics::dx12::InjectAdapterCaptureId(active_adapter->extra_info, adapter_id);
                     WriteDxgiAdapterInfoCommand(*active_adapter);
+                }
+                else
+                {
+                    // we have to write adapter if it is already marked active and as a result active_adapter is null
+                    // this is essential for marking active adapter for system with multiple GPUs
+                    auto parent_adapter = graphics::dx12::GetAdapterDescByLUID(device->GetAdapterLuid(), adapters_);
+                    if (parent_adapter != nullptr)
+                    {
+                        graphics::dx12::InjectAdapterCaptureId(parent_adapter->extra_info, adapter_id);
+                        WriteDxgiAdapterInfoCommand(*parent_adapter);
+                    }
                 }
             }
         }
@@ -1988,6 +2214,24 @@ CaptureSettings::TraceSettings D3D12CaptureManager::GetDefaultTraceSettings()
     d3d12_trace_settings.page_guard_external_memory = true;
 
     return d3d12_trace_settings;
+}
+
+void D3D12CaptureManager::PostProcess_ID3D12DescriptorHeap_GetGPUDescriptorHandleForHeapStart(
+    ID3D12DescriptorHeap_Wrapper* wrapper, D3D12_GPU_DESCRIPTOR_HANDLE result)
+{
+    if (RvAnnotationActive() == true)
+    {
+        resource_value_annotator_->AddDescriptorHandleStart(wrapper, result);
+    }
+}
+
+void D3D12CaptureManager::PostProcess_ID3D12Device_GetDescriptorHandleIncrementSize(
+    ID3D12Device_Wrapper* wrapper, UINT result, D3D12_DESCRIPTOR_HEAP_TYPE heap_type)
+{
+    if (RvAnnotationActive() == true)
+    {
+        resource_value_annotator_->SetDescriptorHandleIncrementSize(heap_type, result);
+    }
 }
 
 void D3D12CaptureManager::PostProcess_ID3D12Device_CopyDescriptors(ID3D12Device_Wrapper*              wrapper,
@@ -2299,6 +2543,11 @@ void D3D12CaptureManager::PostProcess_ID3D12StateObjectProperties_GetShaderIdent
         state_tracker_->TrackGetShaderIdentifier(
             properties_wrapper, result, export_name, GetThreadData()->parameter_buffer_.get());
     }
+    if (result != nullptr && RvAnnotationActive() == true)
+    {
+        auto shader_id = graphics::PackDx12ShaderIdentifier(static_cast<uint8_t*>(result));
+        resource_value_annotator_->AddShaderID(shader_id);
+    }
 }
 
 void D3D12CaptureManager::WriteDxgiAdapterInfoCommand(const format::DxgiAdapterDesc& adapter_desc)
@@ -2359,8 +2608,12 @@ void D3D12CaptureManager::WriteDx12DriverInfo()
 {
     if ((GetCaptureMode() & kModeWrite) == kModeWrite)
     {
-        std::string driverinfo = "";
-        if (gfxrecon::util::driverinfo::GetDriverInfo(driverinfo, format::ApiFamilyId::ApiFamily_D3D12) == true)
+        std::string       driverinfo = "";
+        std::vector<LUID> adapter_luids;
+
+        gfxrecon::graphics::dx12::GetActiveAdapterLuids(adapters_, adapter_luids);
+
+        if (util::driverinfo::GetDriverInfo(driverinfo, format::ApiFamilyId::ApiFamily_D3D12, adapter_luids) == true)
         {
             WriteDriverInfoCommand(driverinfo);
         }

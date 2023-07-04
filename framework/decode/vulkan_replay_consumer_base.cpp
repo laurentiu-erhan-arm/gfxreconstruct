@@ -1,6 +1,6 @@
 /*
 ** Copyright (c) 2018-2020 Valve Corporation
-** Copyright (c) 2018-2022 LunarG, Inc.
+** Copyright (c) 2018-2023 LunarG, Inc.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -130,19 +130,19 @@ static uint32_t GetHardwareBufferFormatBpp(uint32_t format)
     switch (format)
     {
         case AHARDWAREBUFFER_FORMAT_BLOB:
-        case AHARDWAREBUFFER_FORMAT_S8_UINT: // VK_FORMAT_S8_UINT
+        case AHARDWAREBUFFER_FORMAT_S8_UINT:            // VK_FORMAT_S8_UINT
             return 1;
-        case AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM: // VK_FORMAT_R5G6B5_UNORM_PACK16
-        case AHARDWAREBUFFER_FORMAT_D16_UNORM:    // VK_FORMAT_D16_UNORM
+        case AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM:       // VK_FORMAT_R5G6B5_UNORM_PACK16
+        case AHARDWAREBUFFER_FORMAT_D16_UNORM:          // VK_FORMAT_D16_UNORM
             return 2;
-        case AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM: // VK_FORMAT_R8G8B8_UNORM
+        case AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM:       // VK_FORMAT_R8G8B8_UNORM
             return 3;
-        case AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM:    // VK_FORMAT_R8G8B8A8_UNORM
-        case AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM:    // VK_FORMAT_R8G8B8A8_UNORM
-        case AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM: // VK_FORMAT_A2B10G10R10_UNORM_PACK32
-        case AHARDWAREBUFFER_FORMAT_D24_UNORM:         // VK_FORMAT_X8_D24_UNORM_PACK32
-        case AHARDWAREBUFFER_FORMAT_D24_UNORM_S8_UINT: // VK_FORMAT_D24_UNORM_S8_UINT
-        case AHARDWAREBUFFER_FORMAT_D32_FLOAT:         // VK_FORMAT_D32_SFLOAT
+        case AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM:     // VK_FORMAT_R8G8B8A8_UNORM
+        case AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM:     // VK_FORMAT_R8G8B8A8_UNORM
+        case AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM:  // VK_FORMAT_A2B10G10R10_UNORM_PACK32
+        case AHARDWAREBUFFER_FORMAT_D24_UNORM:          // VK_FORMAT_X8_D24_UNORM_PACK32
+        case AHARDWAREBUFFER_FORMAT_D24_UNORM_S8_UINT:  // VK_FORMAT_D24_UNORM_S8_UINT
+        case AHARDWAREBUFFER_FORMAT_D32_FLOAT:          // VK_FORMAT_D32_SFLOAT
             return 4;
         case AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT: // VK_FORMAT_R16G16B16A16_SFLOAT
         case AHARDWAREBUFFER_FORMAT_D32_FLOAT_S8_UINT:  // VK_FORMAT_D32_SFLOAT_S8_UINT
@@ -176,7 +176,7 @@ VulkanReplayConsumerBase::VulkanReplayConsumerBase(std::shared_ptr<application::
     }
     else
     {
-        swapchain_ = std::make_unique<VulkanVirtualSwapchain>();
+        swapchain_ = std::make_unique<VulkanVirtualSwapchain>(options.virtual_swapchain_skip_blit);
     }
 
     if (options_.enable_debug_device_lost)
@@ -2212,8 +2212,10 @@ VulkanReplayConsumerBase::OverrideCreateInstance(VkResult original_result,
         if (replay_create_info->ppEnabledExtensionNames)
         {
             // If a specific WSI extension was selected on the command line we need to make sure that extension is
-            // loaded
+            // loaded and other WSI extensions are disabled
             assert(application_);
+            const bool override_wsi_extensions = !application_->GetWsiCliContext().empty();
+
             for (const auto& itr : application_->GetWsiContexts())
             {
                 // TODO : It's kinda ugly to be referencing Dx12 (even if just by name) in the Vulkan codepath, but
@@ -2227,11 +2229,20 @@ VulkanReplayConsumerBase::OverrideCreateInstance(VkResult original_result,
 
             for (uint32_t i = 0; i < replay_create_info->enabledExtensionCount; ++i)
             {
-                auto current_extension = replay_create_info->ppEnabledExtensionNames[i];
-                filtered_extensions.push_back(current_extension);
-                if (kSurfaceExtensions.find(current_extension) != kSurfaceExtensions.end())
+                const auto current_extension = replay_create_info->ppEnabledExtensionNames[i];
+                const bool is_surface_extension =
+                    kSurfaceExtensions.find(current_extension) != kSurfaceExtensions.end();
+                if (is_surface_extension)
                 {
-                    application_->InitializeWsiContext(current_extension);
+                    if (!override_wsi_extensions)
+                    {
+                        application_->InitializeWsiContext(current_extension);
+                        filtered_extensions.push_back(current_extension);
+                    }
+                }
+                else
+                {
+                    filtered_extensions.push_back(current_extension);
                 }
             }
 
@@ -2244,16 +2255,8 @@ VulkanReplayConsumerBase::OverrideCreateInstance(VkResult original_result,
                 }
                 else
                 {
-                    // Check that the requested extensions are present and print warnings if not.
-                    for (auto extensionIter = filtered_extensions.begin(); extensionIter != filtered_extensions.end();
-                         ++extensionIter)
-                    {
-                        if (!feature_util::IsSupportedExtension(available_extensions, *extensionIter))
-                        {
-                            GFXRECON_LOG_WARNING("Extension %s, is not supported by the replay device.",
-                                                 *extensionIter);
-                        }
-                    }
+                    // Remove enabled extensions that are ignorable from the replay instance.
+                    feature_util::RemoveIgnorableExtensions(available_extensions, &filtered_extensions);
                 }
             }
             else
@@ -2485,7 +2488,7 @@ VulkanReplayConsumerBase::OverrideCreateDevice(VkResult            original_resu
             }
         }
 
-        if (options_.remove_unsupported_features && (physical_device != VK_NULL_HANDLE))
+        if (physical_device != VK_NULL_HANDLE)
         {
             // Remove enabled extensions that are not available from the replay device.
             auto table = GetInstanceTable(physical_device);
@@ -2495,15 +2498,27 @@ VulkanReplayConsumerBase::OverrideCreateDevice(VkResult            original_resu
             if (feature_util::GetDeviceExtensions(
                     physical_device, table->EnumerateDeviceExtensionProperties, &properties) == VK_SUCCESS)
             {
-                feature_util::RemoveUnsupportedExtensions(properties, &modified_extensions);
+                if (options_.remove_unsupported_features)
+                {
+                    feature_util::RemoveUnsupportedExtensions(properties, &modified_extensions);
+                }
+                else
+                {
+                    // Remove enabled extensions that are not available on the replay device, but
+                    // that can still be safely ignored.
+                    feature_util::RemoveIgnorableExtensions(properties, &modified_extensions);
+                }
             }
 
-            // Remove enabled features that are not available from the replay device.
-            feature_util::RemoveUnsupportedFeatures(physical_device,
-                                                    table->GetPhysicalDeviceFeatures,
-                                                    table->GetPhysicalDeviceFeatures2,
-                                                    modified_create_info.pNext,
-                                                    modified_create_info.pEnabledFeatures);
+            if (options_.remove_unsupported_features)
+            {
+                // Remove enabled features that are not available from the replay device.
+                feature_util::RemoveUnsupportedFeatures(physical_device,
+                                                        table->GetPhysicalDeviceFeatures,
+                                                        table->GetPhysicalDeviceFeatures2,
+                                                        modified_create_info.pNext,
+                                                        modified_create_info.pEnabledFeatures);
+            }
         }
 
         modified_create_info.enabledExtensionCount   = static_cast<uint32_t>(modified_extensions.size());
@@ -2933,6 +2948,23 @@ VkResult VulkanReplayConsumerBase::OverrideWaitForFences(PFN_vkWaitForFences    
     const VkFence*       modified_fences      = nullptr;
     std::vector<VkFence> valid_fences;
 
+    // Check if the call is in a frame range for being skipped (see --skip-get-fence-ranges, --skip-get-fence-status)
+    bool           in_skip_range = options_.skip_get_fence_ranges.empty();
+    const uint32_t current_frame = application_->GetCurrentFrameNumber() + 1;
+    for (const util::FrameRange& range : options_.skip_get_fence_ranges)
+    {
+        if (current_frame >= range.first && current_frame <= range.last)
+        {
+            in_skip_range = true;
+            break;
+        }
+    }
+
+    if (in_skip_range && options_.skip_get_fence_status == SkipGetFenceStatus::SkipAll)
+    {
+        return result;
+    }
+
     // Check for fences that need to be removed.
     if (shadow_fences_.empty())
     {
@@ -2970,14 +3002,22 @@ VkResult VulkanReplayConsumerBase::OverrideWaitForFences(PFN_vkWaitForFences    
         // timeout to UINT64_MAX.
         result = func(device, modified_fence_count, modified_fences, waitAll, std::numeric_limits<uint64_t>::max());
     }
-    else if (original_result == VK_TIMEOUT)
-    {
-        // Try to get a timeout result with a 0 timeout.
-        result = func(device, modified_fence_count, modified_fences, waitAll, 0);
-    }
     else
     {
-        result = func(device, modified_fence_count, modified_fences, waitAll, timeout);
+        if (in_skip_range && options_.skip_get_fence_status == SkipGetFenceStatus::SkipUnsuccessful)
+        {
+            return result;
+        }
+
+        if (original_result == VK_TIMEOUT)
+        {
+            // Try to get a timeout result with a 0 timeout.
+            result = func(device, modified_fence_count, modified_fences, waitAll, 0);
+        }
+        else
+        {
+            result = func(device, modified_fence_count, modified_fences, waitAll, timeout);
+        }
     }
 
     return result;
@@ -2990,9 +3030,28 @@ VkResult VulkanReplayConsumerBase::OverrideGetFenceStatus(PFN_vkGetFenceStatus f
 {
     assert((device_info != nullptr) && (fence_info != nullptr));
 
-    VkResult result;
+    VkResult result = VK_SUCCESS;
     VkDevice device = device_info->handle;
     VkFence  fence  = fence_info->handle;
+
+    // Check if the call is in a frame range for being skipped (see --skip-get-fence-ranges, --skip-get-fence-status)
+    bool           in_skip_range = options_.skip_get_fence_ranges.empty();
+    const uint32_t current_frame = application_->GetCurrentFrameNumber() + 1;
+    for (const util::FrameRange& range : options_.skip_get_fence_ranges)
+    {
+        if (current_frame >= range.first && current_frame <= range.last)
+        {
+            in_skip_range = true;
+            break;
+        }
+    }
+
+    if (in_skip_range &&
+        (options_.skip_get_fence_status == SkipGetFenceStatus::SkipAll ||
+         (options_.skip_get_fence_status == SkipGetFenceStatus::SkipUnsuccessful && original_result != VK_SUCCESS)))
+    {
+        return result;
+    }
 
     // If you find this loop to be infinite consider adding a limit in the same way
     // it is done for GetEventStatus and GetQueryPoolResults.
@@ -5036,7 +5095,7 @@ VkResult VulkanReplayConsumerBase::OverrideAcquireNextImageKHR(PFN_vkAcquireNext
     // If image acquire failed at capture, there is nothing worth replaying as the fence and semaphore aren't processed
     // and a successful acquire on replay of an image that does not have a corresponding present to replay can lead to
     // OUT_OF_DATE errors.
-    if (original_result < 0)
+    if (original_result != VK_SUCCESS && original_result != VK_SUBOPTIMAL_KHR)
     {
         result = original_result;
     }
@@ -5257,15 +5316,15 @@ VulkanReplayConsumerBase::OverrideQueuePresentKHR(PFN_vkQueuePresentKHR         
     VkPresentRegionsKHR         modified_present_region_info{ VK_STRUCTURE_TYPE_PRESENT_REGIONS_KHR };
     VkPresentTimesInfoGOOGLE    modified_present_times_info{ VK_STRUCTURE_TYPE_PRESENT_TIMES_INFO_GOOGLE };
 
-    std::vector<VkSwapchainKHR>       valid_swapchains;
-    std::vector<uint32_t>             modified_image_indices;
-    std::vector<uint32_t>             modified_device_masks;
-    std::vector<VkPresentRegionKHR>   modified_regions;
-    std::vector<VkPresentTimeGOOGLE>  modified_times;
-    std::vector<const SemaphoreInfo*> removed_semaphores;
-    std::unordered_set<uint32_t>      removed_swapchain_indices;
-    std::vector<uint32_t>             capture_image_indices;
-    std::vector<SwapchainKHRInfo*>    swapchain_infos;
+    valid_swapchains_.clear();
+    modified_image_indices_.clear();
+    modified_device_masks_.clear();
+    modified_regions_.clear();
+    modified_times_.clear();
+    removed_semaphores_.clear();
+    removed_swapchain_indices_.clear();
+    capture_image_indices_.clear();
+    swapchain_infos_.clear();
 
     if ((screenshot_handler_ != nullptr) && (screenshot_handler_->IsScreenshotFrame()))
     {
@@ -5286,11 +5345,11 @@ VulkanReplayConsumerBase::OverrideQueuePresentKHR(PFN_vkQueuePresentKHR         
             const auto swapchain_info = object_info_table_.GetSwapchainKHRInfo(swapchain_ids[i]);
             if ((swapchain_info != nullptr) && (swapchain_info->surface != VK_NULL_HANDLE))
             {
-                valid_swapchains.emplace_back(swapchain_info->handle);
-                swapchain_infos.emplace_back(swapchain_info);
+                valid_swapchains_.emplace_back(swapchain_info->handle);
+                swapchain_infos_.emplace_back(swapchain_info);
 
                 uint32_t capture_image_index = present_info->pImageIndices[i];
-                capture_image_indices.emplace_back(capture_image_index);
+                capture_image_indices_.emplace_back(capture_image_index);
 
                 if (capture_image_index >= static_cast<uint32_t>(swapchain_info->acquired_indices.size()))
                 {
@@ -5332,16 +5391,16 @@ VulkanReplayConsumerBase::OverrideQueuePresentKHR(PFN_vkQueuePresentKHR         
                 }
 
                 uint32_t replay_image_index = swapchain_info->acquired_indices[capture_image_index].index;
-                modified_image_indices.emplace_back(replay_image_index);
+                modified_image_indices_.emplace_back(replay_image_index);
             }
             else
             {
-                removed_swapchain_indices.insert(i);
+                removed_swapchain_indices_.insert(i);
             }
         }
 
         // If a swapchain was removed, pNext stucts that reference the swapchain need to be modified as well.
-        if (removed_swapchain_indices.empty() == false)
+        if (removed_swapchain_indices_.empty() == false)
         {
             const VkBaseInStructure* next = reinterpret_cast<const VkBaseInStructure*>(modified_present_info.pNext);
             while (next != nullptr)
@@ -5357,18 +5416,18 @@ VulkanReplayConsumerBase::OverrideQueuePresentKHR(PFN_vkQueuePresentKHR         
                         {
                             for (uint32_t i = 0; i < present_info->swapchainCount; ++i)
                             {
-                                if (removed_swapchain_indices.find(i) == removed_swapchain_indices.end())
+                                if (removed_swapchain_indices_.find(i) == removed_swapchain_indices_.end())
                                 {
-                                    modified_device_masks.push_back(pNext->pDeviceMasks[i]);
+                                    modified_device_masks_.push_back(pNext->pDeviceMasks[i]);
                                 }
                             }
 
-                            assert(valid_swapchains.size() == modified_device_masks.size());
+                            assert(valid_swapchains_.size() == modified_device_masks_.size());
 
                             modified_device_group_present_info.pNext = pNext->pNext;
                             modified_device_group_present_info.swapchainCount =
-                                static_cast<uint32_t>(modified_device_masks.size());
-                            modified_device_group_present_info.pDeviceMasks = modified_device_masks.data();
+                                static_cast<uint32_t>(modified_device_masks_.size());
+                            modified_device_group_present_info.pDeviceMasks = modified_device_masks_.data();
                             modified_device_group_present_info.mode         = pNext->mode;
                             pNext                                           = &modified_device_group_present_info;
                         }
@@ -5382,18 +5441,18 @@ VulkanReplayConsumerBase::OverrideQueuePresentKHR(PFN_vkQueuePresentKHR         
                         {
                             for (uint32_t i = 0; i < present_info->swapchainCount; ++i)
                             {
-                                if (removed_swapchain_indices.find(i) == removed_swapchain_indices.end())
+                                if (removed_swapchain_indices_.find(i) == removed_swapchain_indices_.end())
                                 {
-                                    modified_regions.push_back(pNext->pRegions[i]);
+                                    modified_regions_.push_back(pNext->pRegions[i]);
                                 }
                             }
 
-                            assert(valid_swapchains.size() == modified_regions.size());
+                            assert(valid_swapchains_.size() == modified_regions_.size());
 
                             modified_present_region_info.pNext = pNext->pNext;
                             modified_present_region_info.swapchainCount =
-                                static_cast<uint32_t>(modified_regions.size());
-                            modified_present_region_info.pRegions = modified_regions.data();
+                                static_cast<uint32_t>(modified_regions_.size());
+                            modified_present_region_info.pRegions = modified_regions_.data();
                             pNext                                 = &modified_present_region_info;
                         }
                         break;
@@ -5406,17 +5465,17 @@ VulkanReplayConsumerBase::OverrideQueuePresentKHR(PFN_vkQueuePresentKHR         
                         {
                             for (uint32_t i = 0; i < present_info->swapchainCount; ++i)
                             {
-                                if (removed_swapchain_indices.find(i) == removed_swapchain_indices.end())
+                                if (removed_swapchain_indices_.find(i) == removed_swapchain_indices_.end())
                                 {
-                                    modified_times.push_back(pNext->pTimes[i]);
+                                    modified_times_.push_back(pNext->pTimes[i]);
                                 }
                             }
 
-                            assert(valid_swapchains.size() == modified_times.size());
+                            assert(valid_swapchains_.size() == modified_times_.size());
 
                             modified_present_times_info.pNext          = pNext->pNext;
-                            modified_present_times_info.swapchainCount = static_cast<uint32_t>(modified_times.size());
-                            modified_present_times_info.pTimes         = modified_times.data();
+                            modified_present_times_info.swapchainCount = static_cast<uint32_t>(modified_times_.size());
+                            modified_present_times_info.pTimes         = modified_times_.data();
                             pNext                                      = &modified_present_times_info;
                         }
                         break;
@@ -5429,22 +5488,22 @@ VulkanReplayConsumerBase::OverrideQueuePresentKHR(PFN_vkQueuePresentKHR         
             }
         }
 
-        modified_present_info.swapchainCount = static_cast<uint32_t>(valid_swapchains.size());
-        modified_present_info.pSwapchains    = valid_swapchains.data();
-        modified_present_info.pImageIndices  = modified_image_indices.data();
+        modified_present_info.swapchainCount = static_cast<uint32_t>(valid_swapchains_.size());
+        modified_present_info.pSwapchains    = valid_swapchains_.data();
+        modified_present_info.pImageIndices  = modified_image_indices_.data();
     }
     else
     {
         // Need to match the last acquired image index from replay to avoid OUT_OF_DATE errors from present.
-        modified_image_indices.insert(modified_image_indices.end(),
+        modified_image_indices_.insert(modified_image_indices_.end(),
+                                       present_info->pImageIndices,
+                                       std::next(present_info->pImageIndices, present_info->swapchainCount));
+
+        capture_image_indices_.insert(capture_image_indices_.end(),
                                       present_info->pImageIndices,
                                       std::next(present_info->pImageIndices, present_info->swapchainCount));
 
-        capture_image_indices.insert(capture_image_indices.end(),
-                                     present_info->pImageIndices,
-                                     std::next(present_info->pImageIndices, present_info->swapchainCount));
-
-        swapchain_infos.insert(swapchain_infos.end(), present_info->swapchainCount, nullptr);
+        swapchain_infos_.insert(swapchain_infos_.end(), present_info->swapchainCount, nullptr);
 
         const auto swapchain_ids = present_info_data->pSwapchains.GetPointer();
         for (uint32_t i = 0; i < present_info->swapchainCount; ++i)
@@ -5454,10 +5513,10 @@ VulkanReplayConsumerBase::OverrideQueuePresentKHR(PFN_vkQueuePresentKHR         
             const auto swapchain_info = object_info_table_.GetSwapchainKHRInfo(swapchain_ids[i]);
             if (swapchain_info != nullptr)
             {
-                swapchain_infos[i] = swapchain_info;
+                swapchain_infos_[i] = swapchain_info;
 
                 uint32_t capture_image_index = present_info->pImageIndices[i];
-                capture_image_indices[i]     = capture_image_index;
+                capture_image_indices_[i]    = capture_image_index;
 
                 if (capture_image_index >= static_cast<uint32_t>(swapchain_info->acquired_indices.size()))
                 {
@@ -5500,18 +5559,25 @@ VulkanReplayConsumerBase::OverrideQueuePresentKHR(PFN_vkQueuePresentKHR         
                     swapchain_info->acquired_indices[capture_image_index] = { replay_index, true };
                 }
                 uint32_t replay_image_index = swapchain_info->acquired_indices[capture_image_index].index;
-                modified_image_indices[i]   = replay_image_index;
+                modified_image_indices_[i]  = replay_image_index;
             }
         }
 
-        modified_present_info.pImageIndices = modified_image_indices.data();
+        modified_present_info.pImageIndices = modified_image_indices_.data();
+    }
+
+    if (options_.wait_before_present)
+    {
+        format::HandleId device_handle = queue_info->parent_id;
+        VkDevice         device        = MapHandle<DeviceInfo>(device_handle, &VulkanObjectInfoTable::GetDeviceInfo);
+        GetDeviceTable((const void*)device_handle)->DeviceWaitIdle(device);
     }
 
     // Only attempt to find imported or shadow semaphores if we know at least one around.
     if ((!have_imported_semaphores_) && (shadow_semaphores_.empty()) && (modified_present_info.swapchainCount != 0))
     {
         result = swapchain_->QueuePresentKHR(
-            func, capture_image_indices, swapchain_infos, queue_info, &modified_present_info);
+            func, capture_image_indices_, swapchain_infos_, queue_info, &modified_present_info);
     }
     else if (modified_present_info.swapchainCount == 0)
     {
@@ -5520,32 +5586,32 @@ VulkanReplayConsumerBase::OverrideQueuePresentKHR(PFN_vkQueuePresentKHR         
 
         // Used to mark shadow semaphores as signaled in case acquireNextImage signals were supposed to be waited on
         // here.
-        GetShadowSemaphores(present_info_data->pWaitSemaphores, &removed_semaphores);
+        GetShadowSemaphores(present_info_data->pWaitSemaphores, &removed_semaphores_);
     }
     else
     {
         // Check for imported semaphores in the present info, creating a vector of imported semaphore info structures.
         if (present_info_data != nullptr)
         {
-            GetImportedSemaphores(present_info_data->pWaitSemaphores, &removed_semaphores);
-            GetShadowSemaphores(present_info_data->pWaitSemaphores, &removed_semaphores);
+            GetImportedSemaphores(present_info_data->pWaitSemaphores, &removed_semaphores_);
+            GetShadowSemaphores(present_info_data->pWaitSemaphores, &removed_semaphores_);
         }
 
-        if (removed_semaphores.empty())
+        if (removed_semaphores_.empty())
         {
             result = swapchain_->QueuePresentKHR(
-                func, capture_image_indices, swapchain_infos, queue_info, &modified_present_info);
+                func, capture_image_indices_, swapchain_infos_, queue_info, &modified_present_info);
         }
         else
         {
             std::vector<VkSemaphore> semaphore_memory;
-            auto                     semaphore_iter = removed_semaphores.begin();
+            auto                     semaphore_iter = removed_semaphores_.begin();
 
             for (uint32_t i = 0; i < modified_present_info.waitSemaphoreCount; ++i)
             {
                 VkSemaphore semaphore = modified_present_info.pWaitSemaphores[i];
 
-                if ((semaphore_iter == removed_semaphores.end()) || ((*semaphore_iter)->handle != semaphore))
+                if ((semaphore_iter == removed_semaphores_.end()) || ((*semaphore_iter)->handle != semaphore))
                 {
                     semaphore_memory.push_back(semaphore);
                 }
@@ -5560,7 +5626,7 @@ VulkanReplayConsumerBase::OverrideQueuePresentKHR(PFN_vkQueuePresentKHR         
             modified_present_info.pWaitSemaphores    = semaphore_memory.data();
 
             result = swapchain_->QueuePresentKHR(
-                func, capture_image_indices, swapchain_infos, queue_info, &modified_present_info);
+                func, capture_image_indices_, swapchain_infos_, queue_info, &modified_present_info);
         }
     }
 
@@ -5569,7 +5635,7 @@ VulkanReplayConsumerBase::OverrideQueuePresentKHR(PFN_vkQueuePresentKHR         
     {
         if (dispatched_command)
         {
-            TrackSemaphoreForwardProgress(present_info_data->pWaitSemaphores, &removed_semaphores);
+            TrackSemaphoreForwardProgress(present_info_data->pWaitSemaphores, &removed_semaphores_);
         }
         else
         {
@@ -6265,6 +6331,33 @@ VkResult VulkanReplayConsumerBase::OverrideGetAndroidHardwareBufferPropertiesAND
         auto*    output_properties = pProperties->GetOutputPointer();
 
         return func(device, hardware_buffer, output_properties);
+    }
+}
+
+// We want to allow skipping the query for tool properties because the capture layer actually adds this extension
+// and the application may end up using the query.  However, this extension may not be present for replay, so
+// we stub it out in that case.  This will generate warnings in the GfxReconstruct output, but it shouldn't result
+// in a failure.
+VkResult VulkanReplayConsumerBase::OverrideGetPhysicalDeviceToolProperties(
+    PFN_vkGetPhysicalDeviceToolProperties                         func,
+    VkResult                                                      original_result,
+    const PhysicalDeviceInfo*                                     physical_device_info,
+    PointerDecoder<uint32_t>*                                     pToolCount,
+    StructPointerDecoder<Decoded_VkPhysicalDeviceToolProperties>* pToolProperties)
+{
+    const auto& instance_extensions = physical_device_info->parent_enabled_extensions;
+    if (std::find(instance_extensions.begin(), instance_extensions.end(), VK_EXT_TOOLING_INFO_EXTENSION_NAME) !=
+        instance_extensions.end())
+    {
+        return func(physical_device_info->handle, pToolCount->GetOutputPointer(), pToolProperties->GetOutputPointer());
+    }
+    else
+    {
+        GFXRECON_LOG_WARNING_ONCE(
+            "The captured application used vkGetPhysicalDeviceToolProperties. This is not supported by "
+            "the replay device, so replay may fail.");
+        *pToolCount->GetOutputPointer() = 0;
+        return VK_SUCCESS;
     }
 }
 

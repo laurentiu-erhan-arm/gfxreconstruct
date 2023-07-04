@@ -1,5 +1,6 @@
 /*
 ** Copyright (c) 2021 LunarG, Inc.
+** Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -23,9 +24,20 @@
 #include "encode/dx12_state_tracker.h"
 
 #include "encode/custom_dx12_struct_unwrappers.h"
+#include <encode/d3d12_capture_manager.h>
 
 GFXRECON_BEGIN_NAMESPACE(gfxrecon)
 GFXRECON_BEGIN_NAMESPACE(encode)
+
+// The function is used as function pointer parameter for GPUVA map functions
+// in dx12_gpu_va_map.cpp for searching resource which has flag
+// D3D12_RESOURCE_FLAG_RAYTRACING_ACCELERATION_STRUCTURE. Such handling is for
+// keeping headfile organized without having to add too much change to headfile
+// structure.
+bool IsResourceUsedForAccelerationStructure(format::HandleId id)
+{
+    return D3D12CaptureManager::Get()->IsAccelerationStructureResource(id);
+}
 
 #define GFXRECON_ACCEL_STRUCT_TRIM_BARRIER 0
 
@@ -38,7 +50,11 @@ void Dx12StateTracker::WriteState(Dx12StateWriter* writer, uint64_t frame_number
     if (writer != nullptr)
     {
         std::unique_lock<std::mutex> lock(state_table_mutex_);
+#ifdef GFXRECON_AGS_SUPPORT
+        writer->WriteState(state_table_, ags_state_table_, frame_number);
+#else
         writer->WriteState(state_table_, frame_number);
+#endif // GFXRECON_AGS_SUPPORT
     }
 }
 
@@ -552,18 +568,21 @@ void Dx12StateTracker::TrackBuildRaytracingAccelerationStructure(
 {
     // Get the wrapper of the destination resource.
     ID3D12Resource_Wrapper* resource_wrapper = nullptr;
+    auto                    device5          = graphics::dx12::GetDeviceComPtrFromChild<ID3D12Device5>(
+        list_wrapper->GetWrappedObjectAs<ID3D12GraphicsCommandList4>());
+
+    D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO prebuild_info;
+    device5->GetRaytracingAccelerationStructurePrebuildInfo(&desc->Inputs, &prebuild_info);
     {
         std::unique_lock<std::mutex> lock(state_table_mutex_);
-        resource_wrapper = GetResourceWrapperForGpuVa(desc->DestAccelerationStructureData);
+        resource_wrapper =
+            GetResourceWrapperForGpuVa(desc->DestAccelerationStructureData,
+                                       desc->DestAccelerationStructureData + prebuild_info.ResultDataMaxSizeInBytes,
+                                       IsResourceUsedForAccelerationStructure);
     }
 
     if (resource_wrapper)
     {
-        auto device5 = graphics::dx12::GetDeviceComPtrFromChild<ID3D12Device5>(
-            list_wrapper->GetWrappedObjectAs<ID3D12GraphicsCommandList4>());
-
-        D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO prebuild_info;
-        device5->GetRaytracingAccelerationStructurePrebuildInfo(&desc->Inputs, &prebuild_info);
 
         DxAccelerationStructureBuildInfo build_info;
         build_info.dest_gpu_va          = desc->DestAccelerationStructureData;
@@ -653,7 +672,8 @@ void Dx12StateTracker::TrackBuildRaytracingAccelerationStructure(
                 ID3D12Resource_Wrapper* src_resource_wrapper = nullptr;
                 {
                     std::unique_lock<std::mutex> lock(state_table_mutex_);
-                    src_resource_wrapper = GetResourceWrapperForGpuVa(*curr_entry_iter->desc_gpu_va);
+                    src_resource_wrapper = GetResourceWrapperForGpuVa(
+                        *curr_entry_iter->desc_gpu_va, *curr_entry_iter->desc_gpu_va + curr_entry_iter->size);
                 }
 
                 if (src_resource_wrapper == nullptr)
@@ -776,8 +796,12 @@ void Dx12StateTracker::TrackCopyRaytracingAccelerationStructure(
     ID3D12Resource_Wrapper* source_resource_wrapper = nullptr;
     {
         std::unique_lock<std::mutex> lock(state_table_mutex_);
-        dest_resource_wrapper   = GetResourceWrapperForGpuVa(dest_acceleration_structure_data);
-        source_resource_wrapper = GetResourceWrapperForGpuVa(source_acceleration_structure_data);
+        // TODO: find and use the data size of acceleration structure to replace 0
+        //       for function GetResourceWrapperForGpuVa.
+        dest_resource_wrapper =
+            GetResourceWrapperForGpuVa(dest_acceleration_structure_data, 0, IsResourceUsedForAccelerationStructure);
+        source_resource_wrapper =
+            GetResourceWrapperForGpuVa(source_acceleration_structure_data, 0, IsResourceUsedForAccelerationStructure);
     }
 
     if (dest_resource_wrapper && source_resource_wrapper)
@@ -886,14 +910,42 @@ void Dx12StateTracker::TrackGetShaderIdentifier(ID3D12StateObjectProperties_Wrap
         std::make_shared<util::MemoryOutputStream>(parameter_buffer->GetData(), parameter_buffer->GetDataSize());
 }
 
-ID3D12Resource_Wrapper* Dx12StateTracker::GetResourceWrapperForGpuVa(D3D12_GPU_VIRTUAL_ADDRESS gpu_va)
+bool Dx12StateTracker::IsAccelerationStructureResource(format::HandleId id)
 {
-    ID3D12Resource_Wrapper* result      = nullptr;
-    auto                    resource_id = state_table_.GetResourceForGpuVa(gpu_va);
+    ID3D12Resource_Wrapper* resource_wrapper = nullptr;
+    bool                    result           = false;
+
+    if (id != format::kNullHandleId)
+    {
+        resource_wrapper = state_table_.GetID3D12Resource_Wrapper(id);
+
+        if (resource_wrapper != nullptr)
+        {
+            auto object_info = resource_wrapper->GetObjectInfo();
+
+            if ((object_info->initial_state & D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE) != 0)
+            {
+                result = true;
+            }
+        }
+    }
+
+    return result;
+}
+
+ID3D12Resource_Wrapper*
+Dx12StateTracker::GetResourceWrapperForGpuVa(D3D12_GPU_VIRTUAL_ADDRESS          gpu_va,
+                                             uint64_t                           minimum_end_address,
+                                             graphics::ResourceMatchFunctionPtr resource_match_func)
+{
+    ID3D12Resource_Wrapper* result = nullptr;
+    auto resource_id               = state_table_.GetResourceForGpuVa(gpu_va, minimum_end_address, resource_match_func);
+
     if (resource_id != format::kNullHandleId)
     {
         result = state_table_.GetID3D12Resource_Wrapper(resource_id);
     }
+
     return result;
 }
 
@@ -966,6 +1018,57 @@ Dx12StateTracker::CommitAccelerationStructureCopyInfo(DxAccelerationStructureCop
 
     return CommitAccelerationStructureBuildInfo(dest_build_info);
 }
+
+#ifdef GFXRECON_AGS_SUPPORT
+void Dx12StateTracker::TrackAgsCalls(void*                           object_ptr,
+                                     format::ApiCallId               call_id,
+                                     const util::MemoryOutputStream* call_parameter_buffer)
+{
+    std::unique_lock<std::mutex> lock(ags_state_table_mutex_);
+    switch (call_id)
+    {
+        case format::ApiCallId::ApiCall_Ags_agsInitialize_6_0_1:
+            AddAgsInitializeEntry(reinterpret_cast<AGSContext*>(object_ptr), call_id, call_parameter_buffer);
+            break;
+        case format::ApiCallId::ApiCall_Ags_agsDeInitialize_6_0_1:
+            TrackAgsDeInitialize(reinterpret_cast<AGSContext*>(object_ptr));
+            break;
+        case format::ApiCallId::ApiCall_Ags_agsDriverExtensionsDX12_CreateDevice_6_0_1:
+            AddAgsDriverExtensionsDX12CreateDeviceEntry(
+                reinterpret_cast<ID3D12Device*>(object_ptr), call_id, call_parameter_buffer);
+            break;
+        case format::ApiCallId::ApiCall_Ags_agsDriverExtensionsDX12_DestroyDevice_6_0_1:
+            TrackAgsDestroyDevice(reinterpret_cast<ID3D12Device*>(object_ptr));
+            break;
+        default:
+            GFXRECON_LOG_WARNING("AGS call track handler has not been implemented, call ID: %d.", call_id);
+            break;
+    }
+}
+
+void Dx12StateTracker::AddAgsInitializeEntry(AGSContext*                     context,
+                                             format::ApiCallId               call_id,
+                                             const util::MemoryOutputStream* create_parameter_buffer)
+{
+    ags_state_table_.InsertContextCreateData(context, create_parameter_buffer);
+}
+
+void Dx12StateTracker::TrackAgsDeInitialize(AGSContext* context)
+{
+    ags_state_table_.RemoveContextCreateData(context);
+}
+
+void Dx12StateTracker::AddAgsDriverExtensionsDX12CreateDeviceEntry(
+    ID3D12Device* device, format::ApiCallId call_id, const util::MemoryOutputStream* create_parameter_buffer)
+{
+    ags_state_table_.InsertDeviceCreateData(device, create_parameter_buffer);
+}
+
+void Dx12StateTracker::TrackAgsDestroyDevice(ID3D12Device* device)
+{
+    ags_state_table_.RemoveDeviceCreateData(device);
+}
+#endif // GFXRECON_AGS_SUPPORT
 
 GFXRECON_END_NAMESPACE(encode)
 GFXRECON_END_NAMESPACE(gfxrecon)

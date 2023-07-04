@@ -1,7 +1,7 @@
 /*
 ** Copyright (c) 2018-2020 Valve Corporation
 ** Copyright (c) 2018-2021 LunarG, Inc.
-** Copyright (c) 2019-2021 Advanced Micro Devices, Inc. All rights reserved.
+** Copyright (c) 2019-2023 Advanced Micro Devices, Inc. All rights reserved.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -30,9 +30,11 @@
 #include <cassert>
 #include <stdint.h>
 
+#include "encode/ags_dispatch_table.h"
 #include "encode/d3d12_dispatch_table.h"
 #include "encode/dx12_state_tracker.h"
 #include "encode/dxgi_dispatch_table.h"
+#include "encode/dx12_rv_annotator.h"
 #include "generated/generated_dx12_wrappers.h"
 #include "graphics/dx12_image_renderer.h"
 
@@ -79,6 +81,19 @@ class D3D12CaptureManager : public CaptureManager
     void InitD3D12DispatchTable(const D3D12DispatchTable& dispatch_table) { d3d12_dispatch_table_ = dispatch_table; }
 
     //----------------------------------------------------------------------------
+    /// \brief Initializes the AGS dispatch table.
+    ///
+    /// Initializes the CaptureManager's internal AGS dispatch table with
+    /// functions loaded from the AGS DLL.  This dispatch table will be
+    /// used by the 'wrapper' functions to invoke the 'real' AGS function prior
+    /// to processing the function parameters for encoding.
+    ///
+    /// \param dispatch_table An AgsDispatchTable object containing the AGS
+    ///                       function pointers to be used for initialization.
+    //----------------------------------------------------------------------------
+    void InitAgsDispatchTable(const AgsDispatchTable& dispatch_table) { ags_dispatch_table_ = dispatch_table; }
+
+    //----------------------------------------------------------------------------
     /// \brief Retrieves the DXGI dispatch table.
     ///
     /// Retrieves the CaptureManager's internal DXGI dispatch table. Intended to be
@@ -88,6 +103,17 @@ class D3D12CaptureManager : public CaptureManager
     ///         retrieved from the system DLL.
     //----------------------------------------------------------------------------
     const DxgiDispatchTable& GetDxgiDispatchTable() const { return dxgi_dispatch_table_; }
+
+    //----------------------------------------------------------------------------
+    /// \brief Retrieves the Amd Ags X64 dispatch table.
+    ///
+    /// Retrieves the CaptureManager's internal Amd Ags X64 dispatch table. Intended to be
+    /// used by the 'wrapper' functions when invoking the 'real' AGS functions.
+    ///
+    /// \return A AgsDispatchTable object containing AGS function pointers
+    ///         retrieved from the system DLL.
+    //----------------------------------------------------------------------------
+    const AgsDispatchTable& GetAgsDispatchTable() const { return ags_dispatch_table_; }
 
     //----------------------------------------------------------------------------
     /// \brief Retrieves the D3D12 dispatch table.
@@ -122,11 +148,11 @@ class D3D12CaptureManager : public CaptureManager
     //----------------------------------------------------------------------------
     uint32_t DecrementCallScope() { return --call_scope_; }
 
-    virtual bool CreateCaptureFile(const std::string& base_filename) override;
-    virtual void ActivateTrimming() override;
-    virtual void DeactivateTrimming() override;
-
     void EndCreateApiCallCapture(HRESULT result, REFIID riid, void** handle);
+
+    void EndAgsApiCallCapture(HRESULT result, void* object_ptr);
+
+    void EndAgsApiCallCapture(ID3D12GraphicsCommandList_Wrapper* list_wrapper);
 
     template <typename ParentWrapper>
     void EndCreateMethodCallCapture(HRESULT result, REFIID riid, void** handle, ParentWrapper* create_object_wrapper)
@@ -175,6 +201,10 @@ class D3D12CaptureManager : public CaptureManager
     template <typename Wrapper>
     void ProcessWrapperDestroy(Wrapper* wrapper)
     {
+        if (RvAnnotationActive() == true)
+        {
+            resource_value_annotator_->RemoveObjectGPUVA(wrapper);
+        }
         if ((GetCaptureMode() & kModeTrack) == kModeTrack)
         {
             state_tracker_->RemoveEntry(wrapper);
@@ -300,6 +330,15 @@ class D3D12CaptureManager : public CaptureManager
                                                          const D3D12_CLEAR_VALUE*   optimized_clear_value,
                                                          REFIID                     riid,
                                                          void**                     resource);
+
+    void PostProcess_ID3D12Device4_CreateReservedResource1(ID3D12Device4_Wrapper*          wrapper,
+                                                           HRESULT                         result,
+                                                           const D3D12_RESOURCE_DESC*      desc,
+                                                           D3D12_RESOURCE_STATES           initial_state,
+                                                           const D3D12_CLEAR_VALUE*        optimized_clear_value,
+                                                           ID3D12ProtectedResourceSession* protected_session,
+                                                           REFIID                          riid,
+                                                           void**                          resource);
 
     void PreProcess_ID3D12Device3_OpenExistingHeapFromAddress(ID3D12Device3_Wrapper* wrapper,
                                                               const void*            address,
@@ -427,6 +466,13 @@ class D3D12CaptureManager : public CaptureManager
                                                       D3D12_COMMAND_LIST_FLAGS flags,
                                                       REFIID                   riid,
                                                       void**                   ppCommandList);
+
+    void PostProcess_ID3D12Device_GetDescriptorHandleIncrementSize(ID3D12Device_Wrapper*      wrapper,
+                                                                   UINT                       result,
+                                                                   D3D12_DESCRIPTOR_HEAP_TYPE heap_type);
+
+    void PostProcess_ID3D12DescriptorHeap_GetGPUDescriptorHandleForHeapStart(ID3D12DescriptorHeap_Wrapper* wrapper,
+                                                                             D3D12_GPU_DESCRIPTOR_HANDLE   result);
 
     void PostProcess_ID3D12Device_CopyDescriptors(ID3D12Device_Wrapper*              wrapper,
                                                   UINT                               num_dest_ranges,
@@ -634,6 +680,11 @@ class D3D12CaptureManager : public CaptureManager
 
     void WriteDxgiAdapterInfo();
 
+    bool IsAccelerationStructureResource(format::HandleId id);
+
+    bool AddFillMemoryResourceValueCommand(
+        const std::map<uint64_t, Dx12ResourceValueAnnotator::Dx12FillCommandResourceValue>& resource_values);
+
   protected:
     D3D12CaptureManager();
 
@@ -657,13 +708,16 @@ class D3D12CaptureManager : public CaptureManager
     void InitializeID3D12ResourceInfo(ID3D12Device_Wrapper*    device_wrapper,
                                       ID3D12Resource_Wrapper*  resource_wrapper,
                                       D3D12_RESOURCE_DIMENSION dimension,
+                                      D3D12_TEXTURE_LAYOUT     layout,
                                       UINT64                   width,
                                       UINT64                   size,
                                       D3D12_HEAP_TYPE          heap_type,
                                       D3D12_CPU_PAGE_PROPERTY  page_property,
                                       D3D12_MEMORY_POOL        memory_pool,
                                       D3D12_RESOURCE_STATES    initial_state,
-                                      bool                     has_write_watch);
+                                      bool                     has_write_watch,
+                                      ID3D12Heap_Wrapper*      heap_wrapper,
+                                      uint64_t                 heap_offset);
 
     void InitializeSwapChainBufferResourceInfo(ID3D12Resource_Wrapper* resource_wrapper,
                                                D3D12_RESOURCE_STATES   initial_state);
@@ -681,14 +735,15 @@ class D3D12CaptureManager : public CaptureManager
     PFN_D3D12_GET_DEBUG_INTERFACE GetDebugInterfacePtr();
     void                          EnableDebugLayer();
     void                          EnableDRED();
+    bool                          RvAnnotationActive();
 
-    void                              TakeScreenshot(IDXGISwapChain_Wrapper* swapchain_wrapper);
     void                              PrePresent(IDXGISwapChain_Wrapper* wrapper);
     void                              PostPresent(IDXGISwapChain_Wrapper* wrapper);
     static D3D12CaptureManager*       instance_;
     std::set<ID3D12Resource_Wrapper*> mapped_resources_; ///< Track mapped resources for unassisted tracking mode.
     DxgiDispatchTable  dxgi_dispatch_table_;  ///< DXGI dispatch table for functions retrieved from the DXGI DLL.
     D3D12DispatchTable d3d12_dispatch_table_; ///< D3D12 dispatch table for functions retrieved from the D3D12 DLL.
+    AgsDispatchTable   ags_dispatch_table_;   ///< ags dispatch table for functions retrieved from the AGS DLL.
     static thread_local uint32_t call_scope_; ///< Per-thread scope count to determine when an intercepted API call is
                                               ///< being made directly by the application.
     bool debug_layer_enabled_;                ///< Track if debug layer has been enabled.
@@ -704,6 +759,8 @@ class D3D12CaptureManager : public CaptureManager
     std::unique_ptr<graphics::DX12ImageRenderer> frame_buffer_renderer_;
 
     graphics::dx12::ActiveAdapterMap adapters_;
+
+    std::unique_ptr<Dx12ResourceValueAnnotator> resource_value_annotator_{ nullptr };
 };
 
 GFXRECON_END_NAMESPACE(encode)

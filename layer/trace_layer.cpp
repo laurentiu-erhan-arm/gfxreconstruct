@@ -61,13 +61,6 @@ const char* const kUnsupportedDeviceExtensions[] = {
     VK_EXT_SHADER_MODULE_IDENTIFIER_EXTENSION_NAME,
     VK_NVX_BINARY_IMPORT_EXTENSION_NAME,
     VK_VALVE_DESCRIPTOR_SET_HOST_MAPPING_EXTENSION_NAME,
-    VK_KHR_VIDEO_QUEUE_EXTENSION_NAME,
-    VK_KHR_VIDEO_DECODE_QUEUE_EXTENSION_NAME,
-    VK_KHR_VIDEO_ENCODE_QUEUE_EXTENSION_NAME,
-    VK_EXT_VIDEO_ENCODE_H264_EXTENSION_NAME,
-    VK_KHR_VIDEO_DECODE_H264_EXTENSION_NAME,
-    VK_KHR_VIDEO_DECODE_H265_EXTENSION_NAME,
-    VK_EXT_VIDEO_ENCODE_H265_EXTENSION_NAME,
     VK_NVX_BINARY_IMPORT_EXTENSION_NAME,
     VK_HUAWEI_SUBPASS_SHADING_EXTENSION_NAME,
     VK_EXT_PIPELINE_PROPERTIES_EXTENSION_NAME,
@@ -266,7 +259,7 @@ VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL GetInstanceProcAddr(VkInstance instance
         auto table = encode::GetInstanceTable(instance);
         if ((table != nullptr) && (table->GetInstanceProcAddr != nullptr))
         {
-            result = table->GetInstanceProcAddr(encode::GetWrappedHandle(instance), pName);
+            result = table->GetInstanceProcAddr(instance, pName);
         }
     }
 
@@ -294,7 +287,7 @@ VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL GetDeviceProcAddr(VkDevice device, cons
         auto table = encode::GetDeviceTable(device);
         if ((table != nullptr) && (table->GetDeviceProcAddr != nullptr))
         {
-            result = table->GetDeviceProcAddr(encode::GetWrappedHandle(device), pName);
+            result = table->GetDeviceProcAddr(device, pName);
 
             if (result != nullptr)
             {
@@ -323,12 +316,10 @@ VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL GetPhysicalDeviceProcAddr(VkInstance ou
 
     if (ourInstanceWrapper != VK_NULL_HANDLE)
     {
-        const VkInstance nextLayersInstance = encode::GetWrappedHandle<VkInstance>(ourInstanceWrapper);
-
         PFN_GetPhysicalDeviceProcAddr next_gpdpa = get_instance_next_gpdpa(ourInstanceWrapper);
         if (next_gpdpa != nullptr)
         {
-            result = next_gpdpa(nextLayersInstance, pName);
+            result = next_gpdpa(ourInstanceWrapper, pName);
         }
     }
 
@@ -378,11 +369,10 @@ VKAPI_ATTR VkResult VKAPI_CALL EnumerateDeviceExtensionProperties(VkPhysicalDevi
         // In order to screen out unsupported extensions, we always query the chain
         // twice, and remove those that are present from the count.
         auto     instance_table            = encode::GetInstanceTable(physicalDevice);
-        auto     wrapped_device            = encode::GetWrappedHandle(physicalDevice);
         uint32_t downstream_property_count = 0;
 
         result = instance_table->EnumerateDeviceExtensionProperties(
-            wrapped_device, pLayerName, &downstream_property_count, nullptr);
+            physicalDevice, pLayerName, &downstream_property_count, nullptr);
         if (result != VK_SUCCESS)
         {
             return result;
@@ -390,7 +380,7 @@ VKAPI_ATTR VkResult VKAPI_CALL EnumerateDeviceExtensionProperties(VkPhysicalDevi
 
         std::vector<VkExtensionProperties> downstream_properties(downstream_property_count);
         result = instance_table->EnumerateDeviceExtensionProperties(
-            wrapped_device, pLayerName, &downstream_property_count, downstream_properties.data());
+            physicalDevice, pLayerName, &downstream_property_count, downstream_properties.data());
         if (result != VK_SUCCESS)
         {
             return result;
@@ -483,8 +473,7 @@ GFXRECON_END_NAMESPACE(gfxrecon)
 extern "C"
 {
 
-    VK_LAYER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL
-    vkNegotiateLoaderLayerInterfaceVersion(VkNegotiateLayerInterface* pVersionStruct)
+    VKAPI_ATTR VkResult VKAPI_CALL vkNegotiateLoaderLayerInterfaceVersion(VkNegotiateLayerInterface* pVersionStruct)
     {
         assert(pVersionStruct != NULL);
         assert(pVersionStruct->sType == LAYER_NEGOTIATE_INTERFACE_STRUCT);
@@ -507,44 +496,43 @@ extern "C"
 
     // The following two functions are not directly invoked by the desktop loader, which instead uses the function
     // pointers returned by the negotiate function.
-    VK_LAYER_EXPORT VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetInstanceProcAddr(VkInstance  instance,
-                                                                                   const char* pName)
+    VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetInstanceProcAddr(VkInstance instance, const char* pName)
     {
         return gfxrecon::GetInstanceProcAddr(instance, pName);
     }
 
-    VK_LAYER_EXPORT VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetDeviceProcAddr(VkDevice device, const char* pName)
+    VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetDeviceProcAddr(VkDevice device, const char* pName)
     {
         return gfxrecon::GetDeviceProcAddr(device, pName);
     }
 
     // The following four functions are not invoked by the desktop loader, which retrieves the layer specific properties
     // and extensions from both the layer's JSON file and during the negotiation process.
-    VK_LAYER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL
-    vkEnumerateDeviceExtensionProperties(VkPhysicalDevice       physicalDevice,
-                                         const char*            pLayerName,
-                                         uint32_t*              pPropertyCount,
-                                         VkExtensionProperties* pProperties)
+    VKAPI_ATTR VkResult VKAPI_CALL vkEnumerateDeviceExtensionProperties(VkPhysicalDevice       physicalDevice,
+                                                                        const char*            pLayerName,
+                                                                        uint32_t*              pPropertyCount,
+                                                                        VkExtensionProperties* pProperties)
     {
         assert(physicalDevice == VK_NULL_HANDLE);
         return gfxrecon::EnumerateDeviceExtensionProperties(physicalDevice, pLayerName, pPropertyCount, pProperties);
     }
 
-    VK_LAYER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkEnumerateInstanceExtensionProperties(
-        const char* pLayerName, uint32_t* pPropertyCount, VkExtensionProperties* pProperties)
+    VKAPI_ATTR VkResult VKAPI_CALL vkEnumerateInstanceExtensionProperties(const char*            pLayerName,
+                                                                          uint32_t*              pPropertyCount,
+                                                                          VkExtensionProperties* pProperties)
     {
         return gfxrecon::EnumerateInstanceExtensionProperties(pLayerName, pPropertyCount, pProperties);
     }
 
-    VK_LAYER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkEnumerateInstanceLayerProperties(uint32_t*          pPropertyCount,
-                                                                                      VkLayerProperties* pProperties)
+    VKAPI_ATTR VkResult VKAPI_CALL vkEnumerateInstanceLayerProperties(uint32_t*          pPropertyCount,
+                                                                      VkLayerProperties* pProperties)
     {
         return gfxrecon::EnumerateInstanceLayerProperties(pPropertyCount, pProperties);
     }
 
-    VK_LAYER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkEnumerateDeviceLayerProperties(VkPhysicalDevice   physicalDevice,
-                                                                                    uint32_t*          pPropertyCount,
-                                                                                    VkLayerProperties* pProperties)
+    VKAPI_ATTR VkResult VKAPI_CALL vkEnumerateDeviceLayerProperties(VkPhysicalDevice   physicalDevice,
+                                                                    uint32_t*          pPropertyCount,
+                                                                    VkLayerProperties* pProperties)
     {
         assert(physicalDevice == VK_NULL_HANDLE);
         return gfxrecon::EnumerateDeviceLayerProperties(physicalDevice, pPropertyCount, pProperties);

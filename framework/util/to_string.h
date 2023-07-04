@@ -1,6 +1,6 @@
 /*
-** Copyright (c) 2021-2022 LunarG, Inc.
-** Copyright (c) 2022 Valve Corporation
+** Copyright (c) 2021-2023 LunarG, Inc.
+** Copyright (c) 2022-2023 Valve Corporation
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -28,12 +28,13 @@
 
 #include "format/format.h"
 #include "util/defines.h"
+#include "util/logging.h"
 
-#include <codecvt>
-#include <locale>
+#include <iomanip>
 #include <sstream>
 #include <string>
 #include <utility>
+#include <cmath>
 
 GFXRECON_BEGIN_NAMESPACE(gfxrecon)
 GFXRECON_BEGIN_NAMESPACE(util)
@@ -48,7 +49,7 @@ enum ToStringFlagBits
 typedef uint32_t ToStringFlags;
 
 /// @brief  A template ToString to take care of simple POD cases like the many
-/// types of integers and the 32 bit and 64 bit floating point types.
+/// types of integers.
 template <typename T>
 inline std::string
 ToString(const T& obj, ToStringFlags toStringFlags = kToString_Default, uint32_t tabCount = 0, uint32_t tabSize = 4)
@@ -67,6 +68,7 @@ ToString(const T& obj, ToStringFlags toStringFlags = kToString_Default, uint32_t
 /// function specializations since a caller has to explicitly spell out a type
 /// to call one of them and there is no function resolution based on argument
 /// types going on.
+/// @todo This may not be necessary: try deleting it.
 template <typename T>
 inline std::string ToString(uint32_t      apiFlags,
                             ToStringFlags toStringFlags = kToString_Default,
@@ -102,15 +104,32 @@ inline std::string HandleIdToString(format::HandleId handleId)
     return std::to_string(handleId);
 }
 
+#if defined(WIN32)
 inline std::string WCharArrayToString(const wchar_t* pStr)
 {
-    auto str = pStr ? std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t>().to_bytes(pStr) : std::string();
-    for (auto i = str.find('\\'); i != std::string::npos; i = str.find('\\'))
+    int required_size = 0;
+    if (pStr != nullptr)
     {
-        str = str.replace(i, 1, "-");
+        required_size = WideCharToMultiByte(CP_UTF8, 0, pStr, -1, nullptr, 0, nullptr, nullptr);
+
+        // Don't include null-terminator in output.
+        --required_size;
     }
-    return str;
+
+    if (required_size > 0)
+    {
+        std::string result_str;
+        result_str.resize(required_size);
+        required_size = WideCharToMultiByte(
+            CP_UTF8, 0, pStr, -1, result_str.data(), static_cast<int>(result_str.size()), nullptr, nullptr);
+        return result_str;
+    }
+    else
+    {
+        return "";
+    }
 }
+#endif
 
 template <typename BitmaskType, typename FlagsType>
 inline std::string BitmaskToString(FlagsType flags)
@@ -135,11 +154,6 @@ inline std::string BitmaskToString(FlagsType flags)
         str.append(ToString(static_cast<BitmaskType>(0)));
     }
     return str;
-}
-
-inline std::string Bool32ToString(const /* Don't take the header dependency for one typedef: VkBool32*/ uint32_t b)
-{
-    return b ? "true" : "false";
 }
 
 template <typename PtrType>
@@ -255,119 +269,6 @@ inline std::string ArrayToString(size_t        count,
         [&](size_t i) { return ToString(pObjs[i], toStringFlags, tabCount + 1, tabSize); });
 }
 
-template <typename T>
-inline std::string Array2DToString(size_t          m,
-                                   size_t          n,
-                                   const T* const* pObjs,
-                                   ToStringFlags   toStringFlags = kToString_Default,
-                                   uint32_t        tabCount      = 0,
-                                   uint32_t        tabSize       = 4)
-{
-    std::stringstream strStrm;
-    for (size_t i = 0; i < m; ++i)
-    {
-        strStrm << ArrayToString(n, pObjs[i], toStringFlags, tabCount, tabSize);
-    }
-    return strStrm.str();
-}
-
-/// Replace special characters with their escaped versions.
-/// @note forward slash / solidus is not escaped as that is optional and leads
-/// to ugliness such as dates with escaped solidus separators.
-/// @note Slashes for explicit unicode code points will be erroneously escaped
-/// but Vulkan-derived C-strings should not have those embedded.
-inline void JSONEscape(const char c, std::string& out)
-{
-    char out_c = c;
-    switch (c)
-    {
-        case '\"':
-        case '\\':
-            out.push_back('\\');
-            break;
-        case '\b':
-            out.push_back('\\');
-            out_c = 'b';
-            break;
-        case '\f':
-            out.push_back('\\');
-            out_c = 'f';
-            break;
-        case '\n':
-            out.push_back('\\');
-            out_c = 'n';
-            break;
-        case '\r':
-            out.push_back('\\');
-            out_c = 'r';
-            break;
-        case '\t':
-            out.push_back('\\');
-            out_c = 't';
-            break;
-    }
-    out.push_back(out_c);
-}
-
-/// Replace special characters in strings with their escaped versions.
-/// <https://www.json.org/json-en.html>
-inline void JSONEscape(const char* cstr, std::string& escaped)
-{
-    if (cstr)
-    {
-        while (char c = *cstr++)
-        {
-            JSONEscape(c, escaped);
-        }
-    }
-}
-
-inline std::string JSONEscape(const std::string& str)
-{
-    std::string escaped;
-    for (const auto c : str)
-    {
-        JSONEscape(c, escaped);
-    }
-    return escaped;
-}
-
-/// @brief  A single point for the conversion of C-style strings to the JSON
-/// string type or null.
-inline std::string CStrToString(const char* const cstr)
-{
-    std::string str;
-    if (cstr != nullptr)
-    {
-        str.push_back('"');
-        JSONEscape(cstr, str);
-        str.push_back('"');
-    }
-    else
-    {
-        str.assign("null");
-    }
-    return str;
-}
-
-/// @brief  Convert an array of c-style string pointers into a JSON array of
-/// JSON strings or nulls.
-inline std::string CStrArrayToString(size_t             count,
-                                     const char* const* ppStrs,
-                                     ToStringFlags      toStringFlags = kToString_Default,
-                                     uint32_t           tabCount      = 0,
-                                     uint32_t           tabSize       = 4)
-{
-    return ArrayToString(
-        count,
-        ppStrs,
-        toStringFlags,
-        tabCount,
-        tabSize,
-        [&]() { return ppStrs != nullptr; },
-        [&](uint32_t i) { return CStrToString(ppStrs[i]); });
-}
-
 template <typename EnumType>
 inline std::string EnumArrayToString(size_t              count,
                                      const EnumType*     pObjs,
@@ -391,18 +292,6 @@ inline std::string Quote(const std::string& str)
 {
     std::string quoted{ '"' };
     quoted += str;
-    quoted += '"';
-    return quoted;
-}
-
-/// @brief Make a copy of the input string with double quotes at start and end.
-inline std::string Quote(const char* const str)
-{
-    std::string quoted{ '"' };
-    if (str != nullptr)
-    {
-        quoted += str;
-    }
     quoted += '"';
     return quoted;
 }

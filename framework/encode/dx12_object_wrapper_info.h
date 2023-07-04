@@ -1,5 +1,6 @@
 /*
 ** Copyright (c) 2021 LunarG, Inc.
+** Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -43,6 +44,7 @@ GFXRECON_BEGIN_NAMESPACE(encode)
 struct IUnknown_Wrapper;
 class ID3D12Resource_Wrapper;
 class ID3D12Device_Wrapper;
+class ID3D12Heap_Wrapper;
 
 struct GUID_Hash
 {
@@ -351,6 +353,9 @@ struct ID3D12DeviceInfo : public DxWrapperInfo
     uint32_t       adapter_node_index{ 0 };
 
     std::unordered_map<format::HandleId, D3D12_RESIDENCY_PRIORITY> residency_priorities; // ID3D12Pageable
+
+    // Cache features of the device to avoid repeated queries
+    bool is_uma{ false };
 };
 
 struct ID3D12ResourceInfo : public DxWrapperInfo
@@ -364,7 +369,8 @@ struct ID3D12ResourceInfo : public DxWrapperInfo
     D3D12_CPU_PAGE_PROPERTY              page_property{};
     D3D12_MEMORY_POOL                    memory_pool{};
     uint64_t                             size_in_bytes{ 0 };
-
+    D3D12_RESOURCE_DIMENSION             dimension{ D3D12_RESOURCE_DIMENSION_UNKNOWN };
+    D3D12_TEXTURE_LAYOUT                 layout{ D3D12_TEXTURE_LAYOUT_UNKNOWN };
     //// State tracking data:
 
     // Most recent transitions for each subresource.
@@ -391,6 +397,9 @@ struct ID3D12ResourceInfo : public DxWrapperInfo
         uint64_t                                        required_data_size;
         std::vector<BYTE>                               staging_buffer_data;
     } staging_buffer_info;
+
+    ID3D12Heap_Wrapper* heap_wrapper{ nullptr };
+    uint64_t            heap_offset;
 };
 
 struct ID3D12HeapInfo : public DxWrapperInfo
@@ -399,6 +408,8 @@ struct ID3D12HeapInfo : public DxWrapperInfo
     D3D12_HEAP_TYPE         heap_type{};
     D3D12_CPU_PAGE_PROPERTY page_property{};
     D3D12_MEMORY_POOL       memory_pool{};
+    uint64_t                  heap_size{ 0 };
+    D3D12_GPU_VIRTUAL_ADDRESS gpu_va{ 0 };
 
     const void* open_existing_address{ nullptr }; ///< Address used to create heap with OpenExistingHeapFromAddress.
 };
@@ -495,6 +506,12 @@ struct ID3D12DeviceFactoryInfo : public DxWrapperInfo
 {};
 
 struct ID3D12DeviceConfigurationInfo : public DxWrapperInfo
+{};
+
+struct AgsContextInfo : public DxWrapperInfo
+{};
+
+struct AgsDeviceInfo : public DxWrapperInfo
 {};
 
 GFXRECON_END_NAMESPACE(encode)

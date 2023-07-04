@@ -8,13 +8,20 @@
 [1]: https://i.creativecommons.org/l/by-nd/4.0/88x31.png "Creative Commons License"
 [2]: https://creativecommons.org/licenses/by-nd/4.0/
 
-Copyright &copy; 2022 LunarG, Inc.
+Copyright &copy; 2022-2023 LunarG, Inc.
 
-Copyright &copy; 2022 Advanced Micro Devices, Inc.
+Copyright &copy; 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 
 # GFXReconstruct API Capture and Replay - D3D12
 
-This document describes the GFXReconstruct software for capturing and replaying D3D12 API calls on Windows desktop systems.
+***This document describes the GFXReconstruct software for capturing and
+replaying D3D12 API calls on Windows Desktop systems.***
+
+If you are looking for capturing/replaying on a different platform, please refer
+to one of these other documents:
+ * [GfxReconstruct for Android Vulkan](./USAGE_android.md)
+ * [GfxReconstruct for Desktop Vulkan](./USAGE_desktop_Vulkan.md)
+
 
 ## Index
 
@@ -31,6 +38,10 @@ This document describes the GFXReconstruct software for capturing and replaying 
     2. [Capture File Compression](#capture-file-compression)
     3. [Capture File Optimizer](#capture-file-optimizer)
     4. [Renaming Scripts](#renaming-scripts)
+4. [AMD GPU Services Support](#ags-support)
+    1. [How to Capture AGS](#how-to-capture-ags)
+    2. [How to Process AGS Capture Files](#how-to-process-ags-capture-files)
+
 
 
 
@@ -119,7 +130,11 @@ Enable Debug Layer | GFXRECON_DEBUG_LAYER | BOOL | Direct3D 12 only option. Enab
  Debug Device Lost                 | GFXRECON_DEBUG_DEVICE_LOST             | BOOL   | Direct3D 12 only option. Enables automatic injection of breadcrumbs into command buffers and page fault reporting.                  Used to debug device removed problems. 
  Disable DXR Support               | GFXRECON_DISABLE_DXR                   | BOOL   | Direct3D 12 only option. Override the result of `CheckFeatureSupport` to report the `RaytracingTier` as `D3D12_RAYTRACING_TIER_NOT_SUPPORTED`. Default is `false` 
 Acceleration Struct Size Padding | GFXRECON_ACCEL_STRUCT_PADDING | UINT | Direct3D 12 only option. Increase the required acceleration structure size that is reported to the application by calls to `GetRaytracingAccelerationStructurePrebuildInfo`. This can enable replay in environments with increased acceleration structure size requirements. The value should be specified as a percent of size increase. For example, a value of `5` would increase the reported acceleration structure sizes by `5%`. Default is `0` 
-
+Force Command Serialization | GFXRECON_FORCE_COMMAND_SERIALIZATION | BOOL | Sets exclusive locks(unique_lock) for every ApiCall. It can avoid external multi-thread to cause captured issue.
+Enable Experimental RV Search | GFXRECON_RV_ANNOTATION_EXPERIMENTAL | BOOL | Direct3D 12 only option. Experimental feature to help enable replay of certain DXR/ExecuteIndirect workloads. RV annotation is a capture mode which attempts to detect when applications write Resource Values (RVs) to memory. Conceptually, RVs represent different types of GPU pointers that applications write as resource data. This capture mode writes GFXR-specific identifier values into unoccupied bits of application-facing RVs and then searches for the identifier values when the application performs a memory write. This allows GFXR to better track RV locations and eventually produce an RV-optimized capture file that may be replayed. Enabling this feature introduces performance overhead during capture, and may result in unstable capture and/or replay.
+Use random RV annotation | GFXRECON_RV_ANNOTATION_RAND | BOOL | Option for GFXRECON_RV_ANNOTATION_EXPERIMENTAL. By default, the 2-byte identifier values are hard-coded. This option generates random identifier values used for annotating GPUVAs and GPU descriptors. Use this if capture-time crashes are observed.
+Specify GPU VA RV annotation | GFXRECON_RV_ANNOTATION_GPUVA | STRING | Option for GFXRECON_RV_ANNOTATION_EXPERIMENTAL. By default, the 2-byte identifier values are hard-coded. This option forces a specific identifier value to be used for annotating GPUVAs. The value should be specified as a 2-byte hexadecimal string, e.g., "0xAB12" or "ab12".
+Specify GPU descriptor handle RV annotation | GFXRECON_RV_ANNOTATION_DESCRIPTOR | STRING | Option for GFXRECON_RV_ANNOTATION_EXPERIMENTAL. By default, the 2-byte identifier values are hard-coded. This option forces a specific identifier value to be used for annotating GPU descriptors. The value should be specified as a 2-byte hexadecimal string, e.g., "0xAB12" or "ab12".
 
 
 ### Capture Files
@@ -217,6 +232,11 @@ Optional arguments:
   --validate            Enables the Khronos Vulkan validation layer when replaying a
                         Vulkan capture or the Direct3D debug layer when replaying a
                         Direct3D 12 capture.
+  --gpu <index>         Use the specified device for replay, where index
+                        is the zero-based index to the array of physical devices
+                        returned by vkEnumeratePhysicalDevices or IDXGIFactory1::EnumAdapters1.
+                        Replay may fail if the specified device is not compatible with the
+                        original capture devices.
 
 Windows-only:
   --api <api>           Use the specified API for replay
@@ -246,11 +266,6 @@ Vulkan-only:
   --sync                Synchronize after each queue submission with vkQueueWaitIdle.
   --remove-unsupported  Remove unsupported extensions and features from instance
                         and device creation parameters.
-  --gpu <index>         Use the specified device for replay, where index
-                        is the zero-based index to the array of physical devices
-                        returned by vkEnumeratePhysicalDevices.  Replay may fail
-                        if the specified device is not compatible with the
-                        original capture devices.
   -m <mode>             Enable memory translation for replay on GPUs with memory
                         types that are not compatible with the capture GPU's
                         memory types.  Available modes are:
@@ -280,6 +295,9 @@ D3D12-only:
                         (Same as --force-windowed)
   --create-dummy-allocations Enables creation of dummy heaps and resources
                              for replay validation.
+  --dx12-override-object-names Generates unique names for all ID3D12Objects and
+                               assigns each object the generated name.
+                               This is intended to assist replay debugging.
 ```
 
 
@@ -447,4 +465,47 @@ Optional arguments:
 
 Note: running without optional arguments will instruct the optimizer to detect API and run all available optimizations.
 ```
+
+
+
+## AMD GPU Services Support
+
+Some applications adopt vendor-specific libraries to leverage GPU capabilities not exposed by graphics APIs. For example, the AMD GPU Services (AGS) library is commonly loaded by applications that have implemented features specific to AMD.
+
+The GFXReconstruct capture process for AGS also leans on DLL substitution for interception. When an application loads amd_ags_x64.dll, it loads a proxy version provided by GFXReconstruct instead. From that point on, GFXReconstruct can record AGS function calls, process them, and call into the real AGS runtime.
+
+This is supported for AGS version 6.0.1.
+
+
+### How to Capture AGS
+
+The process is the same as normal, with the addition that we must also perform some AGS DLL renaming. There are two versions of the AGS DLL:
+- The official one, which comes bundled with the application (`amd_ags_x64.dll`)
+- The proxy one, which comes bundled with GFXReconstruct (`amd_ags_x64_capture.dll`)
+
+Steps:
+1.	Identify the app executable.
+2.	Identify the official AGS DLL that came bundled with the application, which usually lives beside its executable.
+3.	Verify the AGS version that was shipped with the application. This can be done by inspecting its file properties. If the version is 6.0.1, then AGS calls made by this application can be captured.
+4.	Rename the official AGS DLL to `amd_ags_x64_orig.dll`.
+5.	Copy the GFXReconstruct capture libraries, plus the proxy AGS DLL, beside the application executable.
+6.	Rename the proxy AGS DLL to `amd_ags_x64.dll`.
+7.	At this point, the file structure should look like this:
+```bash
+    C:\AppPath\d3d12_app.exe
+    C:\AppPath\d3d12.dll
+    C:\AppPath\dxgi.dll
+    C:\AppPath\d3d12_capture.dll
+    C:\AppPath\amd_ags_x64.dll
+    C:\AppPath\amd_ags_x64_orig.dll
+```
+8.	Resume standard full/trim capture procedures, and obtain a capture file.
+9.	When finished, make sure to remove the GFXReconstruct capture libraries, and restore the official AGS DLL bundled with the application.
+
+### How to Process AGS Files
+
+Both gfxrecon-replay and gfxrecon-optimize are able to read and process capture files that contain with AGS calls. From a user point of view, their usage remains unchanged. The only additional requirement is that the official AGS DLL must live in the same directory as gfxrecon-replay and gfxrecon-optimize. This is because both tools need to find and reference the official AGS DLL in order to issue AGS calls.
+
+
+
 

@@ -1,5 +1,6 @@
 /*
 ** Copyright (c) 2021 LunarG, Inc.
+** Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -44,7 +45,13 @@ Dx12StateWriter::Dx12StateWriter(util::FileOutputStream* output_stream,
 
 Dx12StateWriter::~Dx12StateWriter() {}
 
+#ifdef GFXRECON_AGS_SUPPORT
+void Dx12StateWriter::WriteState(const Dx12StateTable& state_table,
+                                 const AgsStateTable&  ags_state_table,
+                                 uint64_t              frame_number)
+#else
 void Dx12StateWriter::WriteState(const Dx12StateTable& state_table, uint64_t frame_number)
+#endif // GFXRECON_AGS_SUPPORT
 {
 #if GFXRECON_DEBUG_WRITTEN_OBJECTS
     written_objects_.clear();
@@ -79,6 +86,12 @@ void Dx12StateWriter::WriteState(const Dx12StateTable& state_table, uint64_t fra
     StandardCreateWrite<IDXGIOutput_Wrapper>(state_table);
     StandardCreateWrite<IDXGIOutputDuplication_Wrapper>(state_table);
     StandardCreateWrite<IDXGIResource_Wrapper>(state_table);
+
+#ifdef GFXRECON_AGS_SUPPORT
+    // AGS calls
+    WriteAgsInitialize(ags_state_table);
+    WriteAgsDriverExtensionsDX12CreateDevice(ags_state_table);
+#endif // GFXRECON_AGS_SUPPORT
 
     // Device
     StandardCreateWrite<ID3D12Device_Wrapper>(state_table);
@@ -628,14 +641,34 @@ void Dx12StateWriter::WriteResourceCreationState(
     {
         auto     mappable_resource = map_info.resource_wrapper->GetWrappedObjectAs<ID3D12Resource>();
         uint8_t* result_ptr        = nullptr;
+        auto     resource_info     = map_info.resource_wrapper->GetObjectInfo();
+        bool     unknown_layout_mapping =
+            graphics::dx12::IsTextureWithUnknownLayout(resource_info->dimension, resource_info->layout);
+
         graphics::dx12::MapSubresource(
-            mappable_resource, map_info.subresource, &graphics::dx12::kZeroRange, result_ptr);
+            mappable_resource, map_info.subresource, &graphics::dx12::kZeroRange, result_ptr, unknown_layout_mapping);
 
         for (int32_t i = 0; i < map_info.map_count; ++i)
         {
             encoder_.EncodeUInt32Value(map_info.subresource);
             EncodeStructPtr<D3D12_RANGE>(&encoder_, nullptr);
-            encoder_.EncodeVoidPtrPtr<void>(reinterpret_cast<void**>(&result_ptr));
+            if (!unknown_layout_mapping)
+            {
+                encoder_.EncodeVoidPtrPtr<void>(reinterpret_cast<void**>(&result_ptr));
+            }
+            else
+            {
+                // Quote: "A null pointer is valid and is useful to cache a CPU virtual address range for methods like
+                // WriteToSubresource."
+                //
+                // Source: https://docs.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12resource-map
+                //
+                // The resource is a texture with unknown layout, here we gererate special map call in trim trace file
+                // so the following WriteToSubresource call can be used to restore its content in trim loading states.
+
+                encoder_.EncodeVoidPtrPtr<void>(nullptr);
+            }
+
             encoder_.EncodeInt32Value(S_OK);
             WriteMethodCall(format::ApiCallId::ApiCall_ID3D12Resource_Map,
                             map_info.resource_wrapper->GetCaptureId(),
@@ -747,7 +780,10 @@ void Dx12StateWriter::WriteResourceSnapshots(
                 auto     device_info   = device_wrapper->GetObjectInfo();
 
                 const double max_cpu_mem_usage = 7.0 / 8.0;
-                if (!graphics::dx12::IsMemoryAvailable(size_in_bytes, device_info.get()->adapter3, max_cpu_mem_usage))
+
+                const bool is_uma = device_wrapper->GetObjectInfo()->is_uma;
+                if (!graphics::dx12::IsMemoryAvailable(
+                        size_in_bytes, device_info.get()->adapter3, max_cpu_mem_usage, is_uma))
                 {
                     // If neither system memory or GPU memory are able to accommodate next resource,
                     // execute the existing Copy() calls and release temp buffer to free memory
@@ -778,7 +814,10 @@ void Dx12StateWriter::WriteResourceSnapshots(
                           (resource_info.get()->create_call_id !=
                            format::ApiCall_ID3D12Device4_CreateReservedResource1)));
 
-                if (is_cpu_accessible == false)
+                bool target_texture_with_unknown_layout = graphics::dx12::IsTextureWithUnknownLayout(
+                    resource_info.get()->dimension, resource_info.get()->layout);
+
+                if ((is_cpu_accessible == false) || (is_cpu_accessible && target_texture_with_unknown_layout))
                 {
                     // If the resource is non CPU accessible resource, create staging buffer for it
                     // And issue Copy() to download the data over to the staging buffer
@@ -1156,6 +1195,21 @@ void Dx12StateWriter::WriteCommandListCommands(const ID3D12CommandList_Wrapper* 
             // Always write the close command.
             write_current_command = true;
         }
+#ifdef GFXRECON_AGS_SUPPORT
+        else if (format::GetApiCallFamily(*call_id) == format::ApiFamilyId::ApiFamily_AGS)
+        {
+            if (write_current_command)
+            {
+                // Ags function call, targeting command list.
+                parameter_stream_.Write(parameter_data, (*parameter_size));
+                WriteFunctionCall((*call_id), &parameter_stream_);
+                parameter_stream_.Reset();
+
+                // The output below, in this case, should be skipped.
+                write_current_command = false;
+            }
+        }
+#endif // GFXRECON_AGS_SUPPORT
 
         if (write_current_command)
         {
@@ -1708,6 +1762,28 @@ void Dx12StateWriter::WriteStateObjectPropertiesState(const Dx12StateTable& stat
         WriteAddRefAndReleaseCommands(wrapper);
     });
 }
+
+#ifdef GFXRECON_AGS_SUPPORT
+void Dx12StateWriter::WriteAgsInitialize(const AgsStateTable& ags_state_table)
+{
+    util::MemoryOutputStream* create_data = ags_state_table.GetAgsContextCreateData();
+
+    if (create_data != nullptr)
+    {
+        WriteFunctionCall(format::ApiCallId::ApiCall_Ags_agsInitialize_6_0_1, create_data);
+    }
+}
+
+void Dx12StateWriter::WriteAgsDriverExtensionsDX12CreateDevice(const AgsStateTable& ags_state_table)
+{
+    util::MemoryOutputStream* create_data = ags_state_table.GetAgsDeviceCreateData();
+
+    if (create_data != nullptr)
+    {
+        WriteFunctionCall(format::ApiCallId::ApiCall_Ags_agsDriverExtensionsDX12_CreateDevice_6_0_1, create_data);
+    }
+}
+#endif // GFXRECON_AGS_SUPPORT
 
 GFXRECON_END_NAMESPACE(encode)
 GFXRECON_END_NAMESPACE(gfxrecon)

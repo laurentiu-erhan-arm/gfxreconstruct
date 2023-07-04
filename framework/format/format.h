@@ -1,6 +1,7 @@
 /*
 ** Copyright (c) 2018-2022 Valve Corporation
 ** Copyright (c) 2018-2022 LunarG, Inc.
+** Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -65,6 +66,7 @@ const size_t   kAdapterDescriptionSize    = 128;
 /// Label for operation annotation, which captures parameters used by tools
 /// operating on a capture file.
 const char* const kAnnotationLabelOperation = "operation";
+const char* const kAnnotationLabelReplayOptions = "replayopts";
 
 constexpr uint32_t MakeCompressedBlockType(uint32_t block_type)
 {
@@ -101,7 +103,7 @@ enum AnnotationType : uint32_t
     kXml     = 3
 };
 
-enum AdapterType : uint32_t
+enum AdapterType
 {
     kUnknownAdapter  = 0,
     kSoftwareAdapter = 1,
@@ -213,7 +215,8 @@ enum class ResourceValueType : uint8_t
     kGpuVirtualAddress            = 1,
     kGpuDescriptorHandle          = 2,
     kShaderIdentifier             = 3,
-    kIndirectArgumentDispatchRays = 4
+    kIndirectArgumentDispatchRays = 4,
+    kExecuteIndirectCountBuffer   = 5
 };
 
 #pragma pack(push)
@@ -583,17 +586,17 @@ struct InitDx12AccelerationStructureGeometryDesc
 
 struct DxgiAdapterDesc
 {
-    wchar_t     Description[kAdapterDescriptionSize];
-    uint32_t    VendorId;
-    uint32_t    DeviceId;
-    uint32_t    SubSysId;
-    uint32_t    Revision;
-    uint64_t    DedicatedVideoMemory;
-    uint64_t    DedicatedSystemMemory;
-    uint64_t    SharedSystemMemory;
-    uint32_t    LuidLowPart;
-    int32_t     LuidHighPart;
-    AdapterType type;
+    wchar_t  Description[kAdapterDescriptionSize];
+    uint32_t VendorId;
+    uint32_t DeviceId;
+    uint32_t SubSysId;
+    uint32_t Revision;
+    uint64_t DedicatedVideoMemory;
+    uint64_t DedicatedSystemMemory;
+    uint64_t SharedSystemMemory;
+    uint32_t LuidLowPart;
+    int32_t  LuidHighPart;
+    uint32_t extra_info; // 2 bits (LSB) to store Type and 30 bits for object ID
 };
 
 struct DxgiAdapterInfoCommandHeader

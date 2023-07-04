@@ -13,30 +13,50 @@ Copyright &copy; 2022 Advanced Micro Devices, Inc.
 
 # GFXReconstruct API Capture and Replay - Vulkan
 
-## **Desktop Version**
+***This document describes the GFXReconstruct software for capturing and
+replaying Vulkan API calls on Desktop systems (i.e. Windows, Linux, MacOS).***
 
-This document describes the GFXReconstruct software for capturing and replaying
-Vulkan API calls on Desktop systems.
+If you are looking for capturing/replaying on a different platform, please refer
+to one of these other documents:
+ * [GfxReconstruct for Android](./USAGE_android.md)
+ * [GfxReconstruct for Desktop D3D12](./USAGE_desktop_D3D12.md)
+
 
 ## Index
 
-1. [Capturing API calls](#capturing-api-calls)
-    1. [Enabling the Capture Layer](#enabling-the-capture-layer)
-    2. [Capture Options](#capture-options)
-    3. [Capture Files](#capture-files)
-    4. [Capture Script](#capture-script)
-2. [Replaying API Calls](#replaying-api-calls)
-    1. [Command Line Arguments](#command-line-arguments)
-    2. [Key Controls](#key-controls)
-    3. [Virtual Swapchain](#virtual-swapchain)
-3. [Other Capture File Processing Tools](#other-capture-file-processing-tools)
-    1. [Capture File Info](#capture-file-info)
-    2. [Capture File Compression](#capture-file-compression)
-    3. [Shader Extraction](#shader-extraction)
-    4. [Trimmed File Optimization](#trimmed-file-optimization)
-    5. [JSON Lines Conversion](#json-lines-conversion)
-    6. [Command Launcher](#command-launcher)
-    7. [Options Common To All Tools](#common-options)
+- [GFXReconstruct API Capture and Replay - Vulkan](#gfxreconstruct-api-capture-and-replay---vulkan)
+  - [Index](#index)
+  - [Capturing API calls](#capturing-api-calls)
+    - [Enabling the Capture Layer](#enabling-the-capture-layer)
+      - [Setting VK\_LAYER\_PATH](#setting-vk_layer_path)
+        - [Setting VK\_LAYER\_PATH for Windows](#setting-vk_layer_path-for-windows)
+        - [Setting VK\_LAYER\_PATH for Linux](#setting-vk_layer_path-for-linux)
+      - [Enabling the layer with VK\_INSTANCE\_LAYERS](#enabling-the-layer-with-vk_instance_layers)
+        - [Enabling the layer for Windows](#enabling-the-layer-for-windows)
+        - [Enabling the layer for Linux](#enabling-the-layer-for-linux)
+    - [Capture Options](#capture-options)
+      - [Windows Options](#windows-options)
+      - [Linux Options](#linux-options)
+      - [Supported Options](#supported-options)
+      - [Memory Tracking Known Issues](#memory-tracking-known-issues)
+      - [Settings File](#settings-file)
+      - [Selecting Settings for the page\_guard Memory Tracking Mode](#selecting-settings-for-the-page_guard-memory-tracking-mode)
+    - [Capture Files](#capture-files)
+      - [Specifying Capture File Location](#specifying-capture-file-location)
+      - [Timestamps](#timestamps)
+    - [Capture Script](#capture-script)
+  - [Replaying API Calls](#replaying-api-calls)
+    - [Command Line Arguments](#command-line-arguments)
+    - [Key Controls](#key-controls)
+    - [Virtual Swapchain](#virtual-swapchain)
+  - [Other Capture File Processing Tools](#other-capture-file-processing-tools)
+    - [Capture File Info](#capture-file-info)
+    - [Capture File Compression](#capture-file-compression)
+    - [Shader Extraction](#shader-extraction)
+    - [Trimmed File Optimization](#trimmed-file-optimization)
+    - [JSON Lines Conversion](#json-lines-conversion)
+    - [Command Launcher](#command-launcher)
+    - [Options Common To all Tools](#options-common-to-all-tools)
 
 ## Capturing API calls
 
@@ -180,9 +200,13 @@ Page Guard Separate Read Tracking | GFXRECON_PAGE_GUARD_SEPARATE_READ | BOOL | W
 Page Guard External Memory | GFXRECON_PAGE_GUARD_EXTERNAL_MEMORY | BOOL | When the `page_guard` memory tracking mode is enabled, use the VK_EXT_external_memory_host extension to eliminate the need for shadow memory allocations. For each memory allocation from a host visible memory type, the capture layer will create an allocation from system memory, which it can monitor for write access, and provide that allocation to vkAllocateMemory as external memory. Only available on Windows. Default is `false`
 Page Guard Persistent Memory | GFXRECON_PAGE_GUARD_PERSISTENT_MEMORY | BOOL | When the `page_guard` memory tracking mode is enabled, this option changes the way that the shadow memory used to detect modifications to mapped memory is allocated. The default behavior is to allocate and copy the mapped memory range on map and free the allocation on unmap. When this option is enabled, an allocation with a size equal to that of the object being mapped is made once on the first map and is not freed until the object is destroyed.  This option is intended to be used with applications that frequently map and unmap large memory ranges, to avoid frequent allocation and copy operations that can have a negative impact on performance.  This option is ignored when GFXRECON_PAGE_GUARD_EXTERNAL_MEMORY is enabled. Default is `false`
 Page Guard Align Buffer Sizes | GFXRECON_PAGE_GUARD_ALIGN_BUFFER_SIZES | BOOL | When the `page_guard` memory tracking mode is enabled, this option overrides the Vulkan API calls that report buffer memory properties to report that buffer sizes and alignments must be a multiple of the system page size.  This option is intended to be used with applications that perform CPU writes and GPU writes/copies to different buffers that are bound to the same page of mapped memory, which may result in data being lost when copying pages from the `page_guard` shadow allocation to the real allocation.  This data loss can result in visible corruption during capture.  Forcing buffer sizes and alignments to a multiple of the system page size prevents multiple buffers from being bound to the same page, avoiding data loss from simultaneous CPU writes to the shadow allocation and GPU writes to the real allocation for different buffers bound to the same page.  This option is only available for the Vulkan API.  Default is `false`
-Page guard unblock SIGSEGV | GFXRECON_PAGE_GUARD_UNBLOCK_SIGSEGV | BOOL | When the `page_guard` memory tracking mode is enabled and in the case that SIGSEGV has been marked as blocked in thread's signal mask, setting this enviroment variable to `true` will forcibly re-enable the signal in the thread's signal mask. Default is `false`
-Page guard signal handler watcher | GFXRECON_PAGE_GUARD_SIGNAL_HANDLER_WATCHER | BOOL | When the `page_guard` memory tracking mode is enabled, setting this enviroment variable to `true` will spawn a thread which will will periodically reinstall the `SIGSEGV` handler if it has been replaced by the application being traced. Default is `false`
-Page guard signal handler watcher max restores | GFXRECON_PAGE_GUARD_SIGNAL_HANDLER_WATCHER_MAX_RESTORES | INTEGER | Sets the number of times the watcher will attempt to restore the signal handler. Setting it to a negative will make the watcher thread run indefinitely. Default is `1`
+Page Guard Unblock SIGSEGV | GFXRECON_PAGE_GUARD_UNBLOCK_SIGSEGV | BOOL | When the `page_guard` memory tracking mode is enabled and in the case that SIGSEGV has been marked as blocked in thread's signal mask, setting this enviroment variable to `true` will forcibly re-enable the signal in the thread's signal mask. Default is `false`
+Page Guard Signal Handler Watcher | GFXRECON_PAGE_GUARD_SIGNAL_HANDLER_WATCHER | BOOL | When the `page_guard` memory tracking mode is enabled, setting this enviroment variable to `true` will spawn a thread which will will periodically reinstall the `SIGSEGV` handler if it has been replaced by the application being traced. Default is `false`
+Page Guard Signal Handler Watcher Max Restores | GFXRECON_PAGE_GUARD_SIGNAL_HANDLER_WATCHER_MAX_RESTORES | INTEGER | Sets the number of times the watcher will attempt to restore the signal handler. Setting it to a negative will make the watcher thread run indefinitely. Default is `1`
+Force Command Serialization | GFXRECON_FORCE_COMMAND_SERIALIZATION | BOOL | Sets exclusive locks(unique_lock) for every ApiCall. It can avoid external multi-thread to cause captured issue.
+Delay fence queries | GFXRECON_FENCE_QUERY_DELAY | INTEGER | Fences queried using `vkGetFenceStatus` and `vkWaitForFences` won't return `VK_SUCCESS` before a number of such queries and will instead return `VK_NOT_READY` and `VK_TIMEOUT`. Default is `0`.
+Queue Zero Only | GFXRECON_QUEUE_ZERO_ONLY | BOOL | Forces to using only QueueFamilyIndex: 0 and queueCount: 1 on capturing to avoid replay error for unavailble VkQueue.
+Delay fence queries | GFXRECON_FENCE_QUERY_DELAY | INTEGER | Fences queried using `vkGetFenceStatus` and `vkWaitForFences` won't return `VK_SUCCESS` before a number of such queries and will instead return `VK_NOT_READY` and `VK_TIMEOUT`. Default is `0`.
 
 #### Memory Tracking Known Issues
 
@@ -362,6 +386,9 @@ gfxrecon-replay         [-h | --help] [--version] [--gpu <index>]
                         [--surface-index <N>] [--remove-unsupported] [--validate]
                         [-m <mode> | --memory-translation <mode>]
                         [--use-captured-swapchain-indices]
+                        [--mfr|--measurement-frame-range <start-frame>-<end-frame>]
+                        [--measurement-file <file>] [--quit-after-measurement-range]
+                        [--flush-measurement-range]
                         [--log-level <level>] [--log-file <file>] [--log-debugview]
                         [--api <api>] [--no-debug-popup] <file>
 
@@ -465,6 +492,27 @@ Optional arguments:
                         setup for replay. The default without this option is to use a Virtual Swapchain
                         of images which match the swapchain in effect at capture time and which are
                         copied to the underlying swapchain of the implementation being replayed on.
+  --measurement-frame-range <start_frame>-<end_frame>
+              Custom framerange to measure FPS for.
+              This range will include the start frame but not the end frame.
+              The measurement frame range defaults to all frames except the loading
+              frame but can be configured for any range. If the end frame is past the
+              last frame in the trace it will be clamped to the frame after the last
+              (so in that case the results would include the last frame).
+  --measurement-file <file>
+              Write measurements to a file at the specified path.
+              Default is: '/sdcard/gfxrecon-measurements.json' on android and
+              './gfxrecon-measurements.json' on desktop.
+  --quit-after-measurement-range
+              If this is specified the replayer will abort
+              when it reaches the <end_frame> specified in
+              the --measurement-frame-range argument.
+  --flush-measurement-range
+              If this is specified the replayer will flush
+              and wait for all current GPU work to finish at the
+              start and end of the measurement range.
+  --vssb
+                        Skip blit to real swapchain to gain performance during replay.
 ```
 
 ### Key Controls

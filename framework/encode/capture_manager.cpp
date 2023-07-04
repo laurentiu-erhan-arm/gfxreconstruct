@@ -1,7 +1,7 @@
 /*
 ** Copyright (c) 2018-2022 Valve Corporation
 ** Copyright (c) 2018-2022 LunarG, Inc.
-** Copyright (c) 2019-2021 Advanced Micro Devices, Inc. All rights reserved.
+** Copyright (c) 2019-2023 Advanced Micro Devices, Inc. All rights reserved.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -54,7 +54,7 @@ std::unordered_map<uint64_t, format::ThreadId> CaptureManager::ThreadData::id_ma
 uint32_t                                                 CaptureManager::instance_count_ = 0;
 std::mutex                                               CaptureManager::instance_lock_;
 thread_local std::unique_ptr<CaptureManager::ThreadData> CaptureManager::thread_data_;
-util::SharedMutex                                        CaptureManager::state_mutex_;
+CaptureManager::ApiCallMutexT                            CaptureManager::api_call_mutex_;
 
 std::atomic<format::HandleId> CaptureManager::unique_id_counter_{ format::kNullHandleId };
 
@@ -94,7 +94,8 @@ CaptureManager::CaptureManager(format::ApiFamilyId api_family) :
     current_frame_(kFirstFrame), capture_mode_(kModeWrite), previous_hotkey_state_(false),
     previous_runtime_trigger_state_(CaptureSettings::RuntimeTriggerState::kNotUsed), debug_layer_(false),
     debug_device_lost_(false), screenshot_prefix_(""), screenshots_enabled_(false), global_frame_count_(0),
-    disable_dxr_(false), accel_struct_padding_(0), iunknown_wrapping_(false)
+    disable_dxr_(false), accel_struct_padding_(0), iunknown_wrapping_(false), force_command_serialization_(false),
+    queue_zero_only_(false)
 {}
 
 CaptureManager::~CaptureManager()
@@ -234,19 +235,43 @@ bool CaptureManager::Initialize(std::string base_filename, const CaptureSettings
 {
     bool success = true;
 
-    base_filename_        = base_filename;
-    file_options_         = trace_settings.capture_file_options;
-    timestamp_filename_   = trace_settings.time_stamp_file;
-    memory_tracking_mode_ = trace_settings.memory_tracking_mode;
-    force_file_flush_     = trace_settings.force_flush;
-    debug_layer_          = trace_settings.debug_layer;
-    debug_device_lost_    = trace_settings.debug_device_lost;
-    screenshots_enabled_  = !trace_settings.screenshot_ranges.empty();
-    screenshot_indices_   = CalcScreenshotIndices(trace_settings.screenshot_ranges);
-    screenshot_prefix_    = PrepScreenshotPrefix(trace_settings.screenshot_dir);
-    disable_dxr_          = trace_settings.disable_dxr;
-    accel_struct_padding_ = trace_settings.accel_struct_padding;
-    iunknown_wrapping_    = trace_settings.iunknown_wrapping;
+    base_filename_               = base_filename;
+    file_options_                = trace_settings.capture_file_options;
+    timestamp_filename_          = trace_settings.time_stamp_file;
+    memory_tracking_mode_        = trace_settings.memory_tracking_mode;
+    force_file_flush_            = trace_settings.force_flush;
+    debug_layer_                 = trace_settings.debug_layer;
+    debug_device_lost_           = trace_settings.debug_device_lost;
+    screenshots_enabled_         = !trace_settings.screenshot_ranges.empty();
+    screenshot_format_           = trace_settings.screenshot_format;
+    screenshot_indices_          = CalcScreenshotIndices(trace_settings.screenshot_ranges);
+    screenshot_prefix_           = PrepScreenshotPrefix(trace_settings.screenshot_dir);
+    disable_dxr_                 = trace_settings.disable_dxr;
+    accel_struct_padding_        = trace_settings.accel_struct_padding;
+    iunknown_wrapping_           = trace_settings.iunknown_wrapping;
+    force_command_serialization_ = trace_settings.force_command_serialization;
+    fence_query_delay_           = trace_settings.fence_query_delay;
+    queue_zero_only_             = trace_settings.queue_zero_only;
+    fence_query_delay_           = trace_settings.fence_query_delay;
+
+    rv_annotation_info_.gpuva_mask      = trace_settings.rv_anotation_info.gpuva_mask;
+    rv_annotation_info_.descriptor_mask = trace_settings.rv_anotation_info.descriptor_mask;
+
+    rv_annotation_info_.rv_annotation = trace_settings.rv_anotation_info.rv_annotation;
+    if (rv_annotation_info_.rv_annotation == true)
+    {
+        force_file_flush_            = true;
+        force_command_serialization_ = true;
+        if (trace_settings.rv_anotation_info.annotation_mask_rand == true)
+        {
+            rv_annotation_info_.gpuva_mask      = static_cast<uint16_t>(std::rand() % 0xffff);
+            rv_annotation_info_.descriptor_mask = ~rv_annotation_info_.gpuva_mask;
+        }
+        GFXRECON_LOG_INFO(
+            "Resource value annotation capture enabled, GPU virtual address mask = %04x Descriptor handle mask = %04x",
+            rv_annotation_info_.gpuva_mask,
+            rv_annotation_info_.descriptor_mask);
+    }
 
     if (memory_tracking_mode_ == CaptureSettings::kPageGuard)
     {
@@ -699,6 +724,12 @@ void CaptureManager::EndFrame()
     }
 
     global_frame_count_++;
+
+    // Flush after presents to help avoid capture files with incomplete final blocks.
+    if (file_stream_.get() != nullptr)
+    {
+        file_stream_->Flush();
+    }
 }
 
 std::string CaptureManager::CreateTrimFilename(const std::string&                base_filename,
