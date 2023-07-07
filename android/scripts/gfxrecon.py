@@ -116,6 +116,9 @@ def CreateReplayParser():
     parser.add_argument('--flush-measurement-range', action='store_true', default=False, help='If this is specified the replayer will flush and wait for all current GPU work to finish at the start and end of the measurement range. (forwarded to replay tool)')
     parser.add_argument('--preload-measurement-range', action='store_true', default=False, help='Preloads a frame range specified with --measurement-frame-range from the trace file into a continuous, expandable buffer, in order to mitigate the impact of read file commands on performance measurements.')
     parser.add_argument('--dsf','--disable-subpass-fusion', action='store_true', default=False, help='Force disable subpass fusion. Try to nudge the driver to "fuse" subpasses of the render pass into 1 pass, by using on-chip storage instead of using RAM for data transfer (forwarded to replay tool).')
+    parser.add_argument('--save-pipeline-cache', metavar='DEVICE_FILE', help='If set, produces pipeline caches at replay time instead of using the one saved at capture time and save those caches in DEVICE_FILE. (forwarded to replay tool)')
+    parser.add_argument('--load-pipeline-cache', metavar='DEVICE_FILE', help='If set, loads data created by the `--save-pipeline-cache` option in DEVICE_FILE and uses it to create the pipelines instead of the pipeline caches saved at capture time. (forwarded to replay tool)')
+    parser.add_argument('--add-new-pipeline-caches', action='store_true', default=False, help='If set, allows gfxreconstruct to create new vkPipelineCache objects when it encounters a pipeline created without cache. This option can be used in coordination with `--save-pipeline-cache` and `--load-pipeline-cache`. (forwarded to replay tool)')
 
     parser.add_argument('-m', '--memory-translation', metavar='MODE', choices=['none', 'remap', 'realign', 'rebind'], help='Enable memory translation for replay on GPUs with memory types that are not compatible with the capture GPU\'s memory types.  Available modes are: none, remap, realign, rebind (forwarded to replay tool)')
     parser.add_argument('file', nargs='?', help='File on device to play (forwarded to replay tool)')
@@ -222,6 +225,16 @@ def MakeExtrasString(args):
     if args.preload_measurement_range:
         arg_list.append('--preload-measurement-range')
 
+    if args.save_pipeline_cache:
+        arg_list.append('--save-pipeline-cache')
+        arg_list.append('{}'.format(args.save_pipeline_cache))
+
+    if args.load_pipeline_cache:
+        arg_list.append('--load-pipeline-cache')
+        arg_list.append('{}'.format(args.load_pipeline_cache))
+
+    if args.add_new_pipeline_caches:
+        arg_list.append('--add-new-pipeline-caches')
 
     if args.memory_translation:
         arg_list.append('-m')

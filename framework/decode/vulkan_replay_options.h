@@ -72,6 +72,9 @@ struct VulkanReplayOptions : public ReplayOptions
     bool                         wait_before_present{ false };
     SkipGetFenceStatus           skip_get_fence_status{ SkipGetFenceStatus::NoSkip };
     std::vector<util::UintRange> skip_get_fence_ranges;
+    std::string                  load_pipeline_cache_filename;
+    std::string                  save_pipeline_cache_filename;
+    bool                         add_new_pipeline_caches;
 };
 
 GFXRECON_END_NAMESPACE(decode)

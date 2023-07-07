@@ -32,12 +32,13 @@ const char kOptions[] =
     "screenshot-all,--onhb|--omit-null-hardware-buffers,--qamr|--quit-after-measurement-range,--"
     "fmr|--flush-measurement-range,--use-captured-swapchain-indices,--vssb|--virtual-swapchain-skip-blit,--"
     "dcp,--discard-cached-psos,--use-cached-psos,--dx12-override-object-names,--preload-measurement-range,--dsf|--"
-    "disable-subpass-fusion";
+    "disable-subpass-fusion,--add-new-pipeline-caches";
 const char kArguments[] =
     "--log-level,--log-file,--gpu,--gpu-group,--pause-frame,--wsi,--surface-index,-m|--memory-translation,"
     "--replace-shaders,--screenshots,--denied-messages,--allowed-messages,--screenshot-format,--"
     "screenshot-dir,--screenshot-prefix,--screenshot-size,--screenshot-scale,--mfr|--measurement-frame-range,--"
-    "fw|--force-windowed,--sgfs|--skip-get-fence-status,--sgfr|--skip-get-fence-ranges,--measurements-file";
+    "fw|--force-windowed,--sgfs|--skip-get-fence-status,--sgfr|--skip-get-fence-ranges,--measurements-file,--save-"
+    "pipeline-cache,--load-pipeline-cache";
 
 static void PrintUsage(const char* exe_name)
 {
@@ -235,29 +236,40 @@ static void PrintUsage(const char* exe_name)
     GFXRECON_WRITE_CONSOLE(
         "          \t\tTry to nudge the driver to \"fuse\" subpasses of the render pass into 1 pass,");
     GFXRECON_WRITE_CONSOLE("          \t\tby using on-chip storage instead of using RAM for data transfer.");
+    GFXRECON_WRITE_CONSOLE("  --save-pipeline-cache <cache-file>");
+    GFXRECON_WRITE_CONSOLE("          \t\tIf set, produces pipeline caches at replay time instead of using");
+    GFXRECON_WRITE_CONSOLE("          \t\tthe one saved at capture time and save those caches in <cache-file>.");
+    GFXRECON_WRITE_CONSOLE("  --load-pipeline-cache <cache-file>");
+    GFXRECON_WRITE_CONSOLE("          \t\tIf set, loads data created by the `--save-pipeline-cache`");
+    GFXRECON_WRITE_CONSOLE("          \t\toption in <cache-file> and uses it to create the pipelines instead");
+    GFXRECON_WRITE_CONSOLE("          \t\tof the pipeline caches saved at capture time.");
+    GFXRECON_WRITE_CONSOLE("  --add-new-pipeline-caches");
+    GFXRECON_WRITE_CONSOLE("          \t\tIf set, allows gfxreconstruct to create new vkPipelineCache objects");
+    GFXRECON_WRITE_CONSOLE("          \t\twhen it encounters a pipeline created without cache. This option can");
+    GFXRECON_WRITE_CONSOLE("          \t\tbe used in coordination with `--save-pipeline-cache` and");
+    GFXRECON_WRITE_CONSOLE("          \t\t`--load-pipeline-cache`.");
+
 #if defined(WIN32)
     GFXRECON_WRITE_CONSOLE("")
-    GFXRECON_WRITE_CONSOLE("D3D12-only:")
-        "  --use-cached-psos  \tPermit using cached PSOs when creating graphics or compute pipelines.");
-        GFXRECON_WRITE_CONSOLE(
-            "       \t\t\tUsing cached PSOs may reduce PSO creation time but may result in replay errors.");
-        GFXRECON_WRITE_CONSOLE(
-            "  --debug-device-lost\tEnables automatic injection of breadcrumbs into command buffers");
-        GFXRECON_WRITE_CONSOLE("            \t\tand page fault reporting.");
-        GFXRECON_WRITE_CONSOLE("            \t\tUsed to debug Direct3D 12 device removed problems.");
-        GFXRECON_WRITE_CONSOLE("  --fw <width,height>\tSetup windowed and override resolution.");
-        GFXRECON_WRITE_CONSOLE("                     \t(Same as --force-windowed)");
-        GFXRECON_WRITE_CONSOLE("  --create-dummy-allocations Enables creation of dummy heaps and resources");
-        GFXRECON_WRITE_CONSOLE("                             for replay validation.");
-        GFXRECON_WRITE_CONSOLE("  --dx12-override-object-names Generates unique names for all ID3D12Objects and");
-        GFXRECON_WRITE_CONSOLE("                               assigns each object the generated name.");
-        GFXRECON_WRITE_CONSOLE("                               This is intended to assist replay debugging.");
+GFXRECON_WRITE_CONSOLE(
+        "D3D12-only:") "  --use-cached-psos  \tPermit using cached PSOs when creating graphics or compute pipelines.");
+GFXRECON_WRITE_CONSOLE("       \t\t\tUsing cached PSOs may reduce PSO creation time but may result in replay errors.");
+GFXRECON_WRITE_CONSOLE("  --debug-device-lost\tEnables automatic injection of breadcrumbs into command buffers");
+GFXRECON_WRITE_CONSOLE("            \t\tand page fault reporting.");
+GFXRECON_WRITE_CONSOLE("            \t\tUsed to debug Direct3D 12 device removed problems.");
+GFXRECON_WRITE_CONSOLE("  --fw <width,height>\tSetup windowed and override resolution.");
+GFXRECON_WRITE_CONSOLE("                     \t(Same as --force-windowed)");
+GFXRECON_WRITE_CONSOLE("  --create-dummy-allocations Enables creation of dummy heaps and resources");
+GFXRECON_WRITE_CONSOLE("                             for replay validation.");
+GFXRECON_WRITE_CONSOLE("  --dx12-override-object-names Generates unique names for all ID3D12Objects and");
+GFXRECON_WRITE_CONSOLE("                               assigns each object the generated name.");
+GFXRECON_WRITE_CONSOLE("                               This is intended to assist replay debugging.");
 
 #endif
 
 #if defined(_DEBUG)
-        GFXRECON_WRITE_CONSOLE("  --no-debug-popup\tDisable the 'Abort, Retry, Ignore' message box");
-        GFXRECON_WRITE_CONSOLE("       \t\t\tdisplayed when abort() is called (Windows debug only).");
+GFXRECON_WRITE_CONSOLE("  --no-debug-popup\tDisable the 'Abort, Retry, Ignore' message box");
+GFXRECON_WRITE_CONSOLE("       \t\t\tdisplayed when abort() is called (Windows debug only).");
 #endif
 }
 

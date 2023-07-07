@@ -114,6 +114,9 @@ const char kWaitBeforePresent[]                  = "--wait-before-present";
 const char kSkipGetFenceStatus[]                 = "--skip-get-fence-status";
 const char kSkipGetFenceRanges[]                 = "--skip-get-fence-ranges";
 const char kDisableSubpassFusionOption[]         = "--dsf";
+const char kSavePipelineCacheArgument[]          = "--save-pipeline-cache";
+const char kLoadPipelineCacheArgument[]          = "--load-pipeline-cache";
+const char kCreateNewPipelineCacheOption[]       = "--add-new-pipeline-caches";
 #if defined(WIN32)
 const char kApiFamilyOption[]       = "--api";
 const char kDxTwoPassReplay[]       = "--dx12-two-pass-replay";
@@ -916,6 +919,10 @@ GetVulkanReplayOptions(const gfxrecon::util::ArgumentParser&           arg_parse
     {
         replay_options.preload_measurement_range = true;
     }
+
+    replay_options.save_pipeline_cache_filename = arg_parser.GetArgumentValue(kSavePipelineCacheArgument);
+    replay_options.load_pipeline_cache_filename = arg_parser.GetArgumentValue(kLoadPipelineCacheArgument);
+    replay_options.add_new_pipeline_caches      = arg_parser.IsOptionSet(kCreateNewPipelineCacheOption);
 
     return replay_options;
 }
