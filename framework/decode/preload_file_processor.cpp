@@ -23,6 +23,7 @@
 
 #include "decode/preload_file_processor.h"
 #include "util/logging.h"
+#include <algorithm>
 
 GFXRECON_BEGIN_NAMESPACE(gfxrecon)
 GFXRECON_BEGIN_NAMESPACE(decode)
@@ -31,19 +32,82 @@ PreloadFileProcessor::PreloadFileProcessor() : status_(PreloadStatus::kInactive)
 
 void PreloadFileProcessor::PreloadNextFrames(size_t count)
 {
+    // reserve enough memory to cover entire frame range
+    size_t total_bytes_needed = GetRequiredByteSizeForFrames(count);
+    preload_buffer_.Reserve(total_bytes_needed);
+    GFXRECON_LOG_INFO("Preloading reserved %zu bytes", total_bytes_needed);
+
     status_ = PreloadStatus::kRecord;
-    while (--count != 0U)
+    for (preload_frame_number_ = 0; preload_frame_number_ < count; ++preload_frame_number_)
     {
+        size_t next_chunk_size = GetNextBufferChunkSize();
+        if (next_chunk_size > 0)
+        {
+            while (next_chunk_size > 1 && !preload_buffer_.Reserve(next_chunk_size))
+            {
+                next_chunk_size -= next_chunk_size / 10;
+            }
+            GFXRECON_LOG_INFO("Preloading reserved additional %zu bytes", next_chunk_size);
+        }
         ProcessNextFrame();
     }
     status_ = PreloadStatus::kReplay;
 }
 
+size_t PreloadFileProcessor::GetRequiredByteSizeForFrames(size_t frame_count)
+{
+    gfxrecon::decode::FileProcessor file_processor(UINT64_MAX);
+    file_processor.Initialize(filename_);
+
+    while (file_processor.GetCurrentFrameNumber() < current_frame_number_ + frame_count)
+    {
+        file_processor.ProcessNextFrame();
+        GFXRECON_LOG_WARNING("Frame %zu size %zu", file_processor.GetCurrentFrameNumber(), file_processor.GetNumBytesRead());
+    }
+    size_t bytes_needed = file_processor.GetNumBytesRead() - bytes_read_;
+    return bytes_needed;
+}
+
+size_t PreloadFileProcessor::GetNextBufferChunkSize()
+{
+    const size_t kMegabyte        = 1 << 20;
+    size_t       bytes_to_reserve = 0;
+    const size_t current_average_frame_size =
+        bytes_read_ / std::max(current_frame_number_ + preload_frame_number_, (size_t)1);
+    size_t       average_frame_size   = std::max(current_average_frame_size, kMegabyte);
+    const size_t buffer_capacity_left = preload_buffer_.Capacity() - preload_buffer_.Size();
+
+    if (buffer_capacity_left < average_frame_size)
+    {
+        bytes_to_reserve = average_frame_size;
+    }
+    return bytes_to_reserve;
+}
+
 PreloadFileProcessor::PreloadBuffer::PreloadBuffer() : replay_offset_(0) {}
 
-void PreloadFileProcessor::PreloadBuffer::Reserve(size_t size)
+size_t PreloadFileProcessor::PreloadBuffer::Size()
 {
-    container_.reserve(container_.size() + size);
+    return container_.size();
+}
+
+size_t PreloadFileProcessor::PreloadBuffer::Capacity()
+{
+    return container_.capacity();
+}
+
+bool PreloadFileProcessor::PreloadBuffer::Reserve(size_t size)
+{
+    bool result = true;
+    try
+    {
+        container_.reserve(container_.size() + size);
+    }
+    catch (std::exception e)
+    {
+        result = false;
+    }
+    return result;
 }
 
 size_t PreloadFileProcessor::PreloadBuffer::Read(void* destination, size_t destination_size)

@@ -39,13 +39,19 @@ class PreloadFileProcessor : public FileProcessor
     void PreloadNextFrames(size_t count);
 
   private:
+    size_t GetNextBufferChunkSize();
+
     class PreloadBuffer
     {
       public:
         PreloadBuffer();
 
         // Ensures the buffer can store additional *size* bytes
-        void Reserve(size_t size);
+        bool Reserve(size_t size);
+
+        size_t Size();
+
+        size_t Capacity();
 
         // Copies the preloaded data from the internal container into the provided destination buffer
         // Accounts for current replay position
@@ -72,8 +78,7 @@ class PreloadFileProcessor : public FileProcessor
 
       private:
         std::vector<char> container_;
-        size_t            replay_offset_;
-
+        size_t replay_offset_;
     } preload_buffer_;
 
     enum class PreloadStatus
@@ -83,7 +88,10 @@ class PreloadFileProcessor : public FileProcessor
         kReplay
     } status_;
 
+    size_t preload_frame_number_;
+
     bool ProcessBlocks() override;
+    size_t GetRequiredByteSizeForFrames(size_t frame_count);
 
     bool ReadBytes(void* buffer, size_t buffer_size) override;
 };

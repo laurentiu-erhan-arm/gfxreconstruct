@@ -129,6 +129,7 @@ class FileProcessor
     AnnotationHandler*       annotation_handler_;
     Error                    error_state_;
     uint64_t                 bytes_read_;
+    std::string              filename_;
 
     /// @brief Incremented at the end of every block successfully processed.
     uint64_t block_index_;
@@ -149,7 +150,6 @@ class FileProcessor
     bool IsFileValid() const { return (file_descriptor_ && !feof(file_descriptor_) && !ferror(file_descriptor_)); }
 
   private:
-    std::string                         filename_;
     format::FileHeader                  file_header_;
     std::vector<format::FileOptionPair> file_options_;
     format::EnabledOptions              enabled_options_;
