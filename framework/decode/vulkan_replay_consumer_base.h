@@ -1,6 +1,6 @@
 /*
 ** Copyright (c) 2018-2020 Valve Corporation
-** Copyright (c) 2018-2022 LunarG, Inc.
+** Copyright (c) 2018-2023 LunarG, Inc.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -920,6 +920,22 @@ class VulkanReplayConsumerBase : public VulkanConsumer
         const struct AHardwareBuffer*                                           hardware_buffer,
         StructPointerDecoder<Decoded_VkAndroidHardwareBufferPropertiesANDROID>* pProperties);
 
+    void ClearCommandBufferInfo(CommandBufferInfo* command_buffer_info);
+
+    VkResult OverrideBeginCommandBuffer(PFN_vkBeginCommandBuffer                                func,
+                                        VkResult                                                original_result,
+                                        CommandBufferInfo*                                      command_buffer_info,
+                                        StructPointerDecoder<Decoded_VkCommandBufferBeginInfo>* begin_info_decoder);
+
+    VkResult OverrideResetCommandBuffer(PFN_vkResetCommandBuffer  func,
+                                        VkResult                  original_result,
+                                        CommandBufferInfo*        command_buffer_info,
+                                        VkCommandBufferResetFlags flags);
+
+    void OverrideCmdDebugMarkerInsertEXT(PFN_vkCmdDebugMarkerInsertEXT                             func,
+                                         CommandBufferInfo*                                        command_buffer_info,
+                                         StructPointerDecoder<Decoded_VkDebugMarkerMarkerInfoEXT>* marker_info_decoder);
+
   private:
     void RaiseFatalError(const char* message) const;
 
@@ -1036,6 +1052,8 @@ class VulkanReplayConsumerBase : public VulkanConsumer
 
     void WriteScreenshots(const Decoded_VkPresentInfoKHR* meta_info) const;
 
+    bool CheckCommandBufferInfoForFrameBoundary(const CommandBufferInfo* command_buffer_info);
+
   private:
     typedef std::unordered_set<Window*> ActiveWindows;
 
@@ -1094,6 +1112,17 @@ class VulkanReplayConsumerBase : public VulkanConsumer
 
     // Used to track allocated external memory if replay uses VkImportMemoryHostPointerInfoEXT
     std::unordered_map<VkDeviceMemory, std::pair<void*, size_t>> external_memory_;
+
+    // Temporary data used by OverrideQueuePresentKHR
+    std::vector<VkSwapchainKHR>       valid_swapchains_;
+    std::vector<uint32_t>             modified_image_indices_;
+    std::vector<uint32_t>             modified_device_masks_;
+    std::vector<VkPresentRegionKHR>   modified_regions_;
+    std::vector<VkPresentTimeGOOGLE>  modified_times_;
+    std::vector<const SemaphoreInfo*> removed_semaphores_;
+    std::unordered_set<uint32_t>      removed_swapchain_indices_;
+    std::vector<uint32_t>             capture_image_indices_;
+    std::vector<SwapchainKHRInfo*>    swapchain_infos_;
 };
 
 GFXRECON_END_NAMESPACE(decode)

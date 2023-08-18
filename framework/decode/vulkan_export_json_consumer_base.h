@@ -60,6 +60,8 @@ class VulkanExportJsonConsumerBase : public VulkanConsumer, public AnnotationHan
 
     virtual void ProcessStateEndMarker(uint64_t frame_number) override;
 
+    virtual void ProcessFrameEndMarker(uint64_t frame_number) override;
+
     virtual void ProcessDisplayMessageCommand(const std::string& message) override;
 
     virtual void
@@ -200,15 +202,28 @@ class VulkanExportJsonConsumerBase : public VulkanConsumer, public AnnotationHan
     constexpr const char* NameFunction() const { return "function"; }
     constexpr const char* NameMeta() const { return "meta"; }
     constexpr const char* NameState() const { return "state"; }
+    constexpr const char* NameFrame() const { return "frame"; }
     constexpr const char* NameName() const { return "name"; }
     constexpr const char* NameIndex() const { return "index"; }
     constexpr const char* NameThread() const { return "thread"; }
     constexpr const char* NameReturn() const { return "return"; }
     constexpr const char* NameArgs() const { return "args"; }
     constexpr const char* NameThreadId() const { return "thread"; }
+    /// A field not present in binary format which identifies the index of each
+    /// command within its command buffer.
+    /// @todo Make this field optional.
+    constexpr const char* NameCommandIndex() const { return "cmd_index"; }
+    /// A field not present in binary format which identifies the index of each
+    /// submit in the global order of all submits to all queues as recorded in
+    /// the binary trace file.
+    /// @todo Make this field optional.
+    constexpr const char* NameSubmitIndex() const { return "sub_index"; }
 
     nlohmann::ordered_json& WriteApiCallStart(const ApiCallInfo& call_info, const std::string& command_name);
 
+    /// A utility wrapper so that manual output functions can provide a lambda which only needs to output
+    /// the fields unique to their call and this tops and tails with the standard boilerplate, defining it
+    /// once here. Generated functions avoid the indirection through this.
     template <typename ToJsonFunctionType>
     inline void
     WriteApiCallToFile(const ApiCallInfo& call_info, const std::string& command_name, ToJsonFunctionType toJsonFunction)
@@ -239,6 +254,18 @@ class VulkanExportJsonConsumerBase : public VulkanConsumer, public AnnotationHan
         nlohmann::ordered_json& state = json_data_[NameState()];
         state["marker_type"]          = marker_type;
         state["frame_number"]         = frame_number;
+
+        WriteBlockEnd();
+    }
+
+    inline void WriteFrameMarkerToFile(const std::string& marker_type, uint64_t frame_number)
+    {
+        using namespace util;
+        WriteBlockStart();
+
+        nlohmann::ordered_json& frame = json_data_[NameFrame()];
+        frame["marker_type"]          = marker_type;
+        frame["frame_number"]         = frame_number;
 
         WriteBlockEnd();
     }

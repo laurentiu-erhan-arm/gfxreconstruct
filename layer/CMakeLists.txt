@@ -37,6 +37,10 @@ if (D3D12_SUPPORT)
     if (${BUILD_LAUNCHER_AND_INTERCEPTOR})
         add_subdirectory(gfxrecon_interceptor)
     endif()
+
+    if (${GFXRECON_AGS_SUPPORT_FINAL})
+      add_subdirectory(ags_capture)
+    endif()
 endif()
 
 add_library(VkLayer_gfxreconstruct SHARED "")
@@ -46,6 +50,7 @@ target_sources(VkLayer_gfxreconstruct
                    ${CMAKE_CURRENT_LIST_DIR}/dll_main.cpp
                    ${CMAKE_CURRENT_LIST_DIR}/trace_layer.h
                    ${CMAKE_CURRENT_LIST_DIR}/trace_layer.cpp
+                   ${CMAKE_SOURCE_DIR}/framework/encode/custom_layer_func_table.h
                    ${CMAKE_SOURCE_DIR}/framework/generated/generated_layer_func_table.h
                    $<$<BOOL:WIN32>:${CMAKE_CURRENT_LIST_DIR}/trace_layer.def>
               )

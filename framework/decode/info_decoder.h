@@ -51,7 +51,7 @@ class InfoDecoder : public ApiDecoder
 
     void AddConsumer(InfoConsumer* consumer) { consumers_.push_back(consumer); }
 
-    virtual bool SupportsApiCall(format::ApiCallId id) { return true; }
+    virtual bool SupportsApiCall(format::ApiCallId id) override { return true; }
 
     virtual bool SupportsMetaDataId(format::MetaDataId meta_data_id) override { return true; }
 
@@ -76,6 +76,8 @@ class InfoDecoder : public ApiDecoder
     virtual void DispatchStateBeginMarker(uint64_t frame_number) override {}
 
     virtual void DispatchStateEndMarker(uint64_t frame_number) override {}
+
+    virtual void DispatchFrameEndMarker(uint64_t frame_number) override {}
 
     virtual void DispatchDisplayMessageCommand(format::ThreadId thread_id, const std::string& message) override {}
 
@@ -127,10 +129,11 @@ class InfoDecoder : public ApiDecoder
                                                     const std::string& device_name) override
     {}
 
-    virtual void DispatchSetDeviceMemoryPropertiesCommand(format::ThreadId thread_id,
-                                                          format::HandleId physical_device_id,
-                                                          const std::vector<format::DeviceMemoryType>& memory_types,
-                                                          const std::vector<format::DeviceMemoryHeap>& memory_heaps)
+    virtual void
+    DispatchSetDeviceMemoryPropertiesCommand(format::ThreadId                             thread_id,
+                                             format::HandleId                             physical_device_id,
+                                             const std::vector<format::DeviceMemoryType>& memory_types,
+                                             const std::vector<format::DeviceMemoryHeap>& memory_heaps) override
     {}
 
     virtual void DispatchSetOpaqueAddressCommand(format::ThreadId thread_id,

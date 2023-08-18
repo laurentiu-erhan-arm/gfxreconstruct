@@ -38,9 +38,9 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" "${CMAKE_SOURCE_DIR}/external/cmake-modules")
 
 # Version info
-set(GFXRECONSTRUCT_PROJECT_VERSION_MAJOR 0)
-set(GFXRECONSTRUCT_PROJECT_VERSION_MINOR 9)
-set(GFXRECONSTRUCT_PROJECT_VERSION_PATCH 20)
+set(GFXRECONSTRUCT_PROJECT_VERSION_MAJOR 1)
+set(GFXRECONSTRUCT_PROJECT_VERSION_MINOR 0)
+set(GFXRECONSTRUCT_PROJECT_VERSION_PATCH 0)
 
 set(GFXRECON_PROJECT_VERSION_SHA1 "unknown-build-source")
 
@@ -121,10 +121,12 @@ endif()
 if(MSVC)
 
     # The host toolchain architecture (i.e. are the compiler and other tools compiled to ARM/Intel 32bit/64bit binaries):
-    message("CMAKE_VS_PLATFORM_TOOLSET_HOST_ARCHITECTURE: " ${CMAKE_VS_PLATFORM_TOOLSET_HOST_ARCHITECTURE})
+    message(STATUS "CMAKE_VS_PLATFORM_TOOLSET_HOST_ARCHITECTURE: " ${CMAKE_VS_PLATFORM_TOOLSET_HOST_ARCHITECTURE})
     # The platform name (architecture), we want to build our project for:
     # e.g. passed through the commandline -A option: cmake -G "Visual Studio 17 2022" -A ARM64
-    message("CMAKE_GENERATOR_PLATFORM: " ${CMAKE_GENERATOR_PLATFORM})
+    message(STATUS "CMAKE_GENERATOR_PLATFORM: " ${CMAKE_GENERATOR_PLATFORM})
+
+    message(STATUS "CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION: " ${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION})
 
     set(GFXR_ARM_WINDOWS_BUILD FALSE)
     if(CMAKE_GENERATOR_PLATFORM STREQUAL "ARM64")
@@ -163,6 +165,17 @@ if(MSVC)
         if(${CONVERT_EXPERIMENTAL_D3D12})
             add_definitions(-DCONVERT_EXPERIMENTAL_D3D12)
         endif()
+
+        # Check Windows SDK version and print warning if there is a mismatch.
+        set(EXPECTED_WIN_SDK_VER "10.0.20348.0")
+        if (NOT ${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION} STREQUAL ${EXPECTED_WIN_SDK_VER})
+            message(WARNING
+                "D3D12 support is authored against Windows SDK ${EXPECTED_WIN_SDK_VER}. Windows SDK version "
+                "${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION} may not be compatible. If you encounter build errors, "
+                "set D3D12_SUPPORT=OFF or configure the build with the recommended Windows SDK version. See BUILD.md "
+                "for more information.")
+        endif()
+        
     else()
         set(BUILD_LAUNCHER_AND_INTERCEPTOR OFF)
     endif()
@@ -171,6 +184,24 @@ if(MSVC)
     if(${BUILD_LAUNCHER_AND_INTERCEPTOR})
         add_definitions(-DBUILD_LAUNCHER_AND_INTERCEPTOR)
     endif()
+
+    # Add option to enable/disable AGS support.
+    option(GFXRECON_AGS_SUPPORT "Build with AGS support enabled. Ignored if D3D12_SUPPORT=OFF." ON)
+    
+    if (${D3D12_SUPPORT})
+        if (${GFXRECON_AGS_SUPPORT})
+            if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+                find_package(AGS)
+                if (TARGET AGS::AGS)
+                    add_definitions(-DGFXRECON_AGS_SUPPORT)
+                
+                    # The value for option GFXRECON_AGS_SUPPORT gets cached so use a non-cached variable
+                    # to determine the final result.
+                    set(GFXRECON_AGS_SUPPORT_FINAL ON)
+                endif() # TARGET AGS::AGS
+            endif() # CMAKE_SIZEOF_VOID_P EQUAL 8
+        endif() # GFXRECON_AGS_SUPPORT
+    endif() # D3D12_SUPPORT
 	
 else(MSVC)
     # Turn off D3D12 support for non MSVC builds.
@@ -188,10 +219,6 @@ else(MSVC)
 endif(MSVC)
 
 # GFXReconstruct provided find modules
-if(${D3D12_SUPPORT})
-    find_package(AGS)
-endif() # D3D12_SUPPORT
-
 if(WIN32)
 find_package(Detours)
 endif() # WIN32
@@ -266,6 +293,10 @@ target_include_directories(vulkan_registry INTERFACE ${CMAKE_SOURCE_DIR}/externa
 target_compile_definitions(vulkan_registry INTERFACE VK_NO_PROTOTYPES VK_ENABLE_BETA_EXTENSIONS)
 
 add_library(vulkan_memory_allocator INTERFACE)
+target_compile_options(vulkan_memory_allocator INTERFACE
+    $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:
+        -Wno-nullability-completeness>
+)
 target_include_directories(vulkan_memory_allocator INTERFACE ${CMAKE_SOURCE_DIR}/external/VulkanMemoryAllocator/include)
 
 if (${RUN_TESTS})

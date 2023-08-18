@@ -188,7 +188,7 @@ Visual Studio configuration will include support for capturing and replaying Dir
 At this point, you can build the solution from the command line or open the
 generated solution with Visual Studio.
 
-**Note: the build uses Windows 10 SDK 10.0.20348.0. Windows 11 SDK 10.0.22000.194 is not compatible at the present time. If you need to specify a Windows 10 SDK, please use `-DCMAKE_SYSTEM_VERSION=10.0.20348.0`. If Python code generation is required, the shell used to run it should have the environment variable `WindowsSDKVersion=10.0.20348.0\` set too.**
+**Note: The D3D12 build uses Windows 10 SDK 10.0.20348.0. Other Windows SDK versions may not be compatible. If you need to specify a Windows SDK, please use `-DCMAKE_SYSTEM_VERSION=10.0.20348.0`. If Python code generation is required, the shell used to run it should set the environment variable `WindowsSDKVersion=10.0.20348.0`.**
 
 When generating a native build on an ARM64 Windows host the Visual Studio
 Installer can be used to install the required Windows SDK version, `10.0.20348.0`.
@@ -338,7 +338,7 @@ from gfxreconstruct's root source directory. Then install with `make install`.
 
 - The latest version of [Android Studio](https://developer.android.com/studio/) with additional items:
   - The [Android Platform tools](https://developer.android.com/studio/releases/platform-tools) for your specific platform
-  - [Android SDK 26 (8.0 Oreo) or newer](https://guides.codepath.com/android/installing-android-sdk-tools)
+  - [Android SDK 33 (13 Tiramisu) or newer](https://guides.codepath.com/android/installing-android-sdk-tools)
   - [Android NDK 21.3.6528147 (r21d)](https://developer.android.com/ndk/guides/)
 - [Java JDK 1.11](https://jdk.java.net/11)
 

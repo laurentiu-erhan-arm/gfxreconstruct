@@ -1,7 +1,7 @@
 /*
 ** Copyright (c) 2018-2020 Valve Corporation
 ** Copyright (c) 2018-2020 LunarG, Inc.
-** Copyright (c) 2019-2021 Advanced Micro Devices, Inc. All rights reserved.
+** Copyright (c) 2019-2023 Advanced Micro Devices, Inc. All rights reserved.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -82,6 +82,8 @@ GFXRECON_BEGIN_NAMESPACE(encode)
 #define SCREENSHOT_FRAMES_UPPER                              "SCREENSHOT_FRAMES"
 #define CAPTURE_FRAMES_LOWER                                 "capture_frames"
 #define CAPTURE_FRAMES_UPPER                                 "CAPTURE_FRAMES"
+#define QUIT_AFTER_CAPTURE_FRAMES_LOWER                      "quit_after_capture_frames"
+#define QUIT_AFTER_CAPTURE_FRAMES_UPPER                      "QUIT_AFTER_CAPTURE_FRAMES"
 #define CAPTURE_TRIGGER_LOWER                                "capture_trigger"
 #define CAPTURE_TRIGGER_UPPER                                "CAPTURE_TRIGGER"
 #define CAPTURE_TRIGGER_FRAMES_LOWER                         "capture_trigger_frames"
@@ -118,6 +120,18 @@ GFXRECON_BEGIN_NAMESPACE(encode)
 #define ACCEL_STRUCT_PADDING_UPPER                           "ACCEL_STRUCT_PADDING"
 #define FORCE_COMMAND_SERIALIZATION_LOWER                    "force_command_serialization"
 #define FORCE_COMMAND_SERIALIZATION_UPPER                    "FORCE_COMMAND_SERIALIZATION"
+#define QUEUE_ZERO_ONLY_LOWER                                "queue_zero_only"
+#define QUEUE_ZERO_ONLY_UPPER                                "QUEUE_ZERO_ONLY"
+#define ALLOW_PIPELINE_COMPILE_REQUIRED_LOWER                "allow_pipeline_compile_required"
+#define ALLOW_PIPELINE_COMPILE_REQUIRED_UPPER                "ALLOW_PIPELINE_COMPILE_REQUIRED"
+#define RV_ANNOTATION_EXPERIMENTAL_LOWER                     "rv_annotation_experimental"
+#define RV_ANNOTATION_EXPERIMENTAL_UPPER                     "RV_ANNOTATION_EXPERIMENTAL"
+#define RV_ANNOTATION_RAND_LOWER                             "rv_annotation_rand"
+#define RV_ANNOTATION_RAND_UPPER                             "RV_ANNOTATION_RAND"
+#define RV_ANNOTATION_GPUVA_LOWER                            "rv_annotation_gpuva"
+#define RV_ANNOTATION_GPUVA_UPPER                            "RV_ANNOTATION_GPUVA"
+#define RV_ANNOTATION_DESCRIPTOR_LOWER                       "rv_annotation_descriptor"
+#define RV_ANNOTATION_DESCRIPTOR_UPPER                       "RV_ANNOTATION_DESCRIPTOR"
 #define FENCE_QUERY_DELAY_LOWER                              "fence_query_delay"
 #define FENCE_QUERY_DELAY_UPPER                              "FENCE_QUERY_DELAY"
 
@@ -147,6 +161,7 @@ const char kScreenshotDirEnvVar[]                            = GFXRECON_ENV_VAR_
 const char kScreenshotFormatEnvVar[]                         = GFXRECON_ENV_VAR_PREFIX SCREENSHOT_FORMAT_LOWER;
 const char kScreenshotFramesEnvVar[]                         = GFXRECON_ENV_VAR_PREFIX SCREENSHOT_FRAMES_LOWER;
 const char kCaptureFramesEnvVar[]                            = GFXRECON_ENV_VAR_PREFIX CAPTURE_FRAMES_LOWER;
+const char kQuitAfterFramesEnvVar[]                          = GFXRECON_ENV_VAR_PREFIX QUIT_AFTER_CAPTURE_FRAMES_LOWER;
 const char kCaptureTriggerEnvVar[]                           = GFXRECON_ENV_VAR_PREFIX CAPTURE_TRIGGER_LOWER;
 const char kCaptureTriggerFramesEnvVar[]                     = GFXRECON_ENV_VAR_PREFIX CAPTURE_TRIGGER_FRAMES_LOWER;
 const char kCaptureIUnknownWrappingEnvVar[]                  = GFXRECON_ENV_VAR_PREFIX CAPTURE_IUNKNOWN_WRAPPING_LOWER;
@@ -165,8 +180,13 @@ const char kCaptureAndroidTriggerEnvVar[]                    = GFXRECON_ENV_VAR_
 const char kDisableDxrEnvVar[]                               = GFXRECON_ENV_VAR_PREFIX DISABLE_DXR_LOWER;
 const char kAccelStructPaddingEnvVar[]                       = GFXRECON_ENV_VAR_PREFIX ACCEL_STRUCT_PADDING_LOWER;
 const char kForceCommandSerializationEnvVar[]                = GFXRECON_ENV_VAR_PREFIX FORCE_COMMAND_SERIALIZATION_LOWER;
+const char kQueueZeroOnlyEnvVar[]                            = GFXRECON_ENV_VAR_PREFIX QUEUE_ZERO_ONLY_LOWER;
+const char kAllowPipelineCompileRequiredEnvVar[]             = GFXRECON_ENV_VAR_PREFIX ALLOW_PIPELINE_COMPILE_REQUIRED_LOWER;
+const char kAnnotationExperimentalEnvVar[]                   = GFXRECON_ENV_VAR_PREFIX RV_ANNOTATION_EXPERIMENTAL_LOWER;
+const char kAnnotationRandEnvVar[]                           = GFXRECON_ENV_VAR_PREFIX RV_ANNOTATION_RAND_LOWER;
+const char kAnnotationGPUVAEnvVar[]                          = GFXRECON_ENV_VAR_PREFIX RV_ANNOTATION_GPUVA_LOWER;
+const char kAnnotationDescriptorEnvVar[]                     = GFXRECON_ENV_VAR_PREFIX RV_ANNOTATION_DESCRIPTOR_LOWER;
 const char kFenceQueryDelayEnvVar[]                          = GFXRECON_ENV_VAR_PREFIX FENCE_QUERY_DELAY_LOWER;
-
 
 #else
 // Desktop environment settings
@@ -194,6 +214,7 @@ const char kScreenshotDirEnvVar[]                            = GFXRECON_ENV_VAR_
 const char kScreenshotFormatEnvVar[]                         = GFXRECON_ENV_VAR_PREFIX SCREENSHOT_FORMAT_UPPER;
 const char kScreenshotFramesEnvVar[]                         = GFXRECON_ENV_VAR_PREFIX SCREENSHOT_FRAMES_UPPER;
 const char kCaptureFramesEnvVar[]                            = GFXRECON_ENV_VAR_PREFIX CAPTURE_FRAMES_UPPER;
+const char kQuitAfterFramesEnvVar[]                          = GFXRECON_ENV_VAR_PREFIX QUIT_AFTER_CAPTURE_FRAMES_UPPER;
 const char kPageGuardCopyOnMapEnvVar[]                       = GFXRECON_ENV_VAR_PREFIX PAGE_GUARD_COPY_ON_MAP_UPPER;
 const char kPageGuardSeparateReadEnvVar[]                    = GFXRECON_ENV_VAR_PREFIX PAGE_GUARD_SEPARATE_READ_UPPER;
 const char kPageGuardPersistentMemoryEnvVar[]                = GFXRECON_ENV_VAR_PREFIX PAGE_GUARD_PERSISTENT_MEMORY_UPPER;
@@ -211,6 +232,12 @@ const char kDebugDeviceLostEnvVar[]                          = GFXRECON_ENV_VAR_
 const char kDisableDxrEnvVar[]                               = GFXRECON_ENV_VAR_PREFIX DISABLE_DXR_UPPER;
 const char kAccelStructPaddingEnvVar[]                       = GFXRECON_ENV_VAR_PREFIX ACCEL_STRUCT_PADDING_UPPER;
 const char kForceCommandSerializationEnvVar[]                = GFXRECON_ENV_VAR_PREFIX FORCE_COMMAND_SERIALIZATION_UPPER;
+const char kQueueZeroOnlyEnvVar[]                            = GFXRECON_ENV_VAR_PREFIX QUEUE_ZERO_ONLY_UPPER;
+const char kAllowPipelineCompileRequiredEnvVar[]             = GFXRECON_ENV_VAR_PREFIX ALLOW_PIPELINE_COMPILE_REQUIRED_UPPER;
+const char kAnnotationExperimentalEnvVar[]                   = GFXRECON_ENV_VAR_PREFIX RV_ANNOTATION_EXPERIMENTAL_UPPER;
+const char kAnnotationRandEnvVar[]                           = GFXRECON_ENV_VAR_PREFIX RV_ANNOTATION_RAND_UPPER;
+const char kAnnotationGPUVAEnvVar[]                          = GFXRECON_ENV_VAR_PREFIX RV_ANNOTATION_GPUVA_UPPER;
+const char kAnnotationDescriptorEnvVar[]                     = GFXRECON_ENV_VAR_PREFIX RV_ANNOTATION_DESCRIPTOR_UPPER;
 const char kFenceQueryDelayEnvVar[]                          = GFXRECON_ENV_VAR_PREFIX FENCE_QUERY_DELAY_UPPER;
 #endif
 
@@ -237,6 +264,7 @@ const std::string kOptionKeyScreenshotDir                            = std::stri
 const std::string kOptionKeyScreenshotFormat                         = std::string(kSettingsFilter) + std::string(SCREENSHOT_FORMAT_LOWER);
 const std::string kOptionKeyScreenshotFrames                         = std::string(kSettingsFilter) + std::string(SCREENSHOT_FRAMES_LOWER);
 const std::string kOptionKeyCaptureFrames                            = std::string(kSettingsFilter) + std::string(CAPTURE_FRAMES_LOWER);
+const std::string kOptionKeyQuitAfterCaptureFrames                   = std::string(kSettingsFilter) + std::string(QUIT_AFTER_CAPTURE_FRAMES_LOWER);
 const std::string kOptionKeyCaptureTrigger                           = std::string(kSettingsFilter) + std::string(CAPTURE_TRIGGER_LOWER);
 const std::string kOptionKeyCaptureTriggerFrames                     = std::string(kSettingsFilter) + std::string(CAPTURE_TRIGGER_FRAMES_LOWER);
 const std::string kOptionKeyCaptureIUnknownWrapping                  = std::string(kSettingsFilter) + std::string(CAPTURE_IUNKNOWN_WRAPPING_LOWER);
@@ -254,6 +282,12 @@ const std::string kDebugDeviceLost                                   = std::stri
 const std::string kOptionDisableDxr                                  = std::string(kSettingsFilter) + std::string(DISABLE_DXR_LOWER);
 const std::string kOptionAccelStructPadding                          = std::string(kSettingsFilter) + std::string(ACCEL_STRUCT_PADDING_LOWER);
 const std::string kOptionForceCommandSerialization                   = std::string(kSettingsFilter) + std::string(FORCE_COMMAND_SERIALIZATION_LOWER);
+const std::string kOptionQueueZeroOnly                               = std::string(kSettingsFilter) + std::string(QUEUE_ZERO_ONLY_LOWER);
+const std::string kOptionAllowPipelineCompileRequired                = std::string(kSettingsFilter) + std::string(ALLOW_PIPELINE_COMPILE_REQUIRED_LOWER);
+const std::string kOptionKeyAnnotationExperimental                   = std::string(kSettingsFilter) + std::string(RV_ANNOTATION_EXPERIMENTAL_LOWER);
+const std::string kOptionKeyAnnotationRand                           = std::string(kSettingsFilter) + std::string(RV_ANNOTATION_RAND_LOWER);
+const std::string kOptionKeyAnnotationGPUVA                          = std::string(kSettingsFilter) + std::string(RV_ANNOTATION_GPUVA_LOWER);
+const std::string kOptionKeyAnnotationDescriptor                     = std::string(kSettingsFilter) + std::string(RV_ANNOTATION_DESCRIPTOR_LOWER);
 const std::string kOptionFenceQueryDelay                             = std::string(kSettingsFilter) + std::string(FENCE_QUERY_DELAY_LOWER);
 
 #if defined(GFXRECON_ENABLE_LZ4_COMPRESSION)
@@ -364,6 +398,7 @@ void CaptureSettings::LoadOptionsEnvVar(OptionsMap* options)
 
     // Trimming environment variables
     LoadSingleOptionEnvVar(options, kCaptureFramesEnvVar, kOptionKeyCaptureFrames);
+    LoadSingleOptionEnvVar(options, kQuitAfterFramesEnvVar, kOptionKeyQuitAfterCaptureFrames);
     LoadSingleOptionEnvVar(options, kCaptureTriggerEnvVar, kOptionKeyCaptureTrigger);
     LoadSingleOptionEnvVar(options, kCaptureTriggerFramesEnvVar, kOptionKeyCaptureTriggerFrames);
 
@@ -396,6 +431,14 @@ void CaptureSettings::LoadOptionsEnvVar(OptionsMap* options)
     LoadSingleOptionEnvVar(options, kCaptureIUnknownWrappingEnvVar, kOptionKeyCaptureIUnknownWrapping);
 
     LoadSingleOptionEnvVar(options, kForceCommandSerializationEnvVar, kOptionForceCommandSerialization);
+    LoadSingleOptionEnvVar(options, kQueueZeroOnlyEnvVar, kOptionQueueZeroOnly);
+    LoadSingleOptionEnvVar(options, kAllowPipelineCompileRequiredEnvVar, kOptionAllowPipelineCompileRequired);
+
+    // Annotated GPUVA mask
+    LoadSingleOptionEnvVar(options, kAnnotationExperimentalEnvVar, kOptionKeyAnnotationExperimental);
+    LoadSingleOptionEnvVar(options, kAnnotationRandEnvVar, kOptionKeyAnnotationRand);
+    LoadSingleOptionEnvVar(options, kAnnotationGPUVAEnvVar, kOptionKeyAnnotationGPUVA);
+    LoadSingleOptionEnvVar(options, kAnnotationDescriptorEnvVar, kOptionKeyAnnotationDescriptor);
     LoadSingleOptionEnvVar(options, kFenceQueryDelayEnvVar, kOptionFenceQueryDelay);
 }
 
@@ -463,6 +506,9 @@ void CaptureSettings::ProcessOptions(OptionsMap* options, CaptureSettings* setti
         }
     }
 
+    settings->trace_settings_.quit_after_frame_ranges = ParseBoolString(
+        FindOption(options, kOptionKeyQuitAfterCaptureFrames), settings->trace_settings_.quit_after_frame_ranges);
+
     // Page guard environment variables
     settings->trace_settings_.page_guard_copy_on_map = ParseBoolString(
         FindOption(options, kOptionKeyPageGuardCopyOnMap), settings->trace_settings_.page_guard_copy_on_map);
@@ -514,6 +560,25 @@ void CaptureSettings::ProcessOptions(OptionsMap* options, CaptureSettings* setti
 
     settings->trace_settings_.force_command_serialization = ParseBoolString(
         FindOption(options, kOptionForceCommandSerialization), settings->trace_settings_.force_command_serialization);
+
+    settings->trace_settings_.queue_zero_only =
+        ParseBoolString(FindOption(options, kOptionQueueZeroOnly), settings->trace_settings_.queue_zero_only);
+
+    settings->trace_settings_.allow_pipeline_compile_required =
+        ParseBoolString(FindOption(options, kOptionAllowPipelineCompileRequired),
+                        settings->trace_settings_.allow_pipeline_compile_required);
+
+    settings->trace_settings_.rv_anotation_info.rv_annotation =
+        ParseBoolString(FindOption(options, kOptionKeyAnnotationExperimental),
+                        settings->trace_settings_.rv_anotation_info.rv_annotation);
+    settings->trace_settings_.rv_anotation_info.annotation_mask_rand =
+        ParseBoolString(FindOption(options, kOptionKeyAnnotationRand),
+                        settings->trace_settings_.rv_anotation_info.annotation_mask_rand);
+    settings->trace_settings_.rv_anotation_info.gpuva_mask = ParseUnsignedInteger16String(
+        FindOption(options, kOptionKeyAnnotationGPUVA), settings->trace_settings_.rv_anotation_info.gpuva_mask);
+    settings->trace_settings_.rv_anotation_info.descriptor_mask =
+        ParseUnsignedInteger16String(FindOption(options, kOptionKeyAnnotationDescriptor),
+                                     settings->trace_settings_.rv_anotation_info.descriptor_mask);
     settings->trace_settings_.fence_query_delay =
         ParseIntegerString(FindOption(options, kOptionFenceQueryDelay), settings->trace_settings_.fence_query_delay);
 }
@@ -569,6 +634,39 @@ bool CaptureSettings::ParseBoolString(const std::string& value_string, bool defa
     return gfxrecon::util::ParseBoolString(value_string, default_value);
 }
 
+uint16_t CaptureSettings::ParseUnsignedInteger16String(const std::string& value_string, uint16_t default_value)
+{
+    std::string::const_iterator it = value_string.begin();
+    if (((value_string.compare(0, 2, "0x") == 0) || (value_string.compare(0, 2, "0X") == 0)))
+    {
+        it += 2;
+    }
+    while (it != value_string.end() && std::isxdigit(*it))
+    {
+        ++it;
+    }
+    const bool is_hex_integer = !value_string.empty() && it == value_string.end();
+
+    if (!is_hex_integer && !value_string.empty())
+    {
+        GFXRECON_LOG_WARNING("Settings Loader: Ignoring unrecognized Unsigned Integer16 option value \"%s\"",
+                             value_string.c_str());
+    }
+    // Must be hex format
+    uint32_t value = 0;
+    if (is_hex_integer == true)
+    {
+        value = strtoul(value_string.c_str(), nullptr, 16);
+
+        if (value > (~static_cast<uint32_t>(0x0) >> (32 - RvAnnotationUtil::kMaskSizeOfBits)))
+        {
+            GFXRECON_LOG_WARNING("Settings Loader: Ignoring oversized option value \"%s\"", value_string.c_str());
+        }
+    }
+    // Return low 16bits
+    return is_hex_integer ? static_cast<uint16_t>(value) : default_value;
+}
+
 int CaptureSettings::ParseIntegerString(const std::string& value_string, int default_value)
 {
     std::string::const_iterator it = value_string.begin();
@@ -614,11 +712,12 @@ CaptureSettings::ParseMemoryTrackingModeString(const std::string&               
     return result;
 }
 
+#if defined(__ANDROID__)
 CaptureSettings::RuntimeTriggerState
 CaptureSettings::ParseAndroidRunTimeTrimState(const std::string&                   value_string,
                                               CaptureSettings::RuntimeTriggerState default_value)
 {
-    CaptureSettings::RuntimeTriggerState result = default_value;
+    static CaptureSettings::RuntimeTriggerState result = default_value;
 
     if (value_string.empty())
     {
@@ -626,12 +725,23 @@ CaptureSettings::ParseAndroidRunTimeTrimState(const std::string&                
     }
     else
     {
-        result = gfxrecon::util::ParseBoolString(value_string, false) ? RuntimeTriggerState::kEnabled
-                                                                      : RuntimeTriggerState::kDisabled;
+        CaptureSettings::RuntimeTriggerState new_result = gfxrecon::util::ParseBoolString(value_string, false)
+                                                              ? RuntimeTriggerState::kEnabled
+                                                              : RuntimeTriggerState::kDisabled;
+
+        if (new_result != result)
+        {
+            GFXRECON_LOG_INFO("Runtime settings: Option %s was set to %s",
+                              kCaptureAndroidTriggerEnvVar,
+                              new_result == RuntimeTriggerState::kEnabled ? "enabled" : "disabled");
+
+            result = new_result;
+        }
     }
 
     return result;
 }
+#endif
 
 format::CompressionType CaptureSettings::ParseCompressionTypeString(const std::string&      value_string,
                                                                     format::CompressionType default_value)

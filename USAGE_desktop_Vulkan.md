@@ -24,23 +24,39 @@ to one of these other documents:
 
 ## Index
 
-1. [Capturing API calls](#capturing-api-calls)
-    1. [Enabling the Capture Layer](#enabling-the-capture-layer)
-    2. [Capture Options](#capture-options)
-    3. [Capture Files](#capture-files)
-    4. [Capture Script](#capture-script)
-2. [Replaying API Calls](#replaying-api-calls)
-    1. [Command Line Arguments](#command-line-arguments)
-    2. [Key Controls](#key-controls)
-    3. [Virtual Swapchain](#virtual-swapchain)
-3. [Other Capture File Processing Tools](#other-capture-file-processing-tools)
-    1. [Capture File Info](#capture-file-info)
-    2. [Capture File Compression](#capture-file-compression)
-    3. [Shader Extraction](#shader-extraction)
-    4. [Trimmed File Optimization](#trimmed-file-optimization)
-    5. [JSON Lines Conversion](#json-lines-conversion)
-    6. [Command Launcher](#command-launcher)
-    7. [Options Common To All Tools](#common-options)
+- [GFXReconstruct API Capture and Replay - Vulkan](#gfxreconstruct-api-capture-and-replay---vulkan)
+  - [Index](#index)
+  - [Capturing API calls](#capturing-api-calls)
+    - [Enabling the Capture Layer](#enabling-the-capture-layer)
+      - [Setting VK\_LAYER\_PATH](#setting-vk_layer_path)
+        - [Setting VK\_LAYER\_PATH for Windows](#setting-vk_layer_path-for-windows)
+        - [Setting VK\_LAYER\_PATH for Linux](#setting-vk_layer_path-for-linux)
+      - [Enabling the layer with VK\_INSTANCE\_LAYERS](#enabling-the-layer-with-vk_instance_layers)
+        - [Enabling the layer for Windows](#enabling-the-layer-for-windows)
+        - [Enabling the layer for Linux](#enabling-the-layer-for-linux)
+    - [Capture Options](#capture-options)
+      - [Windows Options](#windows-options)
+      - [Linux Options](#linux-options)
+      - [Supported Options](#supported-options)
+      - [Memory Tracking Known Issues](#memory-tracking-known-issues)
+      - [Settings File](#settings-file)
+      - [Selecting Settings for the page\_guard Memory Tracking Mode](#selecting-settings-for-the-page_guard-memory-tracking-mode)
+    - [Capture Files](#capture-files)
+      - [Specifying Capture File Location](#specifying-capture-file-location)
+      - [Timestamps](#timestamps)
+    - [Capture Script](#capture-script)
+  - [Replaying API Calls](#replaying-api-calls)
+    - [Command Line Arguments](#command-line-arguments)
+    - [Key Controls](#key-controls)
+    - [Virtual Swapchain](#virtual-swapchain)
+  - [Other Capture File Processing Tools](#other-capture-file-processing-tools)
+    - [Capture File Info](#capture-file-info)
+    - [Capture File Compression](#capture-file-compression)
+    - [Shader Extraction](#shader-extraction)
+    - [Trimmed File Optimization](#trimmed-file-optimization)
+    - [JSON Lines Conversion](#json-lines-conversion)
+    - [Command Launcher](#command-launcher)
+    - [Options Common To all Tools](#options-common-to-all-tools)
 
 ## Capturing API calls
 
@@ -163,6 +179,7 @@ Option | Environment Variable | Type | Description
 ------| ------------- |------|-------------
 Capture File Name | GFXRECON_CAPTURE_FILE | STRING | Path to use when creating the capture file.  Default is: `gfxrecon_capture.gfxr`
 Capture Specific Frames | GFXRECON_CAPTURE_FRAMES | STRING | Specify one or more comma-separated frame ranges to capture.  Each range will be written to its own file.  A frame range can be specified as a single value, to specify a single frame to capture, or as two hyphenated values, to specify the first and last frame to capture.  Frame ranges should be specified in ascending order and cannot overlap. Note that frame numbering is 1-based (i.e. the first frame is frame 1). Example: `200,301-305` will create two capture files, one containing a single frame and one containing five frames.  Default is: Empty string (all frames are captured).
+Quit after capturing frame ranges | GFXRECON_QUIT_AFTER_CAPTURE_FRAMES | BOOL | Setting it to `true` will force the application to terminate once all frame ranges specified by `GFXRECON_CAPTURE_FRAMES` have been captured.
 Hotkey Capture Trigger | GFXRECON_CAPTURE_TRIGGER | STRING | Specify a hotkey (any one of F1-F12, TAB, CONTROL) that will be used to start/stop capture.  Example: `F3` will set the capture trigger to F3 hotkey. One capture file will be generated for each pair of start/stop hotkey presses. Default is: Empty string (hotkey capture trigger is disabled).
 Hotkey Capture Trigger | GFXRECON_CAPTURE_TRIGGER_FRAMES | STRING | Specify a limit on the number of frames to be captured via hotkey.  Example: `1` will capture exactly one frame when the trigger key is pressed. Default is: Empty string (no limit)
 Capture File Compression Type | GFXRECON_CAPTURE_COMPRESSION_TYPE | STRING | Compression format to use with the capture file.  Valid values are: `LZ4`, `ZLIB`, `ZSTD`, and `NONE`. Default is: `LZ4`
@@ -189,6 +206,8 @@ Page Guard Signal Handler Watcher | GFXRECON_PAGE_GUARD_SIGNAL_HANDLER_WATCHER |
 Page Guard Signal Handler Watcher Max Restores | GFXRECON_PAGE_GUARD_SIGNAL_HANDLER_WATCHER_MAX_RESTORES | INTEGER | Sets the number of times the watcher will attempt to restore the signal handler. Setting it to a negative will make the watcher thread run indefinitely. Default is `1`
 Force Command Serialization | GFXRECON_FORCE_COMMAND_SERIALIZATION | BOOL | Sets exclusive locks(unique_lock) for every ApiCall. It can avoid external multi-thread to cause captured issue.
 Delay fence queries | GFXRECON_FENCE_QUERY_DELAY | INTEGER | Fences queried using `vkGetFenceStatus` and `vkWaitForFences` won't return `VK_SUCCESS` before a number of such queries and will instead return `VK_NOT_READY` and `VK_TIMEOUT`. Default is `0`.
+Queue Zero Only | GFXRECON_QUEUE_ZERO_ONLY | BOOL | Forces to using only QueueFamilyIndex: 0 and queueCount: 1 on capturing to avoid replay error for unavailble VkQueue.
+Allow Pipeline Compile Required | GFXRECON_ALLOW_PIPELINE_COMPILE_REQUIRED | BOOL | The default behaviour forces VK_PIPELINE_COMPILE_REQUIRED to be returned from Create*Pipelines calls which have VK_PIPELINE_CREATE_FAIL_ON_PIPELINE_COMPILE_REQUIRED_BIT set, and skips dispatching and recording the calls. This forces applications to fallback to recompiling pipelines without caching, the Vulkan calls for which will be captured. Enabling this option causes capture to record the application's calls and implementation's return values unmodified, but the resulting captures are fragile to changes in Vulkan implementations if they use pipeline caching.
 #### Memory Tracking Known Issues
 
 There is a known issue with the page guard memory tracking method. The logic behind that method is to apply a memory protection to the guarded/shadowed regions so that accesses made by the user to trigger a segmentation fault which is handled by GFXReconstruct.

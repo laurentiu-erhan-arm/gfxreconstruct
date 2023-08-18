@@ -1,6 +1,6 @@
 /*
 ** Copyright (c) 2018-2021 Valve Corporation
-** Copyright (c) 2018-2021 LunarG, Inc.
+** Copyright (c) 2018-2023 LunarG, Inc.
 ** Copyright (c) 2019 Advanced Micro Devices, Inc. All rights reserved.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
@@ -215,17 +215,29 @@ class VulkanCaptureManager : public CaptureManager
         EndApiCallCapture();
     }
 
+    void ProcessEndCommandApiCallCapture(VkCommandBuffer command_buffer, format::ApiCallId call_id)
+    {
+        if ((call_id == format::ApiCallId::ApiCall_vkBeginCommandBuffer) ||
+            (call_id == format::ApiCallId::ApiCall_vkResetCommandBuffer))
+        {
+            auto cmd_buffer_wrapper = GetWrapper<CommandBufferWrapper>(command_buffer);
+            GFXRECON_ASSERT(cmd_buffer_wrapper != nullptr);
+            cmd_buffer_wrapper->is_frame_boundary = false;
+        }
+    }
+
     void EndCommandApiCallCapture(VkCommandBuffer command_buffer)
     {
+        auto thread_data = GetThreadData();
+        GFXRECON_ASSERT(thread_data != nullptr);
+
         if ((GetCaptureMode() & kModeTrack) == kModeTrack)
         {
             assert(state_tracker_ != nullptr);
-
-            auto thread_data = GetThreadData();
-            assert(thread_data != nullptr);
-
             state_tracker_->TrackCommand(command_buffer, thread_data->call_id_, thread_data->parameter_buffer_.get());
         }
+
+        ProcessEndCommandApiCallCapture(command_buffer, thread_data->call_id_);
 
         EndApiCallCapture();
     }
@@ -233,16 +245,17 @@ class VulkanCaptureManager : public CaptureManager
     template <typename GetHandlesFunc, typename... GetHandlesArgs>
     void EndCommandApiCallCapture(VkCommandBuffer command_buffer, GetHandlesFunc func, GetHandlesArgs... args)
     {
+        auto thread_data = GetThreadData();
+        GFXRECON_ASSERT(thread_data != nullptr);
+
         if ((GetCaptureMode() & kModeTrack) == kModeTrack)
         {
             assert(state_tracker_ != nullptr);
-
-            auto thread_data = GetThreadData();
-            assert(thread_data != nullptr);
-
             state_tracker_->TrackCommand(
                 command_buffer, thread_data->call_id_, thread_data->parameter_buffer_.get(), func, args...);
         }
+
+        ProcessEndCommandApiCallCapture(command_buffer, thread_data->call_id_);
 
         EndApiCallCapture();
     }
@@ -290,6 +303,18 @@ class VulkanCaptureManager : public CaptureManager
                                                   const VkRayTracingPipelineCreateInfoKHR* pCreateInfos,
                                                   const VkAllocationCallbacks*             pAllocator,
                                                   VkPipeline*                              pPipelines);
+
+    void OverrideGetPhysicalDeviceQueueFamilyProperties(VkPhysicalDevice         physicalDevice,
+                                                        uint32_t*                pQueueFamilyPropertyCount,
+                                                        VkQueueFamilyProperties* pQueueFamilyProperties);
+
+    void OverrideGetPhysicalDeviceQueueFamilyProperties2(VkPhysicalDevice          physicalDevice,
+                                                         uint32_t*                 pQueueFamilyPropertyCount,
+                                                         VkQueueFamilyProperties2* pQueueFamilyProperties);
+
+    void OverrideGetPhysicalDeviceQueueFamilyProperties2KHR(VkPhysicalDevice          physicalDevice,
+                                                            uint32_t*                 pQueueFamilyPropertyCount,
+                                                            VkQueueFamilyProperties2* pQueueFamilyProperties);
 
     VkResult OverrideWaitForFences(
         VkDevice device, uint32_t fenceCount, const VkFence* pFences, VkBool32 waitAll, uint64_t timeout);
@@ -925,6 +950,19 @@ class VulkanCaptureManager : public CaptureManager
                                                           pSubmits[i].pSignalSemaphores);
             }
         }
+
+        // Check whether this queue submission contains a command buffer that should be treated as a frame boundary.
+        for (uint32_t i = 0; i < submitCount; ++i)
+        {
+            for (uint32_t j = 0; j < pSubmits[i].commandBufferCount; ++j)
+            {
+                auto cmd_buffer_wrapper = GetWrapper<CommandBufferWrapper>(pSubmits[i].pCommandBuffers[j]);
+                if (CheckCommandBufferWrapperForFrameBoundary(cmd_buffer_wrapper))
+                {
+                    break;
+                }
+            }
+        }
     }
 
     void PostProcess_vkQueueSubmit2(
@@ -942,6 +980,20 @@ class VulkanCaptureManager : public CaptureManager
                                                               pSubmits[i].pWaitSemaphoreInfos,
                                                               pSubmits[i].signalSemaphoreInfoCount,
                                                               pSubmits[i].pSignalSemaphoreInfos);
+            }
+        }
+
+        // Check whether this queue submission contains a command buffer that should be treated as a frame boundary.
+        for (uint32_t i = 0; i < submitCount; ++i)
+        {
+            for (uint32_t j = 0; j < pSubmits[i].commandBufferInfoCount; ++j)
+            {
+                auto cmd_buffer_wrapper =
+                    GetWrapper<CommandBufferWrapper>(pSubmits[i].pCommandBufferInfos[j].commandBuffer);
+                if (CheckCommandBufferWrapperForFrameBoundary(cmd_buffer_wrapper))
+                {
+                    break;
+                }
             }
         }
     }
@@ -1202,6 +1254,9 @@ class VulkanCaptureManager : public CaptureManager
 
     void PostProcess_vkSetLocalDimmingAMD(VkDevice device, VkSwapchainKHR swapChain, VkBool32 localDimmingEnable);
 
+    void PostProcess_vkCmdDebugMarkerInsertEXT(VkCommandBuffer                   commandBuffer,
+                                               const VkDebugMarkerMarkerInfoEXT* pMarkerInfo);
+
 #if defined(__ANDROID__)
     void OverrideGetPhysicalDeviceSurfacePresentModesKHR(uint32_t* pPresentModeCount, VkPresentModeKHR* pPresentModes);
 #endif
@@ -1266,6 +1321,7 @@ class VulkanCaptureManager : public CaptureManager
     void ReleaseAndroidHardwareBuffer(AHardwareBuffer* hardware_buffer);
     bool CheckBindAlignment(VkDeviceSize memoryOffset);
 
+    bool CheckCommandBufferWrapperForFrameBoundary(const CommandBufferWrapper* command_buffer_wrapper);
     void ProcessFenceSubmit(VkFence fence);
 
   private:

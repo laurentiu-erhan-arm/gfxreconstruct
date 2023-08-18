@@ -1,7 +1,7 @@
 /*
 ** Copyright (c) 2018-2019 Valve Corporation
 ** Copyright (c) 2018-2021 LunarG, Inc.
-** Copyright (c) 2019-2021 Advanced Micro Devices, Inc. All rights reserved.
+** Copyright (c) 2019-2023 Advanced Micro Devices, Inc. All rights reserved.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
 ** copy of this software and associated documentation files (the "Software"),
@@ -25,6 +25,7 @@
 #ifndef GFXRECON_ENCODE_CAPTURE_SETTINGS_H
 #define GFXRECON_ENCODE_CAPTURE_SETTINGS_H
 
+#include "encode/dx12_rv_annotation_util.h"
 #include "format/format.h"
 #include "util/logging.h"
 #include "util/page_guard_manager.h"
@@ -71,6 +72,15 @@ class CaptureSettings
 
     const static char kDefaultCaptureFileName[];
 
+    struct ResourveValueAnnotationInfo
+    {
+        // Annotated GPUVA mask definition
+        bool     rv_annotation{ false };
+        bool     annotation_mask_rand{ false };
+        uint16_t gpuva_mask{ RvAnnotationUtil::kGPUVAMask };
+        uint16_t descriptor_mask{ RvAnnotationUtil::kDescriptorMask };
+    };
+
     struct TraceSettings
     {
         std::string                   capture_file{ kDefaultCaptureFileName };
@@ -99,6 +109,9 @@ class CaptureSettings
         uint32_t                      accel_struct_padding{ 0 };
         bool                          force_command_serialization{ false };
         uint32_t                      fence_query_delay{ 0 };
+        bool                          queue_zero_only{ false };
+        bool                          allow_pipeline_compile_required{ false };
+        bool                          quit_after_frame_ranges{ false };
 
         // An optimization for the page_guard memory tracking mode that eliminates the need for shadow memory by
         // overriding vkAllocateMemory so that all host visible allocations use the external memory extension with a
@@ -108,6 +121,8 @@ class CaptureSettings
 
         // IUnknown wrapping option
         bool iunknown_wrapping{ false };
+
+        ResourveValueAnnotationInfo rv_anotation_info{};
     };
 
   public:
@@ -148,11 +163,15 @@ class CaptureSettings
 
     static int ParseIntegerString(const std::string& value_string, int default_value);
 
+    static uint16_t ParseUnsignedInteger16String(const std::string& value_string, uint16_t default_value);
+
     static MemoryTrackingMode ParseMemoryTrackingModeString(const std::string& value_string,
                                                             MemoryTrackingMode default_value);
 
+#if defined(__ANDROID__)
     static RuntimeTriggerState ParseAndroidRunTimeTrimState(const std::string&  value_string,
                                                             RuntimeTriggerState default_value);
+#endif
 
     static format::CompressionType ParseCompressionTypeString(const std::string&      value_string,
                                                               format::CompressionType default_value);

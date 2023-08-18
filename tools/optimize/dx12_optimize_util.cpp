@@ -31,6 +31,12 @@
 #include "decode/dx12_resource_value_tracker.h"
 #include "decode/file_processor.h"
 
+#ifdef GFXRECON_AGS_SUPPORT
+#include "decode/custom_ags_consumer_base.h"
+#include "decode/custom_ags_decoder.h"
+#include "decode/custom_ags_replay_consumer.h"
+#endif // GFXRECON_AGS_SUPPORT
+
 #include <map>
 
 GFXRECON_BEGIN_NAMESPACE(gfxrecon)
@@ -65,9 +71,9 @@ void CreateResourceValueTrackingConsumer(
     application = std::make_shared<gfxrecon::application::Application>(app_string, file_processor);
     application->InitializeDx12WsiContext();
 
-    // Use default replay options, except dcp.
+    // Use default replay options, except gpu index.
     decode::DxReplayOptions dx_replay_options;
-    dx_replay_options.discard_cached_psos = true;
+    dx_replay_options.override_gpu_index  = options.override_gpu_index;
 
     // Create the replay consumer.
     dx12_replay_consumer = std::make_unique<decode::Dx12ResourceValueTrackingConsumer>(
@@ -219,6 +225,15 @@ bool GetDxrOptimizationInfo(const std::string&               input_filename,
 
         dxr_pass_file_processor.AddDecoder(&dxr_pass_decoder);
         dxr_pass_file_processor.SetBlocksToSkip(info.unreferenced_blocks);
+
+#ifdef GFXRECON_AGS_SUPPORT
+        gfxrecon::decode::AgsReplayConsumer ags_replay_consumer;
+        gfxrecon::decode::AgsDecoder        ags_decoder;
+        ags_replay_consumer.AddDx12Consumer(resource_value_tracking_consumer.get());
+        ags_decoder.AddConsumer(reinterpret_cast<gfxrecon::decode::AgsConsumerBase*>(&ags_replay_consumer));
+
+        dxr_pass_file_processor.AddDecoder(&ags_decoder);
+#endif // GFXRECON_AGS_SUPPORT
 
         GFXRECON_ASSERT(application != nullptr);
 

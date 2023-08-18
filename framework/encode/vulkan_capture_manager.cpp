@@ -1,6 +1,6 @@
 /*
 ** Copyright (c) 2018-2021 Valve Corporation
-** Copyright (c) 2018-2021 LunarG, Inc.
+** Copyright (c) 2018-2023 LunarG, Inc.
 ** Copyright (c) 2019 Advanced Micro Devices, Inc. All rights reserved.
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a
@@ -31,6 +31,7 @@
 #include "format/format_util.h"
 #include "generated/generated_vulkan_struct_handle_wrappers.h"
 #include "graphics/vulkan_device_util.h"
+#include "graphics/vulkan_util.h"
 #include "util/compressor.h"
 #include "util/logging.h"
 #include "util/page_guard_manager.h"
@@ -61,6 +62,13 @@ bool VulkanCaptureManager::CreateInstance()
                                                  []() {
                                                      assert(instance_ == nullptr);
                                                      instance_ = new VulkanCaptureManager();
+                                                 },
+                                                 []() {
+                                                     if (instance_)
+                                                     {
+                                                         delete instance_;
+                                                         instance_ = nullptr;
+                                                     }
                                                  });
 
     GFXRECON_LOG_INFO("  Vulkan Header Version %u.%u.%u",
@@ -73,18 +81,17 @@ bool VulkanCaptureManager::CreateInstance()
 
 void VulkanCaptureManager::DestroyInstance()
 {
-    CaptureManager::DestroyInstance([]() -> const CaptureManager* { return instance_; },
-                                    []() {
-                                        assert(instance_ != nullptr);
-                                        delete instance_;
-                                        instance_ = nullptr;
-                                    });
+    CaptureManager::DestroyInstance([]() -> const CaptureManager* { return instance_; });
 }
 
 void VulkanCaptureManager::WriteTrackedState(util::FileOutputStream* file_stream, format::ThreadId thread_id)
 {
     VulkanStateWriter state_writer(file_stream, compressor_.get(), thread_id);
-    state_tracker_->WriteState(&state_writer, GetCurrentFrame());
+    uint64_t          n_blocks = state_tracker_->WriteState(&state_writer, GetCurrentFrame());
+    block_index_ += n_blocks;
+
+    auto thread_data          = GetThreadData();
+    thread_data->block_index_ = block_index_;
 }
 
 void VulkanCaptureManager::SetLayerFuncs(PFN_vkCreateInstance create_instance, PFN_vkCreateDevice create_device)
@@ -131,12 +138,14 @@ void VulkanCaptureManager::WriteResizeWindowCmd2(format::HandleId              s
 {
     if ((GetCaptureMode() & kModeWrite) == kModeWrite)
     {
+        auto thread_data = GetThreadData();
+
         format::ResizeWindowCommand2 resize_cmd2;
         resize_cmd2.meta_header.block_header.type = format::BlockType::kMetaDataBlock;
         resize_cmd2.meta_header.block_header.size = format::GetMetaDataBlockBaseSize(resize_cmd2);
         resize_cmd2.meta_header.meta_data_id =
             format::MakeMetaDataId(format::ApiFamilyId::ApiFamily_Vulkan, format::MetaDataType::kResizeWindowCommand2);
-        resize_cmd2.thread_id = GetThreadData()->thread_id_;
+        resize_cmd2.thread_id = thread_data->thread_id_;
 
         resize_cmd2.surface_id = surface_id;
         resize_cmd2.width      = width;
@@ -165,6 +174,9 @@ void VulkanCaptureManager::WriteResizeWindowCmd2(format::HandleId              s
         }
 
         WriteToFile(&resize_cmd2, sizeof(resize_cmd2));
+
+        ++block_index_;
+        thread_data->block_index_ = block_index_;
     }
 }
 
@@ -226,6 +238,9 @@ void VulkanCaptureManager::WriteCreateHardwareBufferCmd(format::HandleId        
                 WriteToFile(&create_buffer_cmd, sizeof(create_buffer_cmd));
             }
         }
+
+        ++block_index_;
+        thread_data->block_index_ = block_index_;
 #else
         GFXRECON_UNREFERENCED_PARAMETER(memory_id);
         GFXRECON_UNREFERENCED_PARAMETER(buffer);
@@ -256,6 +271,9 @@ void VulkanCaptureManager::WriteDestroyHardwareBufferCmd(AHardwareBuffer* buffer
         destroy_buffer_cmd.buffer_id = reinterpret_cast<uint64_t>(buffer);
 
         WriteToFile(&destroy_buffer_cmd, sizeof(destroy_buffer_cmd));
+
+        ++block_index_;
+        thread_data->block_index_ = block_index_;
 #else
         GFXRECON_LOG_ERROR("Skipping destroy AHardwareBuffer command write for unsupported platform");
 #endif
@@ -292,6 +310,9 @@ void VulkanCaptureManager::WriteSetDevicePropertiesCommand(format::HandleId     
 
         CombineAndWriteToFile(
             { { &properties_cmd, sizeof(properties_cmd) }, { properties.deviceName, properties_cmd.device_name_len } });
+
+        ++block_index_;
+        thread_data->block_index_ = block_index_;
     }
 }
 
@@ -348,6 +369,9 @@ void VulkanCaptureManager::WriteSetDeviceMemoryPropertiesCommand(
         }
 
         WriteToFile(scratch_buffer.data(), scratch_buffer.size());
+
+        ++block_index_;
+        thread_data->block_index_ = block_index_;
     }
 }
 
@@ -372,6 +396,9 @@ void VulkanCaptureManager::WriteSetOpaqueAddressCommand(format::HandleId device_
         opaque_address_cmd.address   = address;
 
         WriteToFile(&opaque_address_cmd, sizeof(opaque_address_cmd));
+
+        ++block_index_;
+        thread_data->block_index_ = block_index_;
     }
 }
 
@@ -397,6 +424,9 @@ void VulkanCaptureManager::WriteSetRayTracingShaderGroupHandlesCommand(format::H
         set_handles_cmd.data_size   = data_size;
 
         CombineAndWriteToFile({ { &set_handles_cmd, sizeof(set_handles_cmd) }, { data, data_size } });
+
+        ++block_index_;
+        thread_data->block_index_ = block_index_;
     }
 }
 
@@ -674,6 +704,41 @@ VkResult VulkanCaptureManager::OverrideCreateDevice(VkPhysicalDevice            
 
     pCreateInfo_unwrapped->enabledExtensionCount   = static_cast<uint32_t>(modified_extensions.size());
     pCreateInfo_unwrapped->ppEnabledExtensionNames = modified_extensions.data();
+
+    VkDeviceQueueCreateInfo modified_queue_ci = {};
+
+    if (GetQueueZeroOnly())
+    {
+        // GetPhysicalDeviceQueueFamilyProperties force to return only FamilyIndex: 0 and queueCount: 1, so it shouldn't
+        // need to modifiy. If modified happens, it means the application doesn't follow
+        // GetPhysicalDeviceQueueFamilyProperties to set DeviceQueueCreateInfo. This modified could break the
+        // application setting. It might cause error.
+        GFXRECON_ASSERT(pCreateInfo_unwrapped->pQueueCreateInfos != nullptr);
+
+        if (pCreateInfo_unwrapped->queueCreateInfoCount > 1)
+        {
+            GFXRECON_LOG_WARNING("Because QUEUE_ZERO_ONLY is enabled, force queueCreateInfoCount to 1 on CreateDevice. "
+                                 "It might cause error.");
+            pCreateInfo_unwrapped->queueCreateInfoCount = 1;
+        }
+
+        modified_queue_ci = pCreateInfo_unwrapped->pQueueCreateInfos[0];
+
+        if (modified_queue_ci.queueFamilyIndex > 0)
+        {
+            GFXRECON_LOG_WARNING("Because QUEUE_ZERO_ONLY is enabled, force queueFamilyIndex to 0 on CreateDevice. It "
+                                 "might cause error.");
+            modified_queue_ci.queueFamilyIndex = 0;
+        }
+
+        if (modified_queue_ci.queueCount > 1)
+        {
+            GFXRECON_LOG_WARNING(
+                "Because QUEUE_ZERO_ONLY is enabled, force queueCount to 1 on CreateDevice. It might cause error.");
+            modified_queue_ci.queueCount = 1;
+        }
+        pCreateInfo_unwrapped->pQueueCreateInfos = &modified_queue_ci;
+    }
 
     VkResult result = layer_table_.CreateDevice(physicalDevice, pCreateInfo_unwrapped, pAllocator, pDevice);
 
@@ -1233,6 +1298,66 @@ VulkanCaptureManager::OverrideCreateRayTracingPipelinesKHR(VkDevice             
     }
 
     return result;
+}
+
+void VulkanCaptureManager::OverrideGetPhysicalDeviceQueueFamilyProperties(
+    VkPhysicalDevice         physicalDevice,
+    uint32_t*                pQueueFamilyPropertyCount,
+    VkQueueFamilyProperties* pQueueFamilyProperties)
+{
+    GFXRECON_ASSERT(pQueueFamilyPropertyCount != nullptr);
+
+    GetInstanceTable(physicalDevice)
+        ->GetPhysicalDeviceQueueFamilyProperties(physicalDevice, pQueueFamilyPropertyCount, pQueueFamilyProperties);
+
+    if (GetQueueZeroOnly())
+    {
+        *pQueueFamilyPropertyCount = 1;
+        if (pQueueFamilyProperties != nullptr)
+        {
+            pQueueFamilyProperties[0].queueCount = 1;
+        }
+    }
+}
+
+void VulkanCaptureManager::OverrideGetPhysicalDeviceQueueFamilyProperties2(
+    VkPhysicalDevice          physicalDevice,
+    uint32_t*                 pQueueFamilyPropertyCount,
+    VkQueueFamilyProperties2* pQueueFamilyProperties)
+{
+    GFXRECON_ASSERT(pQueueFamilyPropertyCount != nullptr);
+
+    GetInstanceTable(physicalDevice)
+        ->GetPhysicalDeviceQueueFamilyProperties2(physicalDevice, pQueueFamilyPropertyCount, pQueueFamilyProperties);
+
+    if (GetQueueZeroOnly())
+    {
+        *pQueueFamilyPropertyCount = 1;
+        if (pQueueFamilyProperties != nullptr)
+        {
+            pQueueFamilyProperties[0].queueFamilyProperties.queueCount = 1;
+        }
+    }
+}
+
+void VulkanCaptureManager::OverrideGetPhysicalDeviceQueueFamilyProperties2KHR(
+    VkPhysicalDevice          physicalDevice,
+    uint32_t*                 pQueueFamilyPropertyCount,
+    VkQueueFamilyProperties2* pQueueFamilyProperties)
+{
+    GFXRECON_ASSERT(pQueueFamilyPropertyCount != nullptr);
+
+    GetInstanceTable(physicalDevice)
+        ->GetPhysicalDeviceQueueFamilyProperties2KHR(physicalDevice, pQueueFamilyPropertyCount, pQueueFamilyProperties);
+
+    if (GetQueueZeroOnly())
+    {
+        *pQueueFamilyPropertyCount = 1;
+        if (pQueueFamilyProperties != nullptr)
+        {
+            pQueueFamilyProperties[0].queueFamilyProperties.queueCount = 1;
+        }
+    }
 }
 
 VkResult VulkanCaptureManager::OverrideWaitForFences(
@@ -2301,6 +2426,21 @@ void VulkanCaptureManager::PostProcess_vkSetLocalDimmingAMD(VkDevice       devic
     }
 }
 
+void VulkanCaptureManager::PostProcess_vkCmdDebugMarkerInsertEXT(VkCommandBuffer                   commandBuffer,
+                                                                 const VkDebugMarkerMarkerInfoEXT* pMarkerInfo)
+{
+    if (pMarkerInfo != nullptr)
+    {
+        // Look for the debug marker that identifies this command buffer as a VR frame boundary.
+        if (util::platform::StringContains(pMarkerInfo->pMarkerName, graphics::kVulkanVrFrameDelimiterString))
+        {
+            auto cmd_buffer_wrapper = GetWrapper<CommandBufferWrapper>(commandBuffer);
+            GFXRECON_ASSERT(cmd_buffer_wrapper != nullptr);
+            cmd_buffer_wrapper->is_frame_boundary = true;
+        }
+    }
+}
+
 #if defined(__ANDROID__)
 void VulkanCaptureManager::OverrideGetPhysicalDeviceSurfacePresentModesKHR(uint32_t*         pPresentModeCount,
                                                                            VkPresentModeKHR* pPresentModes)
@@ -2322,6 +2462,18 @@ bool VulkanCaptureManager::CheckBindAlignment(VkDeviceSize memoryOffset)
     }
 
     return true;
+}
+
+bool VulkanCaptureManager::CheckCommandBufferWrapperForFrameBoundary(const CommandBufferWrapper* command_buffer_wrapper)
+{
+    GFXRECON_ASSERT(command_buffer_wrapper != nullptr);
+    if (command_buffer_wrapper->is_frame_boundary)
+    {
+        // Do common capture manager end of frame processing.
+        EndFrame();
+        return true;
+    }
+    return false;
 }
 
 void VulkanCaptureManager::PreProcess_vkBindBufferMemory(VkDevice       device,

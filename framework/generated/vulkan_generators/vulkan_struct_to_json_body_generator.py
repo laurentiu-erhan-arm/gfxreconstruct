@@ -119,12 +119,15 @@ class VulkanStructToJsonBodyGenerator(BaseGenerator):
                 {
                     if (data && data->GetPointer())
                     {
-                        switch (reinterpret_cast<const VkBaseInStructure*>(data->GetPointer())->sType)
+                        const auto s_type = reinterpret_cast<const VkBaseInStructure*>(data->GetPointer())->sType;
+                        switch (s_type)
                         {
             ''')
         body += "\n"
         body += self.make_pnext_body()
         body += inspect.cleandoc('''
+                default:
+                                GFXRECON_LOG_WARNING("Unknown pnext node type: %u.", (unsigned) s_type);
                         }
                     }
                 }
@@ -159,8 +162,8 @@ class VulkanStructToJsonBodyGenerator(BaseGenerator):
                     {{
                         if (data && data->decoded_value)
                         {{
-                            const auto& decoded_value = *data->decoded_value;
-                            const auto& meta_struct   = *data;
+                            const {0}& decoded_value = *data->decoded_value;
+                            const Decoded_{0}& meta_struct = *data;
                     '''.format(struct))
                 body += '\n'
                 body += self.makeStructBody(struct, self.feature_struct_members[struct])
