@@ -189,11 +189,9 @@ struct VulkanPoolObjectInfo : public VulkanObjectInfo<T>
 typedef VulkanObjectInfo<VkEvent>                         EventInfo;
 typedef VulkanObjectInfo<VkQueryPool>                     QueryPoolInfo;
 typedef VulkanObjectInfo<VkBufferView>                    BufferViewInfo;
-typedef VulkanObjectInfo<VkImageView>                     ImageViewInfo;
 typedef VulkanObjectInfo<VkShaderModule>                  ShaderModuleInfo;
 typedef VulkanObjectInfo<VkPipelineLayout>                PipelineLayoutInfo;
 typedef VulkanObjectInfo<VkPrivateDataSlot>               PrivateDataSlotInfo;
-typedef VulkanObjectInfo<VkRenderPass>                    RenderPassInfo;
 typedef VulkanObjectInfo<VkDescriptorSetLayout>           DescriptorSetLayoutInfo;
 typedef VulkanObjectInfo<VkSampler>                       SamplerInfo;
 typedef VulkanPoolObjectInfo<VkDescriptorSet>             DescriptorSetInfo;
@@ -337,6 +335,8 @@ struct ImageInfo : public VulkanObjectInfo<VkImage>
     uint32_t                            layer_count{ 0 };
     uint32_t                            level_count{ 0 };
     uint32_t                            queue_family_index{ 0 };
+
+    VkImageLayout current_layout{ VK_IMAGE_LAYOUT_UNDEFINED };
 };
 
 struct PipelineCacheInfo : public VulkanObjectInfo<VkPipelineCache>
@@ -433,9 +433,16 @@ struct ValidationCacheEXTInfo : public VulkanObjectInfo<VkValidationCacheEXT>
     std::unordered_map<uint32_t, size_t> array_counts;
 };
 
+struct ImageViewInfo : public VulkanObjectInfo<VkImageView>
+{
+    format::HandleId image_id{ format::kNullHandleId };
+};
+
 struct FramebufferInfo : public VulkanObjectInfo<VkFramebuffer>
 {
     std::unordered_map<uint32_t, size_t> array_counts;
+
+    std::vector<format::HandleId> attachment_image_view_ids;
 };
 
 struct DeferredOperationKHRInfo : public VulkanObjectInfo<VkDeferredOperationKHR>
@@ -457,9 +464,16 @@ struct ShaderEXTInfo : VulkanObjectInfo<VkShaderEXT>
     std::unordered_map<uint32_t, size_t> array_counts;
 };
 
-struct CommandBufferInfo : VulkanPoolObjectInfo<VkCommandBuffer>
+struct CommandBufferInfo : public VulkanPoolObjectInfo<VkCommandBuffer>
 {
-    bool is_frame_boundary{ false };
+    bool                                                is_frame_boundary{ false };
+    std::vector<format::HandleId>                       frame_buffer_ids;
+    std::unordered_map<format::HandleId, VkImageLayout> image_layout_barriers;
+};
+
+struct RenderPassInfo : public VulkanObjectInfo<VkRenderPass>
+{
+    std::vector<VkAttachmentDescription> attachment_descriptions;
 };
 
 //

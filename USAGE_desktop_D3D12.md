@@ -108,7 +108,8 @@ Capture File Name | GFXRECON_CAPTURE_FILE | STRING | Path to use when creating t
 Capture Specific Frames | GFXRECON_CAPTURE_FRAMES | STRING | Specify one or more comma-separated frame ranges to capture.  Each range will be written to its own file.  A frame range can be specified as a single value, to specify a single frame to capture, or as two hyphenated values, to specify the first and last frame to capture.  Frame ranges should be specified in ascending order and cannot overlap. Note that frame numbering is 1-based (i.e. the first frame is frame 1). Example: `200,301-305` will create two capture files, one containing a single frame and one containing five frames.  Default is: Empty string (all frames are captured).
 Quit after capturing frame ranges | GFXRECON_QUIT_AFTER_CAPTURE_FRAMES | BOOL | Setting it to `true` will force the application to terminate once all frame ranges specified by `GFXRECON_CAPTURE_FRAMES` have been captured.
 Hotkey Capture Trigger | GFXRECON_CAPTURE_TRIGGER | STRING | Specify a hotkey (any one of F1-F12, TAB, CONTROL) that will be used to start/stop capture.  Example: `F3` will set the capture trigger to F3 hotkey. One capture file will be generated for each pair of start/stop hotkey presses. Default is: Empty string (hotkey capture trigger is disabled).
-Hotkey Capture Trigger | GFXRECON_CAPTURE_TRIGGER_FRAMES | STRING | Specify a limit on the number of frames to be captured via hotkey.  Example: `1` will capture exactly one frame when the trigger key is pressed. Default is: Empty string (no limit)
+Hotkey Capture Trigger Frames | GFXRECON_CAPTURE_TRIGGER_FRAMES | STRING | Specify a limit on the number of frames to be captured via hotkey.  Example: `1` will capture exactly one frame when the trigger key is pressed. Default is: Empty string (no limit)
+Capture Specific GPU Queue Submits | GFXRECON_CAPTURE_QUEUE_SUBMITS | STRING | Specify one or more comma-separated GPU queue submit call ranges to capture.  Queue submit calls are `vkQueueSubmit` for Vulkan and `ID3D12CommandQueue::ExecuteCommandLists` for DX12. Queue submit ranges work as described above in `GFXRECON_CAPTURE_FRAMES` but on GPU queue submit calls instead of frames.  Default is: Empty string (all queue submits are captured).
 Capture File Compression Type | GFXRECON_CAPTURE_COMPRESSION_TYPE | STRING | Compression format to use with the capture file.  Valid values are: `LZ4`, `ZLIB`, `ZSTD`, and `NONE`. Default is: `LZ4`
 Capture File Timestamp | GFXRECON_CAPTURE_FILE_TIMESTAMP | BOOL | Add a timestamp to the capture file as described by [Timestamps](#timestamps).  Default is: `true`
 Capture File Flush After Write | GFXRECON_CAPTURE_FILE_FLUSH | BOOL | Flush output stream after each packet is written to the capture file.  Default is: `false`
@@ -160,7 +161,24 @@ where the lower-case letters stand for: Year, Month, Day, Hours, Minutes, Second
 
 The following example shows a timestamp that was added to a file that was originally named `gfxrecon_capture.gfxr` and was created at 2:35 PM on November 25, 2018:  `gfxrecon_capture_20181125T143527.gfxr`
 
+### Trimmed Captures
 
+Trimmed captures are created when GFXR is configured to start capturing at some later
+time in execution.
+
+To create a trimmed capture one of the trimming options can be used.
+For example on desktop there is the `GFXRECON_CAPTURE_FRAMES` environment variable,
+which specifies the frame ranges to capture, each range generating a separate
+trimmed capture file. There's also the `GFXRECON_CAPTURE_TRIGGER` environment
+variable. Each time the hot key is pressed a new trimmed capture is started/stopped.
+
+An existing capture file can be trimmed by replaying the capture with the capture layer
+enabled and a trimming frame range or trimming hot key enabled. (However, replay for
+some content may be fast enough using the hot key may be difficult.) Here's an example
+command-line that replays an existing capture with the capture layer enabled and
+configured to capture only from frame 100 through frame 200 into a new capture file:
+
+`gfxrecon-capture.py -f 100-200 gfxrecon-replay gfxrecon-example-capture.gfxr``
 
 ## Replaying API Calls
 

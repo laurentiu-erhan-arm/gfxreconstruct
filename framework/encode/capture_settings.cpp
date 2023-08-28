@@ -92,6 +92,8 @@ GFXRECON_BEGIN_NAMESPACE(encode)
 #define CAPTURE_ANDROID_TRIGGER_UPPER                        "CAPTURE_ANDROID_TRIGGER"
 #define CAPTURE_IUNKNOWN_WRAPPING_LOWER                      "capture_iunknown_wrapping"
 #define CAPTURE_IUNKNOWN_WRAPPING_UPPER                      "CAPTURE_IUNKNOWN_WRAPPING"
+#define CAPTURE_QUEUE_SUBMITS_LOWER                          "capture_queue_submits"
+#define CAPTURE_QUEUE_SUBMITS_UPPER                          "CAPTURE_QUEUE_SUBMITS"
 #define PAGE_GUARD_COPY_ON_MAP_LOWER                         "page_guard_copy_on_map"
 #define PAGE_GUARD_COPY_ON_MAP_UPPER                         "PAGE_GUARD_COPY_ON_MAP"
 #define PAGE_GUARD_SEPARATE_READ_LOWER                       "page_guard_separate_read"
@@ -165,6 +167,7 @@ const char kQuitAfterFramesEnvVar[]                          = GFXRECON_ENV_VAR_
 const char kCaptureTriggerEnvVar[]                           = GFXRECON_ENV_VAR_PREFIX CAPTURE_TRIGGER_LOWER;
 const char kCaptureTriggerFramesEnvVar[]                     = GFXRECON_ENV_VAR_PREFIX CAPTURE_TRIGGER_FRAMES_LOWER;
 const char kCaptureIUnknownWrappingEnvVar[]                  = GFXRECON_ENV_VAR_PREFIX CAPTURE_IUNKNOWN_WRAPPING_LOWER;
+const char kCaptureQueueSubmitsEnvVar[]                      = GFXRECON_ENV_VAR_PREFIX CAPTURE_QUEUE_SUBMITS_LOWER;
 const char kPageGuardCopyOnMapEnvVar[]                       = GFXRECON_ENV_VAR_PREFIX PAGE_GUARD_COPY_ON_MAP_LOWER;
 const char kPageGuardSeparateReadEnvVar[]                    = GFXRECON_ENV_VAR_PREFIX PAGE_GUARD_SEPARATE_READ_LOWER;
 const char kPageGuardPersistentMemoryEnvVar[]                = GFXRECON_ENV_VAR_PREFIX PAGE_GUARD_PERSISTENT_MEMORY_LOWER;
@@ -227,6 +230,7 @@ const char kPageGuardSignalHandlerWatcherMaxRestoresEnvVar[] = GFXRECON_ENV_VAR_
 const char kCaptureTriggerEnvVar[]                           = GFXRECON_ENV_VAR_PREFIX CAPTURE_TRIGGER_UPPER;
 const char kCaptureTriggerFramesEnvVar[]                     = GFXRECON_ENV_VAR_PREFIX CAPTURE_TRIGGER_FRAMES_UPPER;
 const char kCaptureIUnknownWrappingEnvVar[]                  = GFXRECON_ENV_VAR_PREFIX CAPTURE_IUNKNOWN_WRAPPING_UPPER;
+const char kCaptureQueueSubmitsEnvVar[]                      = GFXRECON_ENV_VAR_PREFIX CAPTURE_QUEUE_SUBMITS_UPPER;
 const char kDebugLayerEnvVar[]                               = GFXRECON_ENV_VAR_PREFIX DEBUG_LAYER_UPPER;
 const char kDebugDeviceLostEnvVar[]                          = GFXRECON_ENV_VAR_PREFIX DEBUG_DEVICE_LOST_UPPER;
 const char kDisableDxrEnvVar[]                               = GFXRECON_ENV_VAR_PREFIX DISABLE_DXR_UPPER;
@@ -268,6 +272,7 @@ const std::string kOptionKeyQuitAfterCaptureFrames                   = std::stri
 const std::string kOptionKeyCaptureTrigger                           = std::string(kSettingsFilter) + std::string(CAPTURE_TRIGGER_LOWER);
 const std::string kOptionKeyCaptureTriggerFrames                     = std::string(kSettingsFilter) + std::string(CAPTURE_TRIGGER_FRAMES_LOWER);
 const std::string kOptionKeyCaptureIUnknownWrapping                  = std::string(kSettingsFilter) + std::string(CAPTURE_IUNKNOWN_WRAPPING_LOWER);
+const std::string kOptionKeyCaptureQueueSubmits                      = std::string(kSettingsFilter) + std::string(CAPTURE_QUEUE_SUBMITS_LOWER);
 const std::string kOptionKeyPageGuardCopyOnMap                       = std::string(kSettingsFilter) + std::string(PAGE_GUARD_COPY_ON_MAP_LOWER);
 const std::string kOptionKeyPageGuardSeparateRead                    = std::string(kSettingsFilter) + std::string(PAGE_GUARD_SEPARATE_READ_LOWER);
 const std::string kOptionKeyPageGuardPersistentMemory                = std::string(kSettingsFilter) + std::string(PAGE_GUARD_PERSISTENT_MEMORY_LOWER);
@@ -340,6 +345,10 @@ void CaptureSettings::LoadRunTimeEnvVarSettings(CaptureSettings* settings)
         std::string value = util::platform::GetEnv(kCaptureAndroidTriggerEnvVar);
         settings->trace_settings_.runtime_capture_trigger =
             ParseAndroidRunTimeTrimState(value, settings->trace_settings_.runtime_capture_trigger);
+        if (!settings->trace_settings_.runtime_capture_trigger != RuntimeTriggerState::kNotUsed)
+        {
+            settings->trace_settings_.trim_boundary = TrimBoundary::kFrames;
+        }
     }
 #endif
 }
@@ -401,6 +410,7 @@ void CaptureSettings::LoadOptionsEnvVar(OptionsMap* options)
     LoadSingleOptionEnvVar(options, kQuitAfterFramesEnvVar, kOptionKeyQuitAfterCaptureFrames);
     LoadSingleOptionEnvVar(options, kCaptureTriggerEnvVar, kOptionKeyCaptureTrigger);
     LoadSingleOptionEnvVar(options, kCaptureTriggerFramesEnvVar, kOptionKeyCaptureTriggerFrames);
+    LoadSingleOptionEnvVar(options, kCaptureQueueSubmitsEnvVar, kOptionKeyCaptureQueueSubmits);
 
     // Page guard environment variables
     LoadSingleOptionEnvVar(options, kPageGuardCopyOnMapEnvVar, kOptionKeyPageGuardCopyOnMap);
@@ -484,10 +494,36 @@ void CaptureSettings::ProcessOptions(OptionsMap* options, CaptureSettings* setti
         FindOption(options, kOptionKeyMemoryTrackingMode), settings->trace_settings_.memory_tracking_mode);
 
     // Trimming options:
-    // trim ranges and trim hotkey are exclusive
-    // with trim key will be parsed only
-    // if trim ranges is empty, else it will be ignored
-    ParseTrimRangeString(FindOption(options, kOptionKeyCaptureFrames), &settings->trace_settings_.trim_ranges);
+    // Trim frame ranges, trim queue submit ranges, and trim frame hotkey are mutually exclusive.
+    // Precedence is frame ranges, queue submit ranges, then frame hotkey.
+    std::string trim_frames = FindOption(options, kOptionKeyCaptureFrames);
+    if (!trim_frames.empty())
+    {
+        ParseUintRangeList(trim_frames, &settings->trace_settings_.trim_ranges, "capture frames");
+        if (!settings->trace_settings_.trim_ranges.empty())
+        {
+            settings->trace_settings_.trim_boundary = TrimBoundary::kFrames;
+        }
+    }
+
+    std::string trim_queue_submits = FindOption(options, kOptionKeyCaptureQueueSubmits);
+    if (!trim_queue_submits.empty())
+    {
+        if (settings->trace_settings_.trim_ranges.empty())
+        {
+            ParseUintRangeList(trim_queue_submits, &settings->trace_settings_.trim_ranges, "capture queue submits");
+            if (!settings->trace_settings_.trim_ranges.empty())
+            {
+                settings->trace_settings_.trim_boundary = TrimBoundary::kQueueSubmits;
+            }
+        }
+        else
+        {
+            GFXRECON_LOG_WARNING(
+                "Settings Loader: Ignoring trim queue submit ranges setting as trim frame ranges has been specified.");
+        }
+    }
+
     std::string trim_key_option        = FindOption(options, kOptionKeyCaptureTrigger);
     std::string trim_key_frames_option = FindOption(options, kOptionKeyCaptureTriggerFrames);
     if (!trim_key_option.empty())
@@ -499,10 +535,14 @@ void CaptureSettings::ProcessOptions(OptionsMap* options, CaptureSettings* setti
             {
                 settings->trace_settings_.trim_key_frames = ParseTrimKeyFramesString(trim_key_frames_option);
             }
+            if (!settings->trace_settings_.trim_key.empty())
+            {
+                settings->trace_settings_.trim_boundary = TrimBoundary::kFrames;
+            }
         }
         else
         {
-            GFXRECON_LOG_WARNING("Settings Loader: Ignore trim key setting as trim ranges has been specified.");
+            GFXRECON_LOG_WARNING("Settings Loader: Ignoring trim key setting as trim ranges has been specified.");
         }
     }
 
@@ -544,7 +584,9 @@ void CaptureSettings::ProcessOptions(OptionsMap* options, CaptureSettings* setti
     // Screenshot options
     settings->trace_settings_.screenshot_dir =
         FindOption(options, kOptionKeyScreenshotDir, settings->trace_settings_.screenshot_dir);
-    ParseFramesList(FindOption(options, kOptionKeyScreenshotFrames), &settings->trace_settings_.screenshot_ranges);
+    ParseUintRangeList(FindOption(options, kOptionKeyScreenshotFrames),
+                       &settings->trace_settings_.screenshot_ranges,
+                       "screenshot frames");
     settings->trace_settings_.screenshot_format = ParseScreenshotFormatString(
         FindOption(options, kOptionKeyScreenshotFormat), settings->trace_settings_.screenshot_format);
 
@@ -794,143 +836,19 @@ util::Log::Severity CaptureSettings::ParseLogLevelString(const std::string&  val
     return result;
 }
 
-void CaptureSettings::ParseTrimRangeString(const std::string&                       value_string,
-                                           std::vector<CaptureSettings::TrimRange>* ranges)
-{
-    assert(ranges != nullptr);
-
-    if (!value_string.empty())
-    {
-        std::istringstream value_string_input;
-        value_string_input.str(value_string);
-
-        for (std::string range; std::getline(value_string_input, range, ',');)
-        {
-            if (range.empty() || (std::count(range.begin(), range.end(), '-') > 1))
-            {
-                GFXRECON_LOG_WARNING("Settings Loader: Ignoring invalid capture frame range \"%s\"", range.c_str());
-                continue;
-            }
-
-            util::strings::RemoveWhitespace(range);
-
-            // Split string on '-' delimiter.
-            bool                     invalid = false;
-            std::vector<std::string> values;
-            std::istringstream       range_input;
-            range_input.str(range);
-
-            for (std::string value; std::getline(range_input, value, '-');)
-            {
-                if (value.empty())
-                {
-                    break;
-                }
-
-                // Check that the value string only contains numbers.
-                size_t count = std::count_if(value.begin(), value.end(), ::isdigit);
-                if (count == value.length())
-                {
-                    values.push_back(value);
-                }
-                else
-                {
-                    GFXRECON_LOG_WARNING("Settings Loader: Ignoring invalid capture frame range \"%s\", which contains "
-                                         "non-numeric values",
-                                         range.c_str());
-                    invalid = true;
-                    break;
-                }
-            }
-
-            if (!invalid)
-            {
-                CaptureSettings::TrimRange trim_range;
-
-                if (values.size() == 1)
-                {
-                    if (std::count(range.begin(), range.end(), '-') == 0)
-                    {
-                        trim_range.first = std::stoi(values[0]);
-                        trim_range.total = 1;
-                    }
-                    else
-                    {
-                        GFXRECON_LOG_WARNING("Settings Loader: Ignoring invalid capture frame range \"%s\"",
-                                             range.c_str());
-                        continue;
-                    }
-                }
-                else if (values.size() == 2)
-                {
-                    trim_range.first = std::stoi(values[0]);
-
-                    uint32_t last = std::stoi(values[1]);
-                    if (last >= trim_range.first)
-                    {
-                        trim_range.total = (last - trim_range.first) + 1;
-                    }
-                    else
-                    {
-                        GFXRECON_LOG_WARNING(
-                            "Settings Loader: Ignoring invalid capture frame range \"%s\", where first "
-                            "frame is greater than last frame",
-                            range.c_str());
-                        continue;
-                    }
-                }
-                else
-                {
-                    GFXRECON_LOG_WARNING("Settings Loader: Ignoring invalid capture frame range \"%s\"", range.c_str());
-                    continue;
-                }
-
-                // Check for invalid start frame of 0.
-                if (trim_range.first == 0)
-                {
-                    GFXRECON_LOG_WARNING(
-                        "Settings Loader: Ignoring invalid capture frame range \"%s\", with first frame equal to zero",
-                        range.c_str());
-                    continue;
-                }
-
-                uint32_t next_allowed = 0;
-
-                // Check that start frame is outside the bounds of the previous range.
-                if (!ranges->empty())
-                {
-                    // This produces the number of the frame after the last frame in the range.
-                    next_allowed = ranges->back().first + ranges->back().total;
-                }
-
-                if (trim_range.first >= next_allowed)
-                {
-                    ranges->emplace_back(trim_range);
-                }
-                else
-                {
-                    GFXRECON_LOG_WARNING("Settings Loader: Ignoring invalid capture frame range \"%s\", "
-                                         "where start frame precedes the end of the previous range \"%u-%u\"",
-                                         range.c_str(),
-                                         ranges->back().first,
-                                         (next_allowed - 1));
-                }
-            }
-        }
-    }
-}
-
-void CaptureSettings::ParseFramesList(const std::string& value_string, std::vector<util::FrameRange>* frames)
+void CaptureSettings::ParseUintRangeList(const std::string&            value_string,
+                                         std::vector<util::UintRange>* frames,
+                                         const char*                   option_name)
 {
     GFXRECON_ASSERT(frames != nullptr);
 
     if (!value_string.empty())
     {
-        std::vector<gfxrecon::util::FrameRange> frame_ranges = gfxrecon::util::GetFrameRanges(value_string);
+        std::vector<gfxrecon::util::UintRange> frame_ranges = util::GetUintRanges(value_string.c_str(), option_name);
 
         for (uint32_t i = 0; i < frame_ranges.size(); ++i)
         {
-            util::FrameRange range{};
+            util::UintRange range{};
             range.first = frame_ranges[i].first;
             range.last  = frame_ranges[i].last;
             frames->push_back(range);

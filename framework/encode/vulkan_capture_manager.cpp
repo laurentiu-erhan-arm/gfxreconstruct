@@ -2219,6 +2219,8 @@ void VulkanCaptureManager::PreProcess_vkQueueSubmit(VkQueue             queue,
 
     ProcessFenceSubmit(fence);
     QueueSubmitWriteFillMemoryCmd();
+
+    PreQueueSubmit();
 }
 
 void VulkanCaptureManager::PreProcess_vkQueueSubmit2(VkQueue              queue,
@@ -2232,6 +2234,8 @@ void VulkanCaptureManager::PreProcess_vkQueueSubmit2(VkQueue              queue,
 
     ProcessFenceSubmit(fence);
     QueueSubmitWriteFillMemoryCmd();
+
+    PreQueueSubmit();
 }
 
 void VulkanCaptureManager::ProcessFenceSubmit(VkFence fence)
