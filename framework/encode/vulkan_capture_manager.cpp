@@ -1300,37 +1300,6 @@ VulkanCaptureManager::OverrideCreateRayTracingPipelinesKHR(VkDevice             
     return result;
 }
 
-VkResult VulkanCaptureManager::OverrideWaitForFences(
-    VkDevice device, uint32_t fenceCount, const VkFence* pFences, VkBool32 waitAll, uint64_t timeout)
-{
-    if (timeout == UINT64_MAX)
-    {
-        // If the caller signals that it explicitly intends to wait until success, then it is less likely to handle a
-        // timeout return value here.
-        return GetDeviceTable(device)->WaitForFences(device, fenceCount, pFences, waitAll, timeout);
-    }
-
-    bool delay = false;
-    for (uint32_t i = 0; i < fenceCount; ++i)
-    {
-        FenceWrapper* wrapper = GetWrapper<FenceWrapper>(pFences[i]);
-        assert(wrapper != nullptr);
-        if (wrapper->query_delay != 0)
-        {
-            // Make sure we decrement every fence, if multiple.
-            delay = true;
-            --wrapper->query_delay;
-        }
-    }
-
-    if (delay)
-    {
-        return VK_TIMEOUT;
-    }
-
-    return GetDeviceTable(device)->WaitForFences(device, fenceCount, pFences, waitAll, timeout);
-}
-
 void VulkanCaptureManager::OverrideGetPhysicalDeviceQueueFamilyProperties(
     VkPhysicalDevice         physicalDevice,
     uint32_t*                pQueueFamilyPropertyCount,
@@ -2267,16 +2236,6 @@ void VulkanCaptureManager::PreProcess_vkQueueSubmit2(VkQueue              queue,
     QueueSubmitWriteFillMemoryCmd();
 
     PreQueueSubmit();
-}
-
-void VulkanCaptureManager::ProcessFenceSubmit(VkFence fence)
-{
-    if (fence != VK_NULL_HANDLE)
-    {
-        FenceWrapper* wrapper = GetWrapper<FenceWrapper>(fence);
-        assert(wrapper != nullptr);
-        wrapper->query_delay = GetFenceQueryDelay();
-    }
 }
 
 void VulkanCaptureManager::ProcessFenceSubmit(VkFence fence)

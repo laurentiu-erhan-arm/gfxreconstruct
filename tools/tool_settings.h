@@ -837,14 +837,15 @@ GetVulkanReplayOptions(const gfxrecon::util::ArgumentParser&           arg_parse
     const std::string& skip_get_fence_ranges = arg_parser.GetArgumentValue(kSkipGetFenceRanges);
     if (skip_get_fence_ranges.empty())
     {
-        gfxrecon::util::FrameRange range;
+        gfxrecon::util::UintRange range;
         range.first = 1;
         range.last  = std::numeric_limits<uint32_t>::max();
         replay_options.skip_get_fence_ranges.push_back(range);
     }
     else
     {
-        replay_options.skip_get_fence_ranges = gfxrecon::util::GetFrameRanges(skip_get_fence_ranges);
+        replay_options.skip_get_fence_ranges =
+            gfxrecon::util::GetUintRanges(skip_get_fence_ranges.c_str(), kSkipGetFenceRanges);
     }
 
     if (arg_parser.IsOptionSet(kPreloadMeasurementRangeOption))
@@ -879,6 +880,11 @@ static gfxrecon::decode::DxReplayOptions GetDxReplayOptions(const gfxrecon::util
     if (arg_parser.IsOptionSet(kUseCachedPsosOption))
     {
         replay_options.use_cached_psos = true;
+    }
+
+    if (arg_parser.IsOptionSet(kDxOverrideObjectNames))
+    {
+        replay_options.override_object_names = true;
     }
 
     if (arg_parser.IsOptionSet(kDxOverrideObjectNames))

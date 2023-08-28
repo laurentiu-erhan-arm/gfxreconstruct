@@ -62,7 +62,7 @@ extern "C"
 #endif
 
 const char kOptions[]   = "-h|--help,--version,--no-debug-popup,--d3d12-pso-removal,--dxr,--dxr-experimental";
-const char kArguments[] = "--gpu,--set-replay-options";
+const char kArguments[] = "--gpu,--set-replay-options,--set-replay-options";
 
 const char kD3d12PsoRemoval[]             = "--d3d12-pso-removal";
 const char kDx12OptimizeDxr[]             = "--dxr";

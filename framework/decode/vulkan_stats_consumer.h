@@ -45,20 +45,20 @@ GFXRECON_BEGIN_NAMESPACE(decode)
 class VulkanStatsConsumer : public gfxrecon::decode::VulkanConsumer, public gfxrecon::decode::AnnotationHandler
 {
   public:
-    uint32_t                        GetTrimmedStartFrame() const { return trimmed_frame_; }
-    const std::string&              GetAppName() const { return app_name_; }
-    uint32_t                        GetAppVersion() const { return app_version_; }
-    const std::string&              GetEngineName() const { return engine_name_; }
-    uint32_t                        GetEngineVersion() const { return engine_version_; }
-    uint32_t                        GetApiVersion() const { return api_version_; }
-    uint64_t                        GetGraphicsPipelineCount() const { return graphics_pipelines_; }
-    uint64_t                        GetComputePipelineCount() const { return compute_pipelines_; }
-    uint64_t                        GetDrawCount() const { return draw_count_; }
-    uint64_t                        GetDispatchCount() const { return dispatch_count_; }
-    uint64_t                        GetAllocationCount() const { return allocation_count_; }
-    uint64_t                        GetMinAllocationSize() const { return min_allocation_size_; }
-    uint64_t                        GetMaxAllocationSize() const { return max_allocation_size_; }
-    uint64_t GetAnnotationCount() const { return annotations_.size() + operation_annotation_datas_.size(); }
+    uint32_t           GetTrimmedStartFrame() const { return trimmed_frame_; }
+    const std::string& GetAppName() const { return app_name_; }
+    uint32_t           GetAppVersion() const { return app_version_; }
+    const std::string& GetEngineName() const { return engine_name_; }
+    uint32_t           GetEngineVersion() const { return engine_version_; }
+    uint32_t           GetApiVersion() const { return api_version_; }
+    uint64_t           GetGraphicsPipelineCount() const { return graphics_pipelines_; }
+    uint64_t           GetComputePipelineCount() const { return compute_pipelines_; }
+    uint64_t           GetDrawCount() const { return draw_count_; }
+    uint64_t           GetDispatchCount() const { return dispatch_count_; }
+    uint64_t           GetAllocationCount() const { return allocation_count_; }
+    uint64_t           GetMinAllocationSize() const { return min_allocation_size_; }
+    uint64_t           GetMaxAllocationSize() const { return max_allocation_size_; }
+    uint64_t           GetAnnotationCount() const { return annotations_.size() + operation_annotation_datas_.size(); }
     const std::unordered_map<std::string, std::string> GetAnnotations() const { return annotations_; }
     const std::vector<std::string>& GetOperationAnnotationDatas() const { return operation_annotation_datas_; }
     const auto&                     GetResolutions() const { return resolutions_; }

@@ -3018,8 +3018,7 @@ VkResult VulkanReplayConsumerBase::OverrideWaitForFences(PFN_vkWaitForFences    
     // Check if the call is in a frame range for being skipped (see --skip-get-fence-ranges, --skip-get-fence-status)
     bool           in_skip_range = options_.skip_get_fence_ranges.empty();
     const uint32_t current_frame = application_->GetCurrentFrameNumber() + 1;
-
-    for (const util::FrameRange& range : options_.skip_get_fence_ranges)
+    for (const util::UintRange& range : options_.skip_get_fence_ranges)
     {
         if (current_frame >= range.first && current_frame <= range.last)
         {
@@ -3105,7 +3104,7 @@ VkResult VulkanReplayConsumerBase::OverrideGetFenceStatus(PFN_vkGetFenceStatus f
     // Check if the call is in a frame range for being skipped (see --skip-get-fence-ranges, --skip-get-fence-status)
     bool           in_skip_range = options_.skip_get_fence_ranges.empty();
     const uint32_t current_frame = application_->GetCurrentFrameNumber() + 1;
-    for (const util::FrameRange& range : options_.skip_get_fence_ranges)
+    for (const util::UintRange& range : options_.skip_get_fence_ranges)
     {
         if (current_frame >= range.first && current_frame <= range.last)
         {
@@ -3908,9 +3907,9 @@ VkResult VulkanReplayConsumerBase::OverrideAllocateMemory(
 
             VkMemoryAllocateInfo                     modified_allocate_info = (*replay_allocate_info);
             VkMemoryOpaqueCaptureAddressAllocateInfo address_info           = {
-                          VK_STRUCTURE_TYPE_MEMORY_OPAQUE_CAPTURE_ADDRESS_ALLOCATE_INFO,
-                          modified_allocate_info.pNext,
-                          opaque_address
+                VK_STRUCTURE_TYPE_MEMORY_OPAQUE_CAPTURE_ADDRESS_ALLOCATE_INFO,
+                modified_allocate_info.pNext,
+                opaque_address
             };
             modified_allocate_info.pNext = &address_info;
 

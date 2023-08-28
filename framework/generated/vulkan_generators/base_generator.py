@@ -84,6 +84,10 @@ _supported_subsets = [
     "vulkan"
 ]
 
+_supported_subsets = [
+    "vulkan"
+]
+
 # Turn lists of names/patterns into matching regular expressions.
 # From Khronos genvk.py
 _add_extensions_pat = _make_re_string(_extensions)
