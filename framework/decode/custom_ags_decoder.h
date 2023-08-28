@@ -65,6 +65,10 @@ class AgsDecoder : public ApiDecoder
     DispatchFillMemoryResourceValueCommand(const format::FillMemoryResourceValueCommandHeader& command_header,
                                            const uint8_t*                                      data) override{};
 
+    virtual void
+    DispatchFillMemoryResourceValueCommand(const format::FillMemoryResourceValueCommandHeader& command_header,
+                                           const uint8_t*                                      data) override{};
+
     virtual void DispatchResizeWindowCommand(format::ThreadId thread_id,
                                              format::HandleId surface_id,
                                              uint32_t         width,

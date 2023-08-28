@@ -3017,7 +3017,8 @@ VkResult VulkanReplayConsumerBase::OverrideWaitForFences(PFN_vkWaitForFences    
 
     // Check if the call is in a frame range for being skipped (see --skip-get-fence-ranges, --skip-get-fence-status)
     bool           in_skip_range = options_.skip_get_fence_ranges.empty();
-    const uint32_t current_frame = application_->GetFileProcessor()->GetCurrentFrameNumber() + 1;
+    const uint32_t current_frame = application_->GetCurrentFrameNumber() + 1;
+
     for (const util::FrameRange& range : options_.skip_get_fence_ranges)
     {
         if (current_frame >= range.first && current_frame <= range.last)
@@ -3103,7 +3104,7 @@ VkResult VulkanReplayConsumerBase::OverrideGetFenceStatus(PFN_vkGetFenceStatus f
 
     // Check if the call is in a frame range for being skipped (see --skip-get-fence-ranges, --skip-get-fence-status)
     bool           in_skip_range = options_.skip_get_fence_ranges.empty();
-    const uint32_t current_frame = application_->GetFileProcessor()->GetCurrentFrameNumber() + 1;
+    const uint32_t current_frame = application_->GetCurrentFrameNumber() + 1;
     for (const util::FrameRange& range : options_.skip_get_fence_ranges)
     {
         if (current_frame >= range.first && current_frame <= range.last)

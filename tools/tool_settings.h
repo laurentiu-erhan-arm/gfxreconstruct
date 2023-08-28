@@ -98,6 +98,7 @@ const char kForceWindowedShortArgument[]         = "--fw";
 const char kForceWindowedLongArgument[]          = "--force-windowed";
 const char kOutput[]                             = "--output";
 const char kMeasurementRangeArgument[]           = "--measurement-frame-range";
+const char kMeasurementFileArgument[]            = "--measurement-file";
 const char kQuitAfterMeasurementRangeOption[]    = "--quit-after-measurement-range";
 const char kFlushMeasurementRangeOption[]        = "--flush-measurement-range";
 const char kEnableUseCapturedSwapchainIndices[]  = "--use-captured-swapchain-indices";
@@ -106,6 +107,7 @@ const char kFormatArgument[]                     = "--format";
 const char kIncludeBinariesOption[]              = "--include-binaries";
 const char kExpandFlagsOption[]                  = "--expand-flags";
 const char kFilePerFrameOption[]                 = "--file-per-frame";
+const char kPreloadMeasurementRangeOption[]      = "--preload-measurement-range";
 const char kWaitBeforePresent[]                  = "--wait-before-present";
 const char kSkipGetFenceStatus[]                 = "--skip-get-fence-status";
 const char kSkipGetFenceRanges[]                 = "--skip-get-fence-ranges";
@@ -431,6 +433,19 @@ static void GetLogSettings(const gfxrecon::util::ArgumentParser& arg_parser,
     log_settings.min_severity              = log_level;
     log_settings.file_name                 = arg_parser.GetArgumentValue(kLogFileArgument);
     log_settings.output_to_os_debug_string = arg_parser.IsOptionSet(kLogDebugView);
+}
+
+static void GetMeasurementFilename(const gfxrecon::util::ArgumentParser& arg_parser, std::string& file_name)
+{
+    file_name = arg_parser.GetArgumentValue(kMeasurementFileArgument);
+    if (file_name.empty())
+    {
+#if defined(__ANDROID__)
+        file_name = "/sdcard/gfxrecon-measurements.json";
+#else
+        file_name = "./gfxrecon-measurements.json";
+#endif
+    }
 }
 
 static gfxrecon::util::ScreenshotFormat GetScreenshotFormat(const gfxrecon::util::ArgumentParser& arg_parser)
@@ -832,6 +847,11 @@ GetVulkanReplayOptions(const gfxrecon::util::ArgumentParser&           arg_parse
         replay_options.skip_get_fence_ranges = gfxrecon::util::GetFrameRanges(skip_get_fence_ranges);
     }
 
+    if (arg_parser.IsOptionSet(kPreloadMeasurementRangeOption))
+    {
+        replay_options.preload_measurement_range = true;
+    }
+
     return replay_options;
 }
 
@@ -859,6 +879,11 @@ static gfxrecon::decode::DxReplayOptions GetDxReplayOptions(const gfxrecon::util
     if (arg_parser.IsOptionSet(kUseCachedPsosOption))
     {
         replay_options.use_cached_psos = true;
+    }
+
+    if (arg_parser.IsOptionSet(kDxOverrideObjectNames))
+    {
+        replay_options.override_object_names = true;
     }
 
     if (arg_parser.IsOptionSet(kDxOverrideObjectNames))

@@ -30,11 +30,14 @@
 #include "generated/generated_vulkan_struct_decoders.h"
 #include "generated/generated_vulkan_consumer.h"
 #include "util/defines.h"
+#include "vulkan/vulkan.hpp"
+#include "vulkan/vulkan_hash.hpp"
 
 #include "vulkan/vulkan.h"
 
 #include <set>
 #include <unordered_map>
+#include <unordered_set>
 
 GFXRECON_BEGIN_NAMESPACE(gfxrecon)
 GFXRECON_BEGIN_NAMESPACE(decode)
@@ -58,6 +61,7 @@ class VulkanStatsConsumer : public gfxrecon::decode::VulkanConsumer, public gfxr
     uint64_t GetAnnotationCount() const { return annotations_.size() + operation_annotation_datas_.size(); }
     const std::unordered_map<std::string, std::string> GetAnnotations() const { return annotations_; }
     const std::vector<std::string>& GetOperationAnnotationDatas() const { return operation_annotation_datas_; }
+    const auto&                     GetResolutions() const { return resolutions_; }
 
     const std::set<gfxrecon::format::HandleId>& GetInstantiatedDevices() const { return used_physical_devices_; }
     const VkPhysicalDeviceProperties*           GetDeviceProperties(gfxrecon::format::HandleId id) const
@@ -412,6 +416,40 @@ class VulkanStatsConsumer : public gfxrecon::decode::VulkanConsumer, public gfxr
         }
     }
 
+    virtual void Process_vkCreateSwapchainKHR(
+        const gfxrecon::decode::ApiCallInfo&                                                        call_info,
+        VkResult                                                                                    returnValue,
+        gfxrecon::format::HandleId                                                                  device,
+        gfxrecon::decode::StructPointerDecoder<gfxrecon::decode::Decoded_VkSwapchainCreateInfoKHR>* pCreateInfo,
+        gfxrecon::decode::StructPointerDecoder<gfxrecon::decode::Decoded_VkAllocationCallbacks>*    pAllocator,
+        gfxrecon::decode::HandlePointerDecoder<VkSwapchainKHR>*                                     pSwapchain)
+    {
+        if (!pCreateInfo->IsNull())
+        {
+            const auto& extent = pCreateInfo->GetPointer()->imageExtent;
+            resolutions_.insert(extent);
+        }
+    }
+
+    virtual void
+    Process_vkCreateSharedSwapchainsKHR(const ApiCallInfo&                                      call_info,
+                                        VkResult                                                returnValue,
+                                        format::HandleId                                        device,
+                                        uint32_t                                                swapchainCount,
+                                        StructPointerDecoder<Decoded_VkSwapchainCreateInfoKHR>* pCreateInfos,
+                                        StructPointerDecoder<Decoded_VkAllocationCallbacks>*    pAllocator,
+                                        HandlePointerDecoder<VkSwapchainKHR>*                   pSwapchains)
+    {
+        if (!pCreateInfos->IsNull())
+        {
+            for (uint32_t i = 0; i < swapchainCount; ++i)
+            {
+                const auto& extent = pCreateInfos->GetPointer()[i].imageExtent;
+                resolutions_.insert(extent);
+            }
+        }
+    }
+
   private:
     uint32_t trimmed_frame_{ 0 };
 
@@ -441,7 +479,10 @@ class VulkanStatsConsumer : public gfxrecon::decode::VulkanConsumer, public gfxr
 
     // Annotation info.
     std::unordered_map<std::string, std::string> annotations_;
-    std::vector<std::string> operation_annotation_datas_;
+    std::vector<std::string>                     operation_annotation_datas_;
+    uint64_t                                     annotation_count_{ 0 };
+
+    std::unordered_set<vk::Extent2D> resolutions_;
 };
 
 GFXRECON_END_NAMESPACE(decode)

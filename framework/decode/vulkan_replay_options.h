@@ -65,6 +65,7 @@ struct VulkanReplayOptions : public ReplayOptions
     std::string                   screenshot_dir;
     std::string                   screenshot_file_prefix{ kDefaultScreenshotFilePrefix };
     std::string                   replace_dir;
+    bool                          preload_measurement_range{ false };
     bool                          wait_before_present{ false };
     SkipGetFenceStatus            skip_get_fence_status{ SkipGetFenceStatus::NoSkip };
     std::vector<util::FrameRange> skip_get_fence_ranges;

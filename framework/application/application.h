@@ -84,7 +84,7 @@ class Application final
 
     void StopRunning() { running_ = false; }
 
-    const decode::FileProcessor* GetFileProcessor() const { return file_processor_; }
+    uint32_t GetCurrentFrameNumber() const { return file_processor_->GetCurrentFrameNumber(); }
 
   private:
     // clang-format off

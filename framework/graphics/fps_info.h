@@ -35,22 +35,24 @@ GFXRECON_BEGIN_NAMESPACE(graphics)
 class FpsInfo
 {
   public:
-    FpsInfo(uint64_t measurement_start_frame = 1,
-            uint64_t measurement_end_frame   = std::numeric_limits<uint64_t>::max(),
-            bool     has_measurement_range   = false,
-            bool     quit_after_range        = false,
-            bool     flush_measurement_range = false);
+    explicit FpsInfo(uint64_t measurement_start_frame   = 1,
+                     uint64_t measurement_end_frame     = std::numeric_limits<uint64_t>::max(),
+                     bool     has_measurement_range     = false,
+                     bool     quit_after_range          = false,
+                     bool     flush_measurement_range   = false,
+                     bool     preload_measurement_range = false);
 
     void LogToConsole();
 
-    void BeginFile();
-    bool ShouldWaitIdleBeforeFrame(uint64_t file_processor_frame);
-    bool ShouldWaitIdleAfterFrame(uint64_t file_processor_frame);
-    bool ShouldQuit(uint64_t file_processor_frame);
-    void BeginFrame(uint64_t file_processor_frame);
-    void EndFrame(uint64_t file_processor_frame);
-    void EndFile(uint64_t end_file_processor_frame);
-    void ProcessStateEndMarker(uint64_t file_processor_frame);
+    void                   BeginFile();
+    bool                   ShouldWaitIdleBeforeFrame(uint64_t file_processor_frame);
+    bool                   ShouldWaitIdleAfterFrame(uint64_t file_processor_frame);
+    bool                   ShouldQuit(uint64_t file_processor_frame);
+    void                   BeginFrame(uint64_t file_processor_frame);
+    void                   EndFrame(uint64_t file_processor_frame);
+    void                   EndFile(uint64_t end_file_processor_frame);
+    void                   ProcessStateEndMarker(uint64_t file_processor_frame);
+    [[nodiscard]] uint64_t ShouldPreloadFrames(uint64_t current_frame) const;
 
   private:
     uint64_t start_time_;
@@ -70,6 +72,11 @@ class FpsInfo
 
     bool started_measurement_;
     bool ended_measurement_;
+
+    int64_t              frame_start_time_;
+    std::vector<int64_t> frame_durations_;
+
+    bool preload_measurement_range_;
 };
 
 GFXRECON_END_NAMESPACE(graphics)
