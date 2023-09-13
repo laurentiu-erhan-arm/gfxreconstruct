@@ -35,7 +35,6 @@
 #include "util/argument_parser.h"
 #include "util/logging.h"
 #include "decode/replay_options_annotation.h"
-#include "util/measurement_manager.h"
 
 #if defined(D3D12_SUPPORT)
 #include "generated/generated_dx12_decoder.h"
@@ -169,14 +168,6 @@ int main(int argc, const char** argv)
                 quit_after_measurement_frame_range = vulkan_replay_options.quit_after_measurement_frame_range;
                 flush_measurement_frame_range      = vulkan_replay_options.flush_measurement_frame_range;
                 preload_measurement_frame_range    = vulkan_replay_options.preload_measurement_range;
-            }
-
-            if (has_mfr)
-            {
-                std::string measurement_file_name;
-                GetMeasurementFilename(arg_parser, measurement_file_name);
-                gfxrecon::util::MeasurementManager::Open(measurement_file_name);
-                gfxrecon::util::MeasurementManager::WriteApplication("capture_name", measurement_file_name);
             }
 
             gfxrecon::graphics::FpsInfo fps_info(static_cast<uint64_t>(start_frame),

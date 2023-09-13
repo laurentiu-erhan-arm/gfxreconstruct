@@ -36,7 +36,6 @@
 #include "util/logging.h"
 #include "util/platform.h"
 #include "decode/replay_options_annotation.h"
-#include "util/measurement_manager.h"
 
 #include <android_native_app_glue.h>
 #include <android/log.h>
@@ -126,14 +125,6 @@ void android_main(struct android_app* app)
                 gfxrecon::decode::VulkanDecoder        decoder;
                 uint32_t                               start_frame, end_frame;
                 bool has_mfr = GetMeasurementFrameRange(arg_parser, start_frame, end_frame);
-
-                if (has_mfr)
-                {
-                    std::string measurement_file_name;
-                    GetMeasurementFilename(arg_parser, measurement_file_name);
-                    gfxrecon::util::MeasurementManager::Open(measurement_file_name);
-                    gfxrecon::util::MeasurementManager::WriteApplication("capture_name", measurement_file_name);
-                }
 
                 gfxrecon::graphics::FpsInfo fps_info(static_cast<uint64_t>(start_frame),
                                                      static_cast<uint64_t>(end_frame),
