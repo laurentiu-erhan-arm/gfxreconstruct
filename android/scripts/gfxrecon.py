@@ -110,6 +110,10 @@ def CreateReplayParser():
     parser.add_argument('--vssb', '--virtual-swapchain-skip-blit', action='store_true', default=False, help='Skip blit to real swapchain to gain performance during replay. (forwarded to replay tool)')
     parser.add_argument('--sgfs', '--skip-get-fence-status', metavar='STATUS', default=0, help='Specify behaviour to skip calls to vkWaitForFences and vkGetFenceStatus. Default is 0 - No skip (forwarded to replay tool)')
     parser.add_argument('--sgfr', '--skip-get-fence-ranges', metavar='FRAME-RANGES', default='', help='Frame ranges where --sgfs applies. Default is all frames (forwarded to replay tool)')
+    parser.add_argument('--mfr', '--measurement-frame-range', metavar='START-END', help='Custom framerange to measure FPS for. This range will include the start frame but not the end frame. The measurement frame range defaults to all frames except the loading frame but can be configured for any range. If the end frame is past the last frame in the trace it will be clamped to the frame after the last (so in that case the results would include the last frame). (forwarded to replay tool)')
+    parser.add_argument('--measurement-file', metavar='DEVICE_FILE', help='Write measurements to a file at the specified path. Default is: \'/sdcard/gfxrecon-measurements.json\' on android and \'./gfxrecon-measurements.json\' on desktop. (forwarded to replay tool)')
+    parser.add_argument('--quit-after-measurement-range', action='store_true', default=False, help='If this is specified the replayer will abort when it reaches the <end_frame> specified in the --measurement-frame-range argument. (forwarded to replay tool)')
+    parser.add_argument('--flush-measurement-range', action='store_true', default=False, help='If this is specified the replayer will flush and wait for all current GPU work to finish at the start and end of the measurement range. (forwarded to replay tool)')
     parser.add_argument('--preload-measurement-range', action='store_true', default=False, help='Preloads a frame range specified with --measurement-frame-range from the trace file into a continuous, expandable buffer, in order to mitigate the impact of read file commands on performance measurements.')
 
     parser.add_argument('-m', '--memory-translation', metavar='MODE', choices=['none', 'remap', 'realign', 'rebind'], help='Enable memory translation for replay on GPUs with memory types that are not compatible with the capture GPU\'s memory types.  Available modes are: none, remap, realign, rebind (forwarded to replay tool)')
@@ -191,9 +195,6 @@ def MakeExtrasString(args):
 
     if args.vssb:
         arg_list.append('--vssb')
-        
-    if args.preload_measurement_range:
-        arg_list.append('--preload-measurement-range')
 
     if args.sgfs:
         arg_list.append('--sgfs')
@@ -202,6 +203,24 @@ def MakeExtrasString(args):
     if args.sgfr:
         arg_list.append('--sgfr')
         arg_list.append('{}'.format(args.sgfr))
+        
+    if args.mfr:
+        arg_list.append('--mfr')
+        arg_list.append('{}'.format(args.mfr))
+
+    if args.measurement_file:
+        arg_list.append('--measurement-file')
+        arg_list.append('{}'.format(args.measurement_file))
+
+    if args.quit_after_measurement_range:
+        arg_list.append('--quit-after-measurement-range')
+
+    if args.flush_measurement_range:
+        arg_list.append('--flush-measurement-range')
+        
+    if args.preload_measurement_range:
+        arg_list.append('--preload-measurement-range')
+
 
     if args.memory_translation:
         arg_list.append('-m')
