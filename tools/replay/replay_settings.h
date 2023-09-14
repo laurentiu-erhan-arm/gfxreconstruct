@@ -31,7 +31,8 @@ const char kOptions[] =
     "opcd|--omit-pipeline-cache-data,--remove-unsupported,--validate,--debug-device-lost,--create-dummy-allocations,--"
     "screenshot-all,--onhb|--omit-null-hardware-buffers,--qamr|--quit-after-measurement-range,--"
     "fmr|--flush-measurement-range,--use-captured-swapchain-indices,--vssb|--virtual-swapchain-skip-blit,--"
-    "dcp,--discard-cached-psos,--use-cached-psos,--dx12-override-object-names,--preload-measurement-range";
+    "dcp,--discard-cached-psos,--use-cached-psos,--dx12-override-object-names,--preload-measurement-range,--dsf|--"
+    "disable-subpass-fusion";
 const char kArguments[] =
     "--log-level,--log-file,--gpu,--gpu-group,--pause-frame,--wsi,--surface-index,-m|--memory-translation,"
     "--replace-shaders,--screenshots,--denied-messages,--allowed-messages,--screenshot-format,--"
@@ -77,6 +78,7 @@ static void PrintUsage(const char* exe_name)
 #else
     GFXRECON_WRITE_CONSOLE("\t\t\t[--log-level <level>] [--log-file <file>] <file>");
 #endif
+    GFXRECON_WRITE_CONSOLE("\t\t\t[--dsf | --disable-subpass-fusion]");
 
     GFXRECON_WRITE_CONSOLE("Required arguments:");
     GFXRECON_WRITE_CONSOLE("  <file>\t\tPath to the capture file to replay.");
@@ -199,7 +201,7 @@ static void PrintUsage(const char* exe_name)
     GFXRECON_WRITE_CONSOLE("          \t\tIf this is specified the replayer will flush")
     GFXRECON_WRITE_CONSOLE("          \t\tand wait for all current GPU work to finish at the");
     GFXRECON_WRITE_CONSOLE("          \t\tstart and end of the measurement range.");
-    GFXRECON_WRITE_CONSOLE("  --gpu-group <index>\t\tUse the specified device group for replay, where index");
+    GFXRECON_WRITE_CONSOLE("  --gpu-group <index>\tUse the specified device group for replay, where index");
     GFXRECON_WRITE_CONSOLE("          \t\tis the zero-based index to the array of physical device group");
     GFXRECON_WRITE_CONSOLE("          \t\treturned by vkEnumeratePhysicalDeviceGroups.  Replay may fail");
     GFXRECON_WRITE_CONSOLE("          \t\tif the specified device group is not compatible with the");
@@ -214,7 +216,10 @@ static void PrintUsage(const char* exe_name)
     GFXRECON_WRITE_CONSOLE("  --sgfr <frame-ranges>");
     GFXRECON_WRITE_CONSOLE("          \t\tFrame ranges where --sgfs applies. The format is:");
     GFXRECON_WRITE_CONSOLE("          \t\t\t<frame-start-1>-<frame-end-1>[,<frame-start-1>-<frame-end-1>]*");
-
+    GFXRECON_WRITE_CONSOLE("  --dsf   \t\tForce disable subpass fusion.");
+    GFXRECON_WRITE_CONSOLE(
+        "          \t\tTry to nudge the driver to \"fuse\" subpasses of the render pass into 1 pass,");
+    GFXRECON_WRITE_CONSOLE("          \t\tby using on-chip storage instead of using RAM for data transfer.");
 #if defined(WIN32)
     GFXRECON_WRITE_CONSOLE("")
     GFXRECON_WRITE_CONSOLE("D3D12-only:")

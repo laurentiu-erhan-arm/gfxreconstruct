@@ -112,7 +112,7 @@ const char kPreloadMeasurementRangeOption[]      = "--preload-measurement-range"
 const char kWaitBeforePresent[]                  = "--wait-before-present";
 const char kSkipGetFenceStatus[]                 = "--skip-get-fence-status";
 const char kSkipGetFenceRanges[]                 = "--skip-get-fence-ranges";
-
+const char kDisableSubpassFusionOption[]         = "--dsf";
 #if defined(WIN32)
 const char kApiFamilyOption[]       = "--api";
 const char kDxTwoPassReplay[]       = "--dx12-two-pass-replay";
@@ -849,6 +849,11 @@ GetVulkanReplayOptions(const gfxrecon::util::ArgumentParser&           arg_parse
     if (arg_parser.IsOptionSet(kFlushMeasurementRangeOption))
     {
         replay_options.flush_measurement_frame_range = true;
+    }
+
+    if (arg_parser.IsOptionSet(kDisableSubpassFusionOption))
+    {
+        replay_options.disable_subpass_fusion = true;
     }
 
     std::string surface_index = arg_parser.GetArgumentValue(kSurfaceIndexArgument);
