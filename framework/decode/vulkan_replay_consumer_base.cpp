@@ -4583,6 +4583,26 @@ VkResult VulkanReplayConsumerBase::OverrideCreateRenderPass(
     GFXRECON_UNREFERENCED_PARAMETER(original_result);
     GFXRECON_ASSERT(pCreateInfo != nullptr);
 
+    if (options_.disable_subpass_fusion)
+    {
+        if (pCreateInfo->GetPointer() != nullptr && pCreateInfo->GetPointer()->dependencyCount > 0)
+        {
+            VkSubpassDependency* dependencies =
+                const_cast<VkSubpassDependency*>(pCreateInfo->GetPointer()->pDependencies);
+            for (uint32_t i = 0; i < pCreateInfo->GetPointer()->dependencyCount; ++i)
+            {
+                if (dependencies[i].srcSubpass == VK_SUBPASS_EXTERNAL ||
+                    dependencies[i].dstSubpass == VK_SUBPASS_EXTERNAL)
+                {
+                    continue;
+                }
+                dependencies[i].srcStageMask |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+                dependencies[i].srcAccessMask |= VK_ACCESS_SHADER_WRITE_BIT;
+                dependencies[i].dstAccessMask |= VK_ACCESS_SHADER_READ_BIT;
+            }
+        }
+    }
+
     auto result = swapchain_->CreateRenderPass(func,
                                                device_info,
                                                pCreateInfo->GetPointer(),
