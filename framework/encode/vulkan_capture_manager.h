@@ -69,7 +69,9 @@ class VulkanCaptureManager : public CaptureManager
 
     // Register special layer provided functions, which perform layer specific initialization.
     // These must be set before the application calls vkCreateInstance.
-    static void SetLayerFuncs(PFN_vkCreateInstance create_instance, PFN_vkCreateDevice create_device);
+    static void SetLayerFuncs(PFN_vkCreateInstance                       create_instance,
+                              PFN_vkCreateDevice                         create_device,
+                              PFN_vkEnumerateInstanceExtensionProperties enum_instance_ext);
 
     // Called by the layer's vkCreateInstance function, after the driver's vkCreateInstance function has been called, to
     // check for failure.  If vkCreateInstance failed, the reference count will be decremented and resources will be
@@ -318,6 +320,36 @@ class VulkanCaptureManager : public CaptureManager
 
     VkResult OverrideWaitForFences(
         VkDevice device, uint32_t fenceCount, const VkFence* pFences, VkBool32 waitAll, uint64_t timeout);
+
+    void OverrideCmdBeginDebugUtilsLabelEXT(VkCommandBuffer commandBuffer, const VkDebugUtilsLabelEXT* pLabelInfo);
+
+    void OverrideCmdEndDebugUtilsLabelEXT(VkCommandBuffer commandBuffer);
+
+    void OverrideCmdInsertDebugUtilsLabelEXT(VkCommandBuffer commandBuffer, const VkDebugUtilsLabelEXT* pLabelInfo);
+
+    VkResult OverrideCreateDebugUtilsMessengerEXT(VkInstance                                instance,
+                                                  const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
+                                                  const VkAllocationCallbacks*              pAllocator,
+                                                  VkDebugUtilsMessengerEXT*                 pMessenger);
+
+    void OverrideDestroyDebugUtilsMessengerEXT(VkInstance                   instance,
+                                               VkDebugUtilsMessengerEXT     messenger,
+                                               const VkAllocationCallbacks* pAllocator);
+
+    void OverrideQueueBeginDebugUtilsLabelEXT(VkQueue queue, const VkDebugUtilsLabelEXT* pLabelInfo);
+
+    void OverrideQueueEndDebugUtilsLabelEXT(VkQueue queue);
+
+    void OverrideQueueInsertDebugUtilsLabelEXT(VkQueue queue, const VkDebugUtilsLabelEXT* pLabelInfo);
+
+    VkResult OverrideSetDebugUtilsObjectNameEXT(VkDevice device, const VkDebugUtilsObjectNameInfoEXT* pNameInfo);
+
+    VkResult OverrideSetDebugUtilsObjectTagEXT(VkDevice device, const VkDebugUtilsObjectTagInfoEXT* pTagInfo);
+
+    void OverrideSubmitDebugUtilsMessageEXT(VkInstance                                  instance,
+                                            VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
+                                            VkDebugUtilsMessageTypeFlagsEXT             messageTypes,
+                                            const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData);
 
     void PostProcess_vkEnumeratePhysicalDevices(VkResult          result,
                                                 VkInstance        instance,
@@ -1327,6 +1359,7 @@ class VulkanCaptureManager : public CaptureManager
 
     bool CheckCommandBufferWrapperForFrameBoundary(const CommandBufferWrapper* command_buffer_wrapper);
     void ProcessFenceSubmit(VkFence fence);
+    bool IsExtensionBeingFaked(const char* extension);
 
   private:
     void QueueSubmitWriteFillMemoryCmd();
@@ -1336,6 +1369,7 @@ class VulkanCaptureManager : public CaptureManager
     std::set<DeviceMemoryWrapper*>      mapped_memory_; // Track mapped memory for unassisted tracking mode.
     std::unique_ptr<VulkanStateTracker> state_tracker_;
     HardwareBufferMap                   hardware_buffers_;
+    std::vector<const char*>            faked_extensions_;
 };
 
 GFXRECON_END_NAMESPACE(encode)

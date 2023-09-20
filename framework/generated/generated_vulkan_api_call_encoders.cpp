@@ -15226,12 +15226,7 @@ VKAPI_ATTR VkResult VKAPI_CALL SetDebugUtilsObjectNameEXT(
 
     CustomEncoderPreCall<format::ApiCallId::ApiCall_vkSetDebugUtilsObjectNameEXT>::Dispatch(VulkanCaptureManager::Get(), device, pNameInfo);
 
-    auto handle_unwrap_memory = VulkanCaptureManager::Get()->GetHandleUnwrapMemory();
-    const VkDebugUtilsObjectNameInfoEXT* pNameInfo_unwrapped = UnwrapStructPtrHandles(pNameInfo, handle_unwrap_memory);
-
-    auto device_wrapper = GetWrapper<DeviceWrapper>(device);
-    auto physical_device = device_wrapper->physical_device->handle;
-    VkResult result = GetInstanceTable(physical_device)->SetDebugUtilsObjectNameEXT(device, pNameInfo_unwrapped);
+    VkResult result = VulkanCaptureManager::Get()->OverrideSetDebugUtilsObjectNameEXT(device, pNameInfo);
 
     auto encoder = VulkanCaptureManager::Get()->BeginApiCallCapture(format::ApiCallId::ApiCall_vkSetDebugUtilsObjectNameEXT);
     if (encoder)
@@ -15265,12 +15260,7 @@ VKAPI_ATTR VkResult VKAPI_CALL SetDebugUtilsObjectTagEXT(
 
     CustomEncoderPreCall<format::ApiCallId::ApiCall_vkSetDebugUtilsObjectTagEXT>::Dispatch(VulkanCaptureManager::Get(), device, pTagInfo);
 
-    auto handle_unwrap_memory = VulkanCaptureManager::Get()->GetHandleUnwrapMemory();
-    const VkDebugUtilsObjectTagInfoEXT* pTagInfo_unwrapped = UnwrapStructPtrHandles(pTagInfo, handle_unwrap_memory);
-
-    auto device_wrapper = GetWrapper<DeviceWrapper>(device);
-    auto physical_device = device_wrapper->physical_device->handle;
-    VkResult result = GetInstanceTable(physical_device)->SetDebugUtilsObjectTagEXT(device, pTagInfo_unwrapped);
+    VkResult result = VulkanCaptureManager::Get()->OverrideSetDebugUtilsObjectTagEXT(device, pTagInfo);
 
     auto encoder = VulkanCaptureManager::Get()->BeginApiCallCapture(format::ApiCallId::ApiCall_vkSetDebugUtilsObjectTagEXT);
     if (encoder)
@@ -15312,7 +15302,7 @@ VKAPI_ATTR void VKAPI_CALL QueueBeginDebugUtilsLabelEXT(
         VulkanCaptureManager::Get()->EndApiCallCapture();
     }
 
-    GetDeviceTable(queue)->QueueBeginDebugUtilsLabelEXT(queue, pLabelInfo);
+    VulkanCaptureManager::Get()->OverrideQueueBeginDebugUtilsLabelEXT(queue, pLabelInfo);
 
     CustomEncoderPostCall<format::ApiCallId::ApiCall_vkQueueBeginDebugUtilsLabelEXT>::Dispatch(VulkanCaptureManager::Get(), queue, pLabelInfo);
 }
@@ -15341,7 +15331,7 @@ VKAPI_ATTR void VKAPI_CALL QueueEndDebugUtilsLabelEXT(
         VulkanCaptureManager::Get()->EndApiCallCapture();
     }
 
-    GetDeviceTable(queue)->QueueEndDebugUtilsLabelEXT(queue);
+    VulkanCaptureManager::Get()->OverrideQueueEndDebugUtilsLabelEXT(queue);
 
     CustomEncoderPostCall<format::ApiCallId::ApiCall_vkQueueEndDebugUtilsLabelEXT>::Dispatch(VulkanCaptureManager::Get(), queue);
 }
@@ -15372,7 +15362,7 @@ VKAPI_ATTR void VKAPI_CALL QueueInsertDebugUtilsLabelEXT(
         VulkanCaptureManager::Get()->EndApiCallCapture();
     }
 
-    GetDeviceTable(queue)->QueueInsertDebugUtilsLabelEXT(queue, pLabelInfo);
+    VulkanCaptureManager::Get()->OverrideQueueInsertDebugUtilsLabelEXT(queue, pLabelInfo);
 
     CustomEncoderPostCall<format::ApiCallId::ApiCall_vkQueueInsertDebugUtilsLabelEXT>::Dispatch(VulkanCaptureManager::Get(), queue, pLabelInfo);
 }
@@ -15403,7 +15393,7 @@ VKAPI_ATTR void VKAPI_CALL CmdBeginDebugUtilsLabelEXT(
         VulkanCaptureManager::Get()->EndCommandApiCallCapture(commandBuffer);
     }
 
-    GetDeviceTable(commandBuffer)->CmdBeginDebugUtilsLabelEXT(commandBuffer, pLabelInfo);
+    VulkanCaptureManager::Get()->OverrideCmdBeginDebugUtilsLabelEXT(commandBuffer, pLabelInfo);
 
     CustomEncoderPostCall<format::ApiCallId::ApiCall_vkCmdBeginDebugUtilsLabelEXT>::Dispatch(VulkanCaptureManager::Get(), commandBuffer, pLabelInfo);
 }
@@ -15432,7 +15422,7 @@ VKAPI_ATTR void VKAPI_CALL CmdEndDebugUtilsLabelEXT(
         VulkanCaptureManager::Get()->EndCommandApiCallCapture(commandBuffer);
     }
 
-    GetDeviceTable(commandBuffer)->CmdEndDebugUtilsLabelEXT(commandBuffer);
+    VulkanCaptureManager::Get()->OverrideCmdEndDebugUtilsLabelEXT(commandBuffer);
 
     CustomEncoderPostCall<format::ApiCallId::ApiCall_vkCmdEndDebugUtilsLabelEXT>::Dispatch(VulkanCaptureManager::Get(), commandBuffer);
 }
@@ -15463,7 +15453,7 @@ VKAPI_ATTR void VKAPI_CALL CmdInsertDebugUtilsLabelEXT(
         VulkanCaptureManager::Get()->EndCommandApiCallCapture(commandBuffer);
     }
 
-    GetDeviceTable(commandBuffer)->CmdInsertDebugUtilsLabelEXT(commandBuffer, pLabelInfo);
+    VulkanCaptureManager::Get()->OverrideCmdInsertDebugUtilsLabelEXT(commandBuffer, pLabelInfo);
 
     CustomEncoderPostCall<format::ApiCallId::ApiCall_vkCmdInsertDebugUtilsLabelEXT>::Dispatch(VulkanCaptureManager::Get(), commandBuffer, pLabelInfo);
 }
@@ -15490,13 +15480,8 @@ VKAPI_ATTR VkResult VKAPI_CALL CreateDebugUtilsMessengerEXT(
 
     CustomEncoderPreCall<format::ApiCallId::ApiCall_vkCreateDebugUtilsMessengerEXT>::Dispatch(VulkanCaptureManager::Get(), instance, pCreateInfo, pAllocator, pMessenger);
 
-    VkResult result = GetInstanceTable(instance)->CreateDebugUtilsMessengerEXT(instance, pCreateInfo, pAllocator, pMessenger);
-
-    if (result >= 0)
-    {
-        CreateWrappedHandle<InstanceWrapper, NoParentWrapper, DebugUtilsMessengerEXTWrapper>(instance, NoParentWrapper::kHandleValue, pMessenger, VulkanCaptureManager::GetUniqueId);
-    }
-    else
+    VkResult result = VulkanCaptureManager::Get()->OverrideCreateDebugUtilsMessengerEXT(instance, pCreateInfo, pAllocator, pMessenger);
+    if (result < 0)
     {
         omit_output_data = true;
     }
@@ -15545,7 +15530,7 @@ VKAPI_ATTR void VKAPI_CALL DestroyDebugUtilsMessengerEXT(
         VulkanCaptureManager::Get()->EndDestroyApiCallCapture<DebugUtilsMessengerEXTWrapper>(messenger);
     }
 
-    GetInstanceTable(instance)->DestroyDebugUtilsMessengerEXT(instance, messenger, pAllocator);
+    VulkanCaptureManager::Get()->OverrideDestroyDebugUtilsMessengerEXT(instance, messenger, pAllocator);
 
     CustomEncoderPostCall<format::ApiCallId::ApiCall_vkDestroyDebugUtilsMessengerEXT>::Dispatch(VulkanCaptureManager::Get(), instance, messenger, pAllocator);
 
@@ -15582,7 +15567,7 @@ VKAPI_ATTR void VKAPI_CALL SubmitDebugUtilsMessageEXT(
         VulkanCaptureManager::Get()->EndApiCallCapture();
     }
 
-    GetInstanceTable(instance)->SubmitDebugUtilsMessageEXT(instance, messageSeverity, messageTypes, pCallbackData);
+    VulkanCaptureManager::Get()->OverrideSubmitDebugUtilsMessageEXT(instance, messageSeverity, messageTypes, pCallbackData);
 
     CustomEncoderPostCall<format::ApiCallId::ApiCall_vkSubmitDebugUtilsMessageEXT>::Dispatch(VulkanCaptureManager::Get(), instance, messageSeverity, messageTypes, pCallbackData);
 }

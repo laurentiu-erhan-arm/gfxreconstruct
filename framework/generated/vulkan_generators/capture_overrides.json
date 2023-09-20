@@ -11,6 +11,17 @@
     "vkGetPhysicalDeviceQueueFamilyProperties": "VulkanCaptureManager::Get()->OverrideGetPhysicalDeviceQueueFamilyProperties",
     "vkGetPhysicalDeviceQueueFamilyProperties2": "VulkanCaptureManager::Get()->OverrideGetPhysicalDeviceQueueFamilyProperties2",
     "vkGetPhysicalDeviceQueueFamilyProperties2KHR": "VulkanCaptureManager::Get()->OverrideGetPhysicalDeviceQueueFamilyProperties2KHR",
-    "vkWaitForFences": "VulkanCaptureManager::Get()->OverrideWaitForFences"
-  }
+    "vkWaitForFences": "VulkanCaptureManager::Get()->OverrideWaitForFences",
+    "vkCmdBeginDebugUtilsLabelEXT": "VulkanCaptureManager::Get()->OverrideCmdBeginDebugUtilsLabelEXT",  
+    "vkCmdEndDebugUtilsLabelEXT": "VulkanCaptureManager::Get()->OverrideCmdEndDebugUtilsLabelEXT",    
+    "vkCmdInsertDebugUtilsLabelEXT": "VulkanCaptureManager::Get()->OverrideCmdInsertDebugUtilsLabelEXT",   
+    "vkCreateDebugUtilsMessengerEXT": "VulkanCaptureManager::Get()->OverrideCreateDebugUtilsMessengerEXT",  
+    "vkDestroyDebugUtilsMessengerEXT": "VulkanCaptureManager::Get()->OverrideDestroyDebugUtilsMessengerEXT", 
+    "vkQueueBeginDebugUtilsLabelEXT": "VulkanCaptureManager::Get()->OverrideQueueBeginDebugUtilsLabelEXT", 
+    "vkQueueEndDebugUtilsLabelEXT": "VulkanCaptureManager::Get()->OverrideQueueEndDebugUtilsLabelEXT",    
+    "vkQueueInsertDebugUtilsLabelEXT": "VulkanCaptureManager::Get()->OverrideQueueInsertDebugUtilsLabelEXT", 
+    "vkSetDebugUtilsObjectNameEXT": "VulkanCaptureManager::Get()->OverrideSetDebugUtilsObjectNameEXT",    
+    "vkSetDebugUtilsObjectTagEXT": "VulkanCaptureManager::Get()->OverrideSetDebugUtilsObjectTagEXT",     
+    "vkSubmitDebugUtilsMessageEXT": "VulkanCaptureManager::Get()->OverrideSubmitDebugUtilsMessageEXT"  
+    }
 }
