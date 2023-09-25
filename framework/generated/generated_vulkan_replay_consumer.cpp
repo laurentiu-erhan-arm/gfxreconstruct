@@ -206,13 +206,14 @@ void VulkanReplayConsumer::Process_vkGetDeviceQueue(
     uint32_t                                    queueIndex,
     HandlePointerDecoder<VkQueue>*              pQueue)
 {
-    VkDevice in_device = MapHandle<DeviceInfo>(device, &VulkanObjectInfoTable::GetDeviceInfo);
+    auto in_device = GetObjectInfoTable().GetDeviceInfo(device);
     if (!pQueue->IsNull()) { pQueue->SetHandleLength(1); }
-    VkQueue* out_pQueue = pQueue->GetHandlePointer();
+    QueueInfo handle_info;
+    pQueue->SetConsumerData(0, &handle_info);
 
-    GetDeviceTable(in_device)->GetDeviceQueue(in_device, queueFamilyIndex, queueIndex, out_pQueue);
+    OverrideGetDeviceQueue(GetDeviceTable(in_device->handle)->GetDeviceQueue, in_device, queueFamilyIndex, queueIndex, pQueue);
 
-    AddHandle<QueueInfo>(device, pQueue->GetPointer(), out_pQueue, &VulkanObjectInfoTable::AddQueueInfo);
+    AddHandle<QueueInfo>(device, pQueue->GetPointer(), pQueue->GetHandlePointer(), std::move(handle_info), &VulkanObjectInfoTable::AddQueueInfo);
 }
 
 void VulkanReplayConsumer::Process_vkQueueSubmit(
@@ -2308,14 +2309,14 @@ void VulkanReplayConsumer::Process_vkGetDeviceQueue2(
     StructPointerDecoder<Decoded_VkDeviceQueueInfo2>* pQueueInfo,
     HandlePointerDecoder<VkQueue>*              pQueue)
 {
-    VkDevice in_device = MapHandle<DeviceInfo>(device, &VulkanObjectInfoTable::GetDeviceInfo);
-    const VkDeviceQueueInfo2* in_pQueueInfo = pQueueInfo->GetPointer();
+    auto in_device = GetObjectInfoTable().GetDeviceInfo(device);
     if (!pQueue->IsNull()) { pQueue->SetHandleLength(1); }
-    VkQueue* out_pQueue = pQueue->GetHandlePointer();
+    QueueInfo handle_info;
+    pQueue->SetConsumerData(0, &handle_info);
 
-    GetDeviceTable(in_device)->GetDeviceQueue2(in_device, in_pQueueInfo, out_pQueue);
+    OverrideGetDeviceQueue2(GetDeviceTable(in_device->handle)->GetDeviceQueue2, in_device, pQueueInfo, pQueue);
 
-    AddHandle<QueueInfo>(device, pQueue->GetPointer(), out_pQueue, &VulkanObjectInfoTable::AddQueueInfo);
+    AddHandle<QueueInfo>(device, pQueue->GetPointer(), pQueue->GetHandlePointer(), std::move(handle_info), &VulkanObjectInfoTable::AddQueueInfo);
 }
 
 void VulkanReplayConsumer::Process_vkCreateSamplerYcbcrConversion(
@@ -2569,11 +2570,11 @@ void VulkanReplayConsumer::Process_vkWaitSemaphores(
     StructPointerDecoder<Decoded_VkSemaphoreWaitInfo>* pWaitInfo,
     uint64_t                                    timeout)
 {
-    VkDevice in_device = MapHandle<DeviceInfo>(device, &VulkanObjectInfoTable::GetDeviceInfo);
-    const VkSemaphoreWaitInfo* in_pWaitInfo = pWaitInfo->GetPointer();
+    auto in_device = GetObjectInfoTable().GetDeviceInfo(device);
+
     MapStructHandles(pWaitInfo->GetMetaStructPointer(), GetObjectInfoTable());
 
-    VkResult replay_result = GetDeviceTable(in_device)->WaitSemaphores(in_device, in_pWaitInfo, timeout);
+    VkResult replay_result = OverrideWaitSemaphores(GetDeviceTable(in_device->handle)->WaitSemaphores, returnValue, in_device, pWaitInfo, timeout);
     CheckResult("vkWaitSemaphores", returnValue, replay_result, call_info);
 }
 
@@ -4435,10 +4436,9 @@ void VulkanReplayConsumer::Process_vkAcquireProfilingLockKHR(
     format::HandleId                            device,
     StructPointerDecoder<Decoded_VkAcquireProfilingLockInfoKHR>* pInfo)
 {
-    VkDevice in_device = MapHandle<DeviceInfo>(device, &VulkanObjectInfoTable::GetDeviceInfo);
-    const VkAcquireProfilingLockInfoKHR* in_pInfo = pInfo->GetPointer();
+    auto in_device = GetObjectInfoTable().GetDeviceInfo(device);
 
-    VkResult replay_result = GetDeviceTable(in_device)->AcquireProfilingLockKHR(in_device, in_pInfo);
+    VkResult replay_result = OverrideAcquireProfilingLockKHR(GetDeviceTable(in_device->handle)->AcquireProfilingLockKHR, returnValue, in_device, pInfo);
     CheckResult("vkAcquireProfilingLockKHR", returnValue, replay_result, call_info);
 }
 
@@ -4810,11 +4810,10 @@ void VulkanReplayConsumer::Process_vkWaitForPresentKHR(
     uint64_t                                    presentId,
     uint64_t                                    timeout)
 {
-    VkDevice in_device = MapHandle<DeviceInfo>(device, &VulkanObjectInfoTable::GetDeviceInfo);
-    VkSwapchainKHR in_swapchain = MapHandle<SwapchainKHRInfo>(swapchain, &VulkanObjectInfoTable::GetSwapchainKHRInfo);
-    if (GetObjectInfoTable().GetSurfaceKHRInfo(GetObjectInfoTable().GetSwapchainKHRInfo(swapchain)->surface_id) == nullptr || GetObjectInfoTable().GetSurfaceKHRInfo(GetObjectInfoTable().GetSwapchainKHRInfo(swapchain)->surface_id)->surface_creation_skipped) { return; }
+    auto in_device = GetObjectInfoTable().GetDeviceInfo(device);
+    auto in_swapchain = GetObjectInfoTable().GetSwapchainKHRInfo(swapchain);
 
-    VkResult replay_result = GetDeviceTable(in_device)->WaitForPresentKHR(in_device, in_swapchain, presentId, timeout);
+    VkResult replay_result = OverrideWaitForPresentKHR(GetDeviceTable(in_device->handle)->WaitForPresentKHR, returnValue, in_device, in_swapchain, presentId, timeout);
     CheckResult("vkWaitForPresentKHR", returnValue, replay_result, call_info);
 }
 

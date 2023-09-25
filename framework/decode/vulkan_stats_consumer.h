@@ -42,7 +42,7 @@
 GFXRECON_BEGIN_NAMESPACE(gfxrecon)
 GFXRECON_BEGIN_NAMESPACE(decode)
 
-class VulkanStatsConsumer : public gfxrecon::decode::VulkanConsumer, public gfxrecon::decode::AnnotationHandler
+class VulkanStatsConsumer : public gfxrecon::decode::VulkanConsumer
 {
   public:
     uint32_t           GetTrimmedStartFrame() const { return trimmed_frame_; }
@@ -58,10 +58,7 @@ class VulkanStatsConsumer : public gfxrecon::decode::VulkanConsumer, public gfxr
     uint64_t           GetAllocationCount() const { return allocation_count_; }
     uint64_t           GetMinAllocationSize() const { return min_allocation_size_; }
     uint64_t           GetMaxAllocationSize() const { return max_allocation_size_; }
-    uint64_t           GetAnnotationCount() const { return annotations_.size() + operation_annotation_datas_.size(); }
-    const std::unordered_map<std::string, std::string> GetAnnotations() const { return annotations_; }
-    const std::vector<std::string>& GetOperationAnnotationDatas() const { return operation_annotation_datas_; }
-    const auto&                     GetResolutions() const { return resolutions_; }
+    const auto&        GetResolutions() const { return resolutions_; }
 
     const std::set<gfxrecon::format::HandleId>& GetInstantiatedDevices() const { return used_physical_devices_; }
     const VkPhysicalDeviceProperties*           GetDeviceProperties(gfxrecon::format::HandleId id) const
@@ -79,24 +76,6 @@ class VulkanStatsConsumer : public gfxrecon::decode::VulkanConsumer, public gfxr
     {
         // Theres should only be one of these in a capture file.
         trimmed_frame_ = static_cast<uint32_t>(frame_number);
-    }
-
-    /// @brief Count all annotations and save the operation ones which contain data
-    /// such as build versions from the tools that have processed the file.
-    virtual void ProcessAnnotation(uint64_t                         block_index,
-                                   gfxrecon::format::AnnotationType type,
-                                   const std::string&               label,
-                                   const std::string&               data) override
-    {
-        if (type == gfxrecon::format::AnnotationType::kJson &&
-            label.compare(gfxrecon::format::kAnnotationLabelOperation) == 0)
-        {
-            operation_annotation_datas_.push_back(data);
-        }
-        else
-        {
-            annotations_[label] = data;
-        }
     }
 
     virtual void Process_vkCreateInstance(
@@ -476,11 +455,6 @@ class VulkanStatsConsumer : public gfxrecon::decode::VulkanConsumer, public gfxr
     uint64_t allocation_count_{ 0 };
     uint64_t min_allocation_size_{ std::numeric_limits<uint64_t>::max() };
     uint64_t max_allocation_size_{ 0 };
-
-    // Annotation info.
-    std::unordered_map<std::string, std::string> annotations_;
-    std::vector<std::string>                     operation_annotation_datas_;
-    uint64_t                                     annotation_count_{ 0 };
 
     std::unordered_set<vk::Extent2D> resolutions_;
 };

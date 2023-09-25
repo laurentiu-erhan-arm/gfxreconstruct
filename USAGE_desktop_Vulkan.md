@@ -402,6 +402,7 @@ gfxrecon-replay         [-h | --help] [--version] [--gpu <index>]
                         [--pause-frame <N>] [--paused] [--sync] [--screenshot-all]
                         [--screenshots <N1(-N2),...>] [--screenshot-format <format>]
                         [--screenshot-dir <dir>] [--screenshot-prefix <file-prefix>]
+                        [--screenshot-scale SCALE] [--screenshot-size WIDTHxHEIGHT]
                         [--sfa | --skip-failed-allocations] [--replace-shaders <dir>]
                         [--opcd | --omit-pipeline-cache-data] [--wsi <platform>]
                         [--surface-index <N>] [--remove-unsupported] [--validate]
@@ -461,6 +462,16 @@ Optional arguments:
                         Prefix to apply to the screenshot file name.  Default is
                         "screenshot", producing file names similar to
                         "screenshot_frame8049.bmp".
+  --screenshot-scale SCALE
+                        Specify a decimal factor which will determine screenshot
+                        sizes. The factor will be multiplied with the swapchain
+                        images dimension to determine the screenshot dimensions.
+                        Default is 1.0.
+  --screenshot-size WIDTHxHEIGHT
+                        Specify desired screenshot dimensions. Leaving this
+                        unspecified screenshots will use the swapchain images
+                        dimensions. If --screenshot-scale is also specified then
+                        this option is ignored.
   --sfa                 Skip vkAllocateMemory, vkAllocateCommandBuffers, and
                         vkAllocateDescriptorSets calls that failed during
                         capture (same as --skip-failed-allocations).
@@ -550,6 +561,10 @@ Right arrow, n | Advance to the next frame when paused.
 During replay, swapchain indices for present can be different from captured indices. Causes for this can include the swapchain image count differing between capture and replay, and `vkAcquireNextImageKHR` returning a different `pImageIndex` at replay to the one that was captured. These issues can cause unexpected rendering or even crashes.
 
 Virtual Swapchain insulates higher layers in the Vulkan stack from these problems by creating a set of images, exactly matching the swapchain configuration at capture time, which it exposes for them to render into.  Before a present, it copies the virtual image to a target swapchain image for display. Since this issue can happen in many situations, virtual swapchain is the default setup. If the user wants to bypass the feature and use the captured indices to present directly on the swapchain of the replay implementation, they should add the `--use-captured-swapchain-indices` option when invoking `gfxrecon-replay`.
+
+### Debug mode VMA errors
+
+gfxrec-replay with the -m rebind option uses the Vulkan Memory Allocator library for memory allocations. If gfxrecon-replay is compiled debuggable, VMA_ASSERT errors in VMA can be trapped for debugging by setting GFXRECON_LOG_BREAK_ON_ERROR to true.
 
 ## Other Capture File Processing Tools
 

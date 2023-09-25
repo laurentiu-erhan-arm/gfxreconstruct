@@ -745,7 +745,8 @@ The `gfxrecon.py replay` command has the following usage:
 usage: gfxrecon.py replay [-h] [--push-file LOCAL_FILE] [--version] [--pause-frame N]
                           [--paused] [--screenshot-all] [--screenshots RANGES]
                           [--screenshot-format FORMAT] [--screenshot-dir DIR]
-                          [--screenshot-prefix PREFIX] [--sfa] [--opcd]
+                          [--screenshot-prefix PREFIX] [--screenshot-scale SCALE]
+                          [--screenshot-size WIDTHxHEIGHT] [--sfa] [--opcd]
                           [--surface-index N] [--sync] [--remove-unsupported]
                           [--use-captured-swapchain-indices] [--mfr START-END]
                           [--measurement-file DEVICE_FILE] [--quit-after-measurement-range]
@@ -795,6 +796,16 @@ optional arguments:
   --screenshot-prefix PREFIX
                         Prefix to apply to the screenshot file name. Default
                         is "screenshot" (forwarded to replay tool)
+  --screenshot-scale SCALE
+                        Specify a decimal factor which will determine screenshot
+                        sizes. The factor will be multiplied with the swapchain
+                        images dimension to determine the screenshot dimensions.
+                        Default is 1.0.
+  --screenshot-size WIDTHxHEIGHT
+                        Specify desired screenshot dimensions. Leaving this
+                        unspecified screenshots will use the swapchain images
+                        dimensions. If --screenshot-scale is also specified then
+                        this option is ignored.
   --sfa, --skip-failed-allocations
                         Skip vkAllocateMemory, vkAllocateCommandBuffers, and
                         vkAllocateDescriptorSets calls that failed during
