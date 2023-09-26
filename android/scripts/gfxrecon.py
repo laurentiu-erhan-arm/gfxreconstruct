@@ -108,6 +108,7 @@ def CreateReplayParser():
     parser.add_argument('--onhb', '--omit-null-hardware-buffers', action='store_true', default=False, help='Omit Vulkan calls that would pass a NULL AHardwareBuffer* (forwarded to replay tool)')
     parser.add_argument('--use-captured-swapchain-indices', action='store_true', default=False, help='Use the swapchain indices stored in the capture directly on the swapchain setup for replay. The default without this option is to use a Virtual Swapchain of images which match the swapchain in effect at capture time and which are copied to the underlying swapchain of the implementation being replayed on.')
     parser.add_argument('--vssb', '--virtual-swapchain-skip-blit', action='store_true', default=False, help='Skip blit to real swapchain to gain performance during replay. (forwarded to replay tool)')
+    parser.add_argument('--colorspace-fallback', action='store_true', default=False, help='Swap the swapchain color space if unsupported by replay device. Check if color space is not supported by replay device and swap to VK_COLOR_SPACE_SRGB_NONLINEAR_KHR. (forwarded to replay tool).')
     parser.add_argument('--sgfs', '--skip-get-fence-status', metavar='STATUS', default=0, help='Specify behaviour to skip calls to vkWaitForFences and vkGetFenceStatus. Default is 0 - No skip (forwarded to replay tool)')
     parser.add_argument('--sgfr', '--skip-get-fence-ranges', metavar='FRAME-RANGES', default='', help='Frame ranges where --sgfs applies. Default is all frames (forwarded to replay tool)')
     parser.add_argument('--mfr', '--measurement-frame-range', metavar='START-END', help='Custom framerange to measure FPS for. This range will include the start frame but not the end frame. The measurement frame range defaults to all frames except the loading frame but can be configured for any range. If the end frame is past the last frame in the trace it will be clamped to the frame after the last (so in that case the results would include the last frame). (forwarded to replay tool)')
@@ -199,6 +200,9 @@ def MakeExtrasString(args):
 
     if args.vssb:
         arg_list.append('--vssb')
+    
+    if args.scs:
+        arg_list.append('--colorspace-fallback')
 
     if args.sgfs:
         arg_list.append('--sgfs')
