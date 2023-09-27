@@ -201,7 +201,7 @@ def MakeExtrasString(args):
     if args.vssb:
         arg_list.append('--vssb')
     
-    if args.scs:
+    if args.colorspace_fallback:
         arg_list.append('--colorspace-fallback')
 
     if args.sgfs:
