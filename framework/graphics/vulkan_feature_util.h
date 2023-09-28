@@ -30,7 +30,6 @@
 #include <vector>
 
 GFXRECON_BEGIN_NAMESPACE(gfxrecon)
-GFXRECON_BEGIN_NAMESPACE(decode)
 GFXRECON_BEGIN_NAMESPACE(feature_util)
 
 VkResult GetInstanceLayers(PFN_vkEnumerateInstanceLayerProperties instance_layer_proc,
@@ -46,11 +45,11 @@ VkResult GetDeviceExtensions(VkPhysicalDevice                         physical_d
                              std::vector<VkExtensionProperties>*      properties);
 
 bool IsSupportedExtension(const std::vector<VkExtensionProperties>& properties, const char* extension);
+bool IsSupportedExtension(const std::vector<const char*>& extensions_names, const char* extension);
 
 void RemoveUnsupportedExtensions(const std::vector<VkExtensionProperties>& properties,
                                  std::vector<const char*>*                 extensions);
 
-bool IsSupportedExtension(const std::vector<VkExtensionProperties>& properties, const char* extension);
 void RemoveIgnorableExtensions(const std::vector<VkExtensionProperties>& properties,
                                std::vector<const char*>*                 extensions);
 
@@ -63,7 +62,6 @@ void CheckUnsupportedFeatures(VkPhysicalDevice                 physicalDevice,
                               bool                             remove_unsupported);
 
 GFXRECON_END_NAMESPACE(feature_util)
-GFXRECON_END_NAMESPACE(decode)
 GFXRECON_END_NAMESPACE(gfxrecon)
 
 #endif // GFXRECON_DECODE_VULKAN_FEATURE_FILTER_UTIL_H

@@ -20,7 +20,7 @@
 ** DEALINGS IN THE SOFTWARE.
 */
 
-#include "decode/vulkan_feature_util.h"
+#include "graphics/vulkan_feature_util.h"
 
 #include "util/logging.h"
 #include "util/platform.h"
@@ -31,7 +31,6 @@
 #include <vector>
 
 GFXRECON_BEGIN_NAMESPACE(gfxrecon)
-GFXRECON_BEGIN_NAMESPACE(decode)
 GFXRECON_BEGIN_NAMESPACE(feature_util)
 
 // There are some extensions which can be enabled by the application, but can be ignored during replay if
@@ -41,10 +40,7 @@ GFXRECON_BEGIN_NAMESPACE(feature_util)
 // querying layer information.  This can be problematic if the instance replaying attempts to
 // enable the extension with no support present on the replay device (usually because the layer is
 // no longer there)
-std::set<std::string> kIgnorableExtensions = {
-    VK_EXT_TOOLING_INFO_EXTENSION_NAME,
-    VK_EXT_DEBUG_MARKER_EXTENSION_NAME,
-};
+std::set<std::string> kIgnorableExtensions = { VK_EXT_TOOLING_INFO_EXTENSION_NAME, VK_EXT_DEBUG_MARKER_EXTENSION_NAME };
 
 VkResult GetInstanceLayers(PFN_vkEnumerateInstanceLayerProperties instance_layer_proc,
                            std::vector<VkLayerProperties>*        layers)
@@ -143,6 +139,21 @@ bool IsSupportedExtension(const std::vector<VkExtensionProperties>& properties, 
     return false;
 }
 
+bool IsSupportedExtension(const std::vector<const char*>& extensions_names, const char* extension)
+{
+    assert(extension != nullptr);
+
+    for (const auto name : extensions_names)
+    {
+        if (util::platform::StringCompare(name, extension) == 0)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 bool IsIgnorableExtension(const char* extension)
 {
     return kIgnorableExtensions.count(extension) > 0;
@@ -203,5 +214,4 @@ void RemoveIgnorableExtensions(const std::vector<VkExtensionProperties>& propert
 }
 
 GFXRECON_END_NAMESPACE(feature_util)
-GFXRECON_END_NAMESPACE(decode)
 GFXRECON_END_NAMESPACE(gfxrecon)

@@ -769,9 +769,54 @@ class VulkanReplayConsumerBase : public VulkanConsumer
         PFN_vkCreateDebugUtilsMessengerEXT                                      func,
         VkResult                                                                original_result,
         const InstanceInfo*                                                     instance_info,
-        const StructPointerDecoder<Decoded_VkDebugUtilsMessengerCreateInfoEXT>* pCreateInfo,
-        const StructPointerDecoder<Decoded_VkAllocationCallbacks>*              pAllocator,
-        HandlePointerDecoder<VkDebugUtilsMessengerEXT>*                         pMessenger);
+        const StructPointerDecoder<Decoded_VkDebugUtilsMessengerCreateInfoEXT>* create_info,
+        const StructPointerDecoder<Decoded_VkAllocationCallbacks>*              allocator,
+        HandlePointerDecoder<VkDebugUtilsMessengerEXT>*                         messenger);
+
+    void OverrideCmdBeginDebugUtilsLabelEXT(PFN_vkCmdBeginDebugUtilsLabelEXT func,
+                                            const CommandBufferInfo*         command_buffer_info,
+                                            const StructPointerDecoder<Decoded_VkDebugUtilsLabelEXT>* label);
+
+    void OverrideCmdEndDebugUtilsLabelEXT(PFN_vkCmdEndDebugUtilsLabelEXT func,
+                                          const CommandBufferInfo*       command_buffer_info);
+
+    void OverrideCmdInsertDebugUtilsLabelEXT(PFN_vkCmdInsertDebugUtilsLabelEXT func,
+                                             const CommandBufferInfo*          command_buffer_info,
+                                             const StructPointerDecoder<Decoded_VkDebugUtilsLabelEXT>* label);
+
+    void OverrideDestroyDebugUtilsMessengerEXT(PFN_vkDestroyDebugUtilsMessengerEXT                        func,
+                                               const InstanceInfo*                                        instance_info,
+                                               const DebugUtilsMessengerEXTInfo*                          messenger,
+                                               const StructPointerDecoder<Decoded_VkAllocationCallbacks>* allocator);
+
+    void OverrideQueueBeginDebugUtilsLabelEXT(PFN_vkQueueBeginDebugUtilsLabelEXT                        func,
+                                              const QueueInfo*                                          queue_info,
+                                              const StructPointerDecoder<Decoded_VkDebugUtilsLabelEXT>* label);
+
+    void OverrideQueueEndDebugUtilsLabelEXT(PFN_vkQueueEndDebugUtilsLabelEXT func, const QueueInfo* queue_info);
+
+    void OverrideQueueInsertDebugUtilsLabelEXT(PFN_vkQueueInsertDebugUtilsLabelEXT                       func,
+                                               const QueueInfo*                                          queue_info,
+                                               const StructPointerDecoder<Decoded_VkDebugUtilsLabelEXT>* label);
+
+    VkResult
+    OverrideSetDebugUtilsObjectNameEXT(PFN_vkSetDebugUtilsObjectNameEXT func,
+                                       const VkResult                   original_result,
+                                       const DeviceInfo*                device_info,
+                                       const StructPointerDecoder<Decoded_VkDebugUtilsObjectNameInfoEXT>* name_info);
+
+    VkResult
+    OverrideSetDebugUtilsObjectTagEXT(PFN_vkSetDebugUtilsObjectTagEXT                                   func,
+                                      const VkResult                                                    original_result,
+                                      const DeviceInfo*                                                 device_info,
+                                      const StructPointerDecoder<Decoded_VkDebugUtilsObjectTagInfoEXT>* pTagInfo);
+
+    void OverrideSubmitDebugUtilsMessageEXT(
+        PFN_vkSubmitDebugUtilsMessageEXT                                          func,
+        const InstanceInfo*                                                       instance_info,
+        const VkDebugUtilsMessageSeverityFlagBitsEXT                              message_severity,
+        const VkDebugUtilsMessageTypeFlagsEXT                                     message_types,
+        const StructPointerDecoder<Decoded_VkDebugUtilsMessengerCallbackDataEXT>* callback_data);
 
     VkResult OverrideCreateSwapchainKHR(PFN_vkCreateSwapchainKHR                                      func,
                                         VkResult                                                      original_result,
@@ -982,9 +1027,10 @@ class VulkanReplayConsumerBase : public VulkanConsumer
                                         CommandBufferInfo*        command_buffer_info,
                                         VkCommandBufferResetFlags flags);
 
-    void     OverrideCmdDebugMarkerInsertEXT(PFN_vkCmdDebugMarkerInsertEXT                             func,
-                                             CommandBufferInfo*                                        command_buffer_info,
-                                             StructPointerDecoder<Decoded_VkDebugMarkerMarkerInfoEXT>* marker_info_decoder);
+    void OverrideCmdDebugMarkerInsertEXT(PFN_vkCmdDebugMarkerInsertEXT                             func,
+                                         CommandBufferInfo*                                        command_buffer_info,
+                                         StructPointerDecoder<Decoded_VkDebugMarkerMarkerInfoEXT>* marker_info_decoder);
+
     VkResult OverrideWaitSemaphores(PFN_vkWaitSemaphores                                     func,
                                     VkResult                                                 original_result,
                                     const DeviceInfo*                                        device_info,
@@ -1148,6 +1194,7 @@ class VulkanReplayConsumerBase : public VulkanConsumer
                                           VkPipelineCache   pipelineCache,
                                           VkPipeline*       pipelines,
                                           uint32_t          pipelineCount);
+    bool            IsExtensionBeingFaked(const char* extension);
 
   private:
     typedef std::unordered_set<Window*> ActiveWindows;
@@ -1227,6 +1274,7 @@ class VulkanReplayConsumerBase : public VulkanConsumer
 
     std::unordered_map<format::HandleId, std::pair<const DeviceInfo*, VkPipelineCache>> tracked_pipeline_caches_;
     std::unordered_map<VkPipeline, format::HandleId>                                    pipeline_cache_correspondances_;
+    std::vector<const char*>                                                            faked_extensions_;
 };
 
 GFXRECON_END_NAMESPACE(decode)

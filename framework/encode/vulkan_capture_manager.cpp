@@ -32,6 +32,7 @@
 #include "generated/generated_vulkan_struct_handle_wrappers.h"
 #include "graphics/vulkan_device_util.h"
 #include "graphics/vulkan_util.h"
+#include "graphics/vulkan_feature_util.h"
 #include "util/compressor.h"
 #include "util/logging.h"
 #include "util/page_guard_manager.h"
@@ -94,11 +95,14 @@ void VulkanCaptureManager::WriteTrackedState(util::FileOutputStream* file_stream
     thread_data->block_index_ = block_index_;
 }
 
-void VulkanCaptureManager::SetLayerFuncs(PFN_vkCreateInstance create_instance, PFN_vkCreateDevice create_device)
+void VulkanCaptureManager::SetLayerFuncs(PFN_vkCreateInstance                       create_instance,
+                                         PFN_vkCreateDevice                         create_device,
+                                         PFN_vkEnumerateInstanceExtensionProperties enum_instance_ext)
 {
     assert((create_instance != nullptr) && (create_device != nullptr));
-    layer_table_.CreateInstance = create_instance;
-    layer_table_.CreateDevice   = create_device;
+    layer_table_.CreateInstance                       = create_instance;
+    layer_table_.CreateDevice                         = create_device;
+    layer_table_.EnumerateInstanceExtensionProperties = enum_instance_ext;
 }
 
 void VulkanCaptureManager::CheckVkCreateInstanceStatus(VkResult result)
@@ -549,56 +553,48 @@ VkResult VulkanCaptureManager::OverrideCreateInstance(const VkInstanceCreateInfo
 
     if (CreateInstance())
     {
+        VkInstanceCreateInfo     create_info_copy = (*pCreateInfo);
+        size_t                   extension_count  = create_info_copy.enabledExtensionCount;
+        const char* const*       extensions       = create_info_copy.ppEnabledExtensionNames;
+        std::vector<const char*> modified_extensions{ extensions, extensions + extension_count };
+
+        std::vector<VkExtensionProperties> supported_extensions;
+        feature_util::GetInstanceExtensions(layer_table_.EnumerateInstanceExtensionProperties, &supported_extensions);
+
         if (instance_->GetPageGuardMemoryMode() == kMemoryModeExternal)
         {
             assert(pCreateInfo != nullptr);
 
-            VkInstanceCreateInfo create_info_copy = (*pCreateInfo);
-
             // TODO: Only enable KHR_get_physical_device_properties_2 for 1.0 API version.
-            size_t                   extension_count = create_info_copy.enabledExtensionCount;
-            const char* const*       extensions      = create_info_copy.ppEnabledExtensionNames;
-            std::vector<const char*> modified_extensions;
-
-            bool has_dev_prop2    = false;
-            bool has_ext_mem_caps = false;
-
-            for (size_t i = 0; i < extension_count; ++i)
-            {
-                auto entry = extensions[i];
-
-                modified_extensions.push_back(entry);
-
-                if (util::platform::StringCompare(entry, VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) == 0)
-                {
-                    has_dev_prop2 = true;
-                }
-
-                if (util::platform::StringCompare(entry, VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME) == 0)
-                {
-                    has_ext_mem_caps = true;
-                }
-            }
-
-            if (!has_dev_prop2)
+            if (!feature_util::IsSupportedExtension(modified_extensions,
+                                                    VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
             {
                 modified_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
             }
-
-            if (!has_ext_mem_caps)
+            if (!feature_util::IsSupportedExtension(modified_extensions,
+                                                    VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME))
             {
                 modified_extensions.push_back(VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME);
             }
-
-            create_info_copy.enabledExtensionCount   = static_cast<uint32_t>(modified_extensions.size());
-            create_info_copy.ppEnabledExtensionNames = modified_extensions.data();
-
-            result = layer_table_.CreateInstance(&create_info_copy, pAllocator, pInstance);
         }
-        else
+
+        bool debug_utils_is_not_supported =
+            !feature_util::IsSupportedExtension(supported_extensions, VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+        bool debug_utils_is_requested =
+            feature_util::IsSupportedExtension(modified_extensions, VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+
+        if (debug_utils_is_requested && debug_utils_is_not_supported)
         {
-            result = layer_table_.CreateInstance(pCreateInfo, pAllocator, pInstance);
+            auto iter = std::find_if(modified_extensions.begin(), modified_extensions.end(), [](const char* extension) {
+                return util::platform::StringCompare(VK_EXT_DEBUG_UTILS_EXTENSION_NAME, extension) == 0;
+            });
+            modified_extensions.erase(iter);
+            instance_->faked_extensions_.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
         }
+
+        create_info_copy.enabledExtensionCount   = static_cast<uint32_t>(modified_extensions.size());
+        create_info_copy.ppEnabledExtensionNames = modified_extensions.data();
+        result = layer_table_.CreateInstance(&create_info_copy, pAllocator, pInstance);
     }
 
     if ((result == VK_SUCCESS) && (pCreateInfo->pApplicationInfo != nullptr))
@@ -1368,6 +1364,117 @@ VkResult VulkanCaptureManager::OverrideWaitForFences(
     }
 
     return GetDeviceTable(device)->WaitForFences(device, fenceCount, pFences, waitAll, timeout);
+}
+
+bool VulkanCaptureManager::IsExtensionBeingFaked(const char* extension)
+{
+    return feature_util::IsSupportedExtension(faked_extensions_, extension);
+}
+
+void VulkanCaptureManager::OverrideCmdBeginDebugUtilsLabelEXT(VkCommandBuffer             commandBuffer,
+                                                              const VkDebugUtilsLabelEXT* pLabelInfo)
+{
+    if (!IsExtensionBeingFaked(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+    {
+        GetDeviceTable(commandBuffer)->CmdBeginDebugUtilsLabelEXT(commandBuffer, pLabelInfo);
+    }
+}
+
+void VulkanCaptureManager::OverrideCmdEndDebugUtilsLabelEXT(VkCommandBuffer commandBuffer)
+{
+    if (!IsExtensionBeingFaked(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+    {
+        GetDeviceTable(commandBuffer)->CmdEndDebugUtilsLabelEXT(commandBuffer);
+    }
+}
+
+void VulkanCaptureManager::OverrideCmdInsertDebugUtilsLabelEXT(VkCommandBuffer             commandBuffer,
+                                                               const VkDebugUtilsLabelEXT* pLabelInfo)
+{
+    if (!IsExtensionBeingFaked(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+    {
+        GetDeviceTable(commandBuffer)->CmdInsertDebugUtilsLabelEXT(commandBuffer, pLabelInfo);
+    }
+}
+
+VkResult
+VulkanCaptureManager::OverrideCreateDebugUtilsMessengerEXT(VkInstance                                instance,
+                                                           const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
+                                                           const VkAllocationCallbacks*              pAllocator,
+                                                           VkDebugUtilsMessengerEXT*                 pMessenger)
+{
+    if (!IsExtensionBeingFaked(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+    {
+        return GetInstanceTable(instance)->CreateDebugUtilsMessengerEXT(instance, pCreateInfo, pAllocator, pMessenger);
+    }
+    return VK_SUCCESS;
+}
+
+void VulkanCaptureManager::OverrideDestroyDebugUtilsMessengerEXT(VkInstance                   instance,
+                                                                 VkDebugUtilsMessengerEXT     messenger,
+                                                                 const VkAllocationCallbacks* pAllocator)
+{
+    if (!IsExtensionBeingFaked(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+    {
+        GetInstanceTable(instance)->DestroyDebugUtilsMessengerEXT(instance, messenger, pAllocator);
+    }
+}
+
+void VulkanCaptureManager::OverrideQueueBeginDebugUtilsLabelEXT(VkQueue queue, const VkDebugUtilsLabelEXT* pLabelInfo)
+{
+    if (!IsExtensionBeingFaked(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+    {
+        GetDeviceTable(queue)->QueueBeginDebugUtilsLabelEXT(queue, pLabelInfo);
+    }
+}
+
+void VulkanCaptureManager::OverrideQueueEndDebugUtilsLabelEXT(VkQueue queue)
+{
+    if (!IsExtensionBeingFaked(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+    {
+        GetDeviceTable(queue)->QueueEndDebugUtilsLabelEXT(queue);
+    }
+}
+
+void VulkanCaptureManager::OverrideQueueInsertDebugUtilsLabelEXT(VkQueue queue, const VkDebugUtilsLabelEXT* pLabelInfo)
+{
+    if (!IsExtensionBeingFaked(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+    {
+        GetDeviceTable(queue)->QueueInsertDebugUtilsLabelEXT(queue, pLabelInfo);
+    }
+}
+
+VkResult VulkanCaptureManager::OverrideSetDebugUtilsObjectNameEXT(VkDevice                             device,
+                                                                  const VkDebugUtilsObjectNameInfoEXT* pNameInfo)
+{
+    if (!IsExtensionBeingFaked(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+    {
+        auto physical_device = GetWrapper<DeviceWrapper>(device)->physical_device->handle;
+        return GetInstanceTable(physical_device)->SetDebugUtilsObjectNameEXT(device, pNameInfo);
+    }
+    return VK_SUCCESS;
+}
+
+VkResult VulkanCaptureManager::OverrideSetDebugUtilsObjectTagEXT(VkDevice                            device,
+                                                                 const VkDebugUtilsObjectTagInfoEXT* pTagInfo)
+{
+    if (!IsExtensionBeingFaked(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+    {
+        auto physical_device = GetWrapper<DeviceWrapper>(device)->physical_device->handle;
+        return GetInstanceTable(physical_device)->SetDebugUtilsObjectTagEXT(device, pTagInfo);
+    }
+    return VK_SUCCESS;
+}
+
+void VulkanCaptureManager::OverrideSubmitDebugUtilsMessageEXT(VkInstance                             instance,
+                                                              VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+                                                              VkDebugUtilsMessageTypeFlagsEXT        messageTypes,
+                                                              const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData)
+{
+    if (!IsExtensionBeingFaked(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+    {
+        GetInstanceTable(instance)->SubmitDebugUtilsMessageEXT(instance, messageSeverity, messageTypes, pCallbackData);
+    }
 }
 
 void VulkanCaptureManager::ProcessEnumeratePhysicalDevices(VkResult          result,

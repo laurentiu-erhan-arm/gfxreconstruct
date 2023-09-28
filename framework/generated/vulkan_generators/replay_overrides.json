@@ -62,7 +62,6 @@
     "vkDestroyDescriptorUpdateTemplate": "OverrideDestroyDescriptorUpdateTemplate",
     "vkDestroyDescriptorUpdateTemplateKHR": "OverrideDestroyDescriptorUpdateTemplate",
     "vkCreateDebugReportCallbackEXT": "OverrideCreateDebugReportCallbackEXT",
-    "vkCreateDebugUtilsMessengerEXT": "OverrideCreateDebugUtilsMessengerEXT",
     "vkCreateSwapchainKHR": "OverrideCreateSwapchainKHR",
     "vkDestroySwapchainKHR": "OverrideDestroySwapchainKHR",
     "vkGetSwapchainImagesKHR": "OverrideGetSwapchainImagesKHR",
@@ -103,6 +102,17 @@
     "vkCreateFramebuffer": "OverrideCreateFramebuffer",
     "vkAcquireProfilingLockKHR": "OverrideAcquireProfilingLockKHR",
     "vkWaitForPresentKHR": "OverrideWaitForPresentKHR",
-    "vkWaitSemaphores": "OverrideWaitSemaphores"
+    "vkWaitSemaphores": "OverrideWaitSemaphores",
+    "vkCmdBeginDebugUtilsLabelEXT": "OverrideCmdBeginDebugUtilsLabelEXT",
+    "vkCmdEndDebugUtilsLabelEXT": "OverrideCmdEndDebugUtilsLabelEXT",
+    "vkCmdInsertDebugUtilsLabelEXT": "OverrideCmdInsertDebugUtilsLabelEXT",
+    "vkCreateDebugUtilsMessengerEXT": "OverrideCreateDebugUtilsMessengerEXT",
+    "vkDestroyDebugUtilsMessengerEXT": "OverrideDestroyDebugUtilsMessengerEXT",
+    "vkQueueBeginDebugUtilsLabelEXT": "OverrideQueueBeginDebugUtilsLabelEXT",
+    "vkQueueEndDebugUtilsLabelEXT": "OverrideQueueEndDebugUtilsLabelEXT",
+    "vkQueueInsertDebugUtilsLabelEXT": "OverrideQueueInsertDebugUtilsLabelEXT",
+    "vkSetDebugUtilsObjectNameEXT": "OverrideSetDebugUtilsObjectNameEXT",
+    "vkSetDebugUtilsObjectTagEXT": "OverrideSetDebugUtilsObjectTagEXT",
+    "vkSubmitDebugUtilsMessageEXT": "OverrideSubmitDebugUtilsMessageEXT"
   }
 }

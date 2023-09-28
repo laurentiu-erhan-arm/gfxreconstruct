@@ -6046,13 +6046,13 @@ void VulkanReplayConsumer::Process_vkSetDebugUtilsObjectNameEXT(
     format::HandleId                            device,
     StructPointerDecoder<Decoded_VkDebugUtilsObjectNameInfoEXT>* pNameInfo)
 {
-    VkDevice in_device = MapHandle<DeviceInfo>(device, &VulkanObjectInfoTable::GetDeviceInfo);
-    const VkDebugUtilsObjectNameInfoEXT* in_pNameInfo = pNameInfo->GetPointer();
+    auto in_device = GetObjectInfoTable().GetDeviceInfo(device);
+
     MapStructHandles(pNameInfo->GetMetaStructPointer(), GetObjectInfoTable());
     DeviceInfo* device_info = GetObjectInfoTable().GetDeviceInfo(device);
-    VkPhysicalDevice             physical_device = device_info->parent;
+    VkPhysicalDevice physical_device = device_info->parent;
 
-    VkResult replay_result = GetInstanceTable(physical_device)->SetDebugUtilsObjectNameEXT(in_device, in_pNameInfo);
+    VkResult replay_result = OverrideSetDebugUtilsObjectNameEXT(GetInstanceTable(physical_device)->SetDebugUtilsObjectNameEXT, returnValue, in_device, pNameInfo);
     CheckResult("vkSetDebugUtilsObjectNameEXT", returnValue, replay_result, call_info);
 }
 
@@ -6062,13 +6062,13 @@ void VulkanReplayConsumer::Process_vkSetDebugUtilsObjectTagEXT(
     format::HandleId                            device,
     StructPointerDecoder<Decoded_VkDebugUtilsObjectTagInfoEXT>* pTagInfo)
 {
-    VkDevice in_device = MapHandle<DeviceInfo>(device, &VulkanObjectInfoTable::GetDeviceInfo);
-    const VkDebugUtilsObjectTagInfoEXT* in_pTagInfo = pTagInfo->GetPointer();
+    auto in_device = GetObjectInfoTable().GetDeviceInfo(device);
+
     MapStructHandles(pTagInfo->GetMetaStructPointer(), GetObjectInfoTable());
     DeviceInfo* device_info = GetObjectInfoTable().GetDeviceInfo(device);
-    VkPhysicalDevice             physical_device = device_info->parent;
+    VkPhysicalDevice physical_device = device_info->parent;
 
-    VkResult replay_result = GetInstanceTable(physical_device)->SetDebugUtilsObjectTagEXT(in_device, in_pTagInfo);
+    VkResult replay_result = OverrideSetDebugUtilsObjectTagEXT(GetInstanceTable(physical_device)->SetDebugUtilsObjectTagEXT, returnValue, in_device, pTagInfo);
     CheckResult("vkSetDebugUtilsObjectTagEXT", returnValue, replay_result, call_info);
 }
 
@@ -6077,19 +6077,18 @@ void VulkanReplayConsumer::Process_vkQueueBeginDebugUtilsLabelEXT(
     format::HandleId                            queue,
     StructPointerDecoder<Decoded_VkDebugUtilsLabelEXT>* pLabelInfo)
 {
-    VkQueue in_queue = MapHandle<QueueInfo>(queue, &VulkanObjectInfoTable::GetQueueInfo);
-    const VkDebugUtilsLabelEXT* in_pLabelInfo = pLabelInfo->GetPointer();
+    auto in_queue = GetObjectInfoTable().GetQueueInfo(queue);
 
-    GetDeviceTable(in_queue)->QueueBeginDebugUtilsLabelEXT(in_queue, in_pLabelInfo);
+    OverrideQueueBeginDebugUtilsLabelEXT(GetDeviceTable(in_queue->handle)->QueueBeginDebugUtilsLabelEXT, in_queue, pLabelInfo);
 }
 
 void VulkanReplayConsumer::Process_vkQueueEndDebugUtilsLabelEXT(
     const ApiCallInfo&                          call_info,
     format::HandleId                            queue)
 {
-    VkQueue in_queue = MapHandle<QueueInfo>(queue, &VulkanObjectInfoTable::GetQueueInfo);
+    auto in_queue = GetObjectInfoTable().GetQueueInfo(queue);
 
-    GetDeviceTable(in_queue)->QueueEndDebugUtilsLabelEXT(in_queue);
+    OverrideQueueEndDebugUtilsLabelEXT(GetDeviceTable(in_queue->handle)->QueueEndDebugUtilsLabelEXT, in_queue);
 }
 
 void VulkanReplayConsumer::Process_vkQueueInsertDebugUtilsLabelEXT(
@@ -6097,10 +6096,9 @@ void VulkanReplayConsumer::Process_vkQueueInsertDebugUtilsLabelEXT(
     format::HandleId                            queue,
     StructPointerDecoder<Decoded_VkDebugUtilsLabelEXT>* pLabelInfo)
 {
-    VkQueue in_queue = MapHandle<QueueInfo>(queue, &VulkanObjectInfoTable::GetQueueInfo);
-    const VkDebugUtilsLabelEXT* in_pLabelInfo = pLabelInfo->GetPointer();
+    auto in_queue = GetObjectInfoTable().GetQueueInfo(queue);
 
-    GetDeviceTable(in_queue)->QueueInsertDebugUtilsLabelEXT(in_queue, in_pLabelInfo);
+    OverrideQueueInsertDebugUtilsLabelEXT(GetDeviceTable(in_queue->handle)->QueueInsertDebugUtilsLabelEXT, in_queue, pLabelInfo);
 }
 
 void VulkanReplayConsumer::Process_vkCmdBeginDebugUtilsLabelEXT(
@@ -6108,19 +6106,18 @@ void VulkanReplayConsumer::Process_vkCmdBeginDebugUtilsLabelEXT(
     format::HandleId                            commandBuffer,
     StructPointerDecoder<Decoded_VkDebugUtilsLabelEXT>* pLabelInfo)
 {
-    VkCommandBuffer in_commandBuffer = MapHandle<CommandBufferInfo>(commandBuffer, &VulkanObjectInfoTable::GetCommandBufferInfo);
-    const VkDebugUtilsLabelEXT* in_pLabelInfo = pLabelInfo->GetPointer();
+    auto in_commandBuffer = GetObjectInfoTable().GetCommandBufferInfo(commandBuffer);
 
-    GetDeviceTable(in_commandBuffer)->CmdBeginDebugUtilsLabelEXT(in_commandBuffer, in_pLabelInfo);
+    OverrideCmdBeginDebugUtilsLabelEXT(GetDeviceTable(in_commandBuffer->handle)->CmdBeginDebugUtilsLabelEXT, in_commandBuffer, pLabelInfo);
 }
 
 void VulkanReplayConsumer::Process_vkCmdEndDebugUtilsLabelEXT(
     const ApiCallInfo&                          call_info,
     format::HandleId                            commandBuffer)
 {
-    VkCommandBuffer in_commandBuffer = MapHandle<CommandBufferInfo>(commandBuffer, &VulkanObjectInfoTable::GetCommandBufferInfo);
+    auto in_commandBuffer = GetObjectInfoTable().GetCommandBufferInfo(commandBuffer);
 
-    GetDeviceTable(in_commandBuffer)->CmdEndDebugUtilsLabelEXT(in_commandBuffer);
+    OverrideCmdEndDebugUtilsLabelEXT(GetDeviceTable(in_commandBuffer->handle)->CmdEndDebugUtilsLabelEXT, in_commandBuffer);
 }
 
 void VulkanReplayConsumer::Process_vkCmdInsertDebugUtilsLabelEXT(
@@ -6128,10 +6125,9 @@ void VulkanReplayConsumer::Process_vkCmdInsertDebugUtilsLabelEXT(
     format::HandleId                            commandBuffer,
     StructPointerDecoder<Decoded_VkDebugUtilsLabelEXT>* pLabelInfo)
 {
-    VkCommandBuffer in_commandBuffer = MapHandle<CommandBufferInfo>(commandBuffer, &VulkanObjectInfoTable::GetCommandBufferInfo);
-    const VkDebugUtilsLabelEXT* in_pLabelInfo = pLabelInfo->GetPointer();
+    auto in_commandBuffer = GetObjectInfoTable().GetCommandBufferInfo(commandBuffer);
 
-    GetDeviceTable(in_commandBuffer)->CmdInsertDebugUtilsLabelEXT(in_commandBuffer, in_pLabelInfo);
+    OverrideCmdInsertDebugUtilsLabelEXT(GetDeviceTable(in_commandBuffer->handle)->CmdInsertDebugUtilsLabelEXT, in_commandBuffer, pLabelInfo);
 }
 
 void VulkanReplayConsumer::Process_vkCreateDebugUtilsMessengerEXT(
@@ -6159,11 +6155,10 @@ void VulkanReplayConsumer::Process_vkDestroyDebugUtilsMessengerEXT(
     format::HandleId                            messenger,
     StructPointerDecoder<Decoded_VkAllocationCallbacks>* pAllocator)
 {
-    VkInstance in_instance = MapHandle<InstanceInfo>(instance, &VulkanObjectInfoTable::GetInstanceInfo);
-    VkDebugUtilsMessengerEXT in_messenger = MapHandle<DebugUtilsMessengerEXTInfo>(messenger, &VulkanObjectInfoTable::GetDebugUtilsMessengerEXTInfo);
-    const VkAllocationCallbacks* in_pAllocator = GetAllocationCallbacks(pAllocator);
+    auto in_instance = GetObjectInfoTable().GetInstanceInfo(instance);
+    auto in_messenger = GetObjectInfoTable().GetDebugUtilsMessengerEXTInfo(messenger);
 
-    GetInstanceTable(in_instance)->DestroyDebugUtilsMessengerEXT(in_instance, in_messenger, in_pAllocator);
+    OverrideDestroyDebugUtilsMessengerEXT(GetInstanceTable(in_instance->handle)->DestroyDebugUtilsMessengerEXT, in_instance, in_messenger, pAllocator);
     RemoveHandle(messenger, &VulkanObjectInfoTable::RemoveDebugUtilsMessengerEXTInfo);
 }
 
@@ -6174,10 +6169,9 @@ void VulkanReplayConsumer::Process_vkSubmitDebugUtilsMessageEXT(
     VkDebugUtilsMessageTypeFlagsEXT             messageTypes,
     StructPointerDecoder<Decoded_VkDebugUtilsMessengerCallbackDataEXT>* pCallbackData)
 {
-    VkInstance in_instance = MapHandle<InstanceInfo>(instance, &VulkanObjectInfoTable::GetInstanceInfo);
-    const VkDebugUtilsMessengerCallbackDataEXT* in_pCallbackData = pCallbackData->GetPointer();
+    auto in_instance = GetObjectInfoTable().GetInstanceInfo(instance);
 
-    GetInstanceTable(in_instance)->SubmitDebugUtilsMessageEXT(in_instance, messageSeverity, messageTypes, in_pCallbackData);
+    OverrideSubmitDebugUtilsMessageEXT(GetInstanceTable(in_instance->handle)->SubmitDebugUtilsMessageEXT, in_instance, messageSeverity, messageTypes, pCallbackData);
 }
 
 void VulkanReplayConsumer::Process_vkGetAndroidHardwareBufferPropertiesANDROID(

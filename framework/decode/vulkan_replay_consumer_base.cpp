@@ -28,11 +28,11 @@
 #include "decode/vulkan_captured_swapchain.h"
 #include "decode/vulkan_virtual_swapchain.h"
 #include "decode/vulkan_enum_util.h"
-#include "decode/vulkan_feature_util.h"
 #include "decode/vulkan_object_cleanup_util.h"
 #include "format/format_util.h"
 #include "generated/generated_vulkan_struct_handle_mappers.h"
 #include "graphics/vulkan_device_util.h"
+#include "graphics/vulkan_feature_util.h"
 #include "graphics/vulkan_util.h"
 #include "util/file_path.h"
 #include "util/hash.h"
@@ -2404,6 +2404,21 @@ VulkanReplayConsumerBase::OverrideCreateInstance(VkResult original_result,
 
             if (extension_query_result == VK_SUCCESS)
             {
+                bool debug_utils_is_not_supported =
+                    !feature_util::IsSupportedExtension(available_extensions, VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+                bool debug_utils_is_requested =
+                    feature_util::IsSupportedExtension(filtered_extensions, VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+
+                if (debug_utils_is_requested && debug_utils_is_not_supported)
+                {
+                    auto iter =
+                        std::find_if(filtered_extensions.begin(), filtered_extensions.end(), [](const char* extension) {
+                            return util::platform::StringCompare(VK_EXT_DEBUG_UTILS_EXTENSION_NAME, extension) == 0;
+                        });
+                    filtered_extensions.erase(iter);
+                    faked_extensions_.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+                }
+
                 if (options_.remove_unsupported_features)
                 {
                     // Remove enabled extensions that are not available from the replay instance.
@@ -5360,6 +5375,11 @@ VkResult VulkanReplayConsumerBase::OverrideCreateDebugReportCallbackEXT(
                 pCallback->GetHandlePointer());
 }
 
+bool VulkanReplayConsumerBase::IsExtensionBeingFaked(const char* extension)
+{
+    return feature_util::IsSupportedExtension(faked_extensions_, extension);
+}
+
 VkResult VulkanReplayConsumerBase::OverrideCreateDebugUtilsMessengerEXT(
     PFN_vkCreateDebugUtilsMessengerEXT                                      func,
     VkResult                                                                original_result,
@@ -5372,6 +5392,11 @@ VkResult VulkanReplayConsumerBase::OverrideCreateDebugUtilsMessengerEXT(
 
     assert((instance_info != nullptr) && (pCreateInfo != nullptr) && (pMessenger != nullptr) &&
            (pMessenger->GetHandlePointer() != nullptr));
+
+    if (IsExtensionBeingFaked(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+    {
+        return original_result;
+    }
 
     VkDebugUtilsMessengerCreateInfoEXT modified_create_info{};
     if (!pCreateInfo->IsNull())
@@ -5388,6 +5413,119 @@ VkResult VulkanReplayConsumerBase::OverrideCreateDebugUtilsMessengerEXT(
                 &modified_create_info,
                 GetAllocationCallbacks(pAllocator),
                 pMessenger->GetHandlePointer());
+}
+
+void VulkanReplayConsumerBase::OverrideCmdBeginDebugUtilsLabelEXT(
+    PFN_vkCmdBeginDebugUtilsLabelEXT                          func,
+    const CommandBufferInfo*                                  command_buffer_info,
+    const StructPointerDecoder<Decoded_VkDebugUtilsLabelEXT>* label)
+{
+    if (!IsExtensionBeingFaked(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+    {
+        func(command_buffer_info->handle, label->GetPointer());
+    }
+}
+
+void VulkanReplayConsumerBase::OverrideCmdEndDebugUtilsLabelEXT(PFN_vkCmdEndDebugUtilsLabelEXT func,
+                                                                const CommandBufferInfo*       command_buffer_info)
+{
+    if (!IsExtensionBeingFaked(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+    {
+        func(command_buffer_info->handle);
+    }
+}
+
+void VulkanReplayConsumerBase::OverrideCmdInsertDebugUtilsLabelEXT(
+    PFN_vkCmdInsertDebugUtilsLabelEXT                         func,
+    const CommandBufferInfo*                                  command_buffer_info,
+    const StructPointerDecoder<Decoded_VkDebugUtilsLabelEXT>* label)
+{
+    if (!IsExtensionBeingFaked(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+    {
+        func(command_buffer_info->handle, label->GetPointer());
+    }
+}
+
+void VulkanReplayConsumerBase::OverrideDestroyDebugUtilsMessengerEXT(
+    PFN_vkDestroyDebugUtilsMessengerEXT                        func,
+    const InstanceInfo*                                        instance_info,
+    const DebugUtilsMessengerEXTInfo*                          messenger,
+    const StructPointerDecoder<Decoded_VkAllocationCallbacks>* allocator)
+{
+    if (!IsExtensionBeingFaked(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+    {
+        func(instance_info->handle, messenger->handle, allocator->GetPointer());
+    }
+}
+
+void VulkanReplayConsumerBase::OverrideQueueBeginDebugUtilsLabelEXT(
+    PFN_vkQueueBeginDebugUtilsLabelEXT                        func,
+    const QueueInfo*                                          queue_info,
+    const StructPointerDecoder<Decoded_VkDebugUtilsLabelEXT>* label)
+{
+    if (!IsExtensionBeingFaked(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+    {
+        func(queue_info->handle, label->GetPointer());
+    }
+}
+
+void VulkanReplayConsumerBase::OverrideQueueEndDebugUtilsLabelEXT(PFN_vkQueueEndDebugUtilsLabelEXT func,
+                                                                  const QueueInfo*                 queue_info)
+{
+    if (!IsExtensionBeingFaked(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+    {
+        func(queue_info->handle);
+    }
+}
+
+void VulkanReplayConsumerBase::OverrideQueueInsertDebugUtilsLabelEXT(
+    PFN_vkQueueInsertDebugUtilsLabelEXT                       func,
+    const QueueInfo*                                          queue_info,
+    const StructPointerDecoder<Decoded_VkDebugUtilsLabelEXT>* label)
+{
+    if (!IsExtensionBeingFaked(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+    {
+        func(queue_info->handle, label->GetPointer());
+    }
+}
+
+VkResult VulkanReplayConsumerBase::OverrideSetDebugUtilsObjectNameEXT(
+    PFN_vkSetDebugUtilsObjectNameEXT                                   func,
+    const VkResult                                                     original_result,
+    const DeviceInfo*                                                  device_info,
+    const StructPointerDecoder<Decoded_VkDebugUtilsObjectNameInfoEXT>* name_info)
+{
+    if (!IsExtensionBeingFaked(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+    {
+        return func(device_info->handle, name_info->GetPointer());
+    }
+    return original_result;
+}
+
+VkResult VulkanReplayConsumerBase::OverrideSetDebugUtilsObjectTagEXT(
+    PFN_vkSetDebugUtilsObjectTagEXT                                   func,
+    const VkResult                                                    original_result,
+    const DeviceInfo*                                                 device_info,
+    const StructPointerDecoder<Decoded_VkDebugUtilsObjectTagInfoEXT>* pTagInfo)
+{
+    if (!IsExtensionBeingFaked(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+    {
+        return func(device_info->handle, pTagInfo->GetPointer());
+    }
+    return original_result;
+}
+
+void VulkanReplayConsumerBase::OverrideSubmitDebugUtilsMessageEXT(
+    PFN_vkSubmitDebugUtilsMessageEXT                                          func,
+    const InstanceInfo*                                                       instance_info,
+    const VkDebugUtilsMessageSeverityFlagBitsEXT                              message_severity,
+    const VkDebugUtilsMessageTypeFlagsEXT                                     message_types,
+    const StructPointerDecoder<Decoded_VkDebugUtilsMessengerCallbackDataEXT>* callback_data)
+{
+    if (!IsExtensionBeingFaked(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+    {
+        func(instance_info->handle, message_severity, message_types, callback_data->GetPointer());
+    }
 }
 
 VkResult VulkanReplayConsumerBase::OverrideCreateSwapchainKHR(

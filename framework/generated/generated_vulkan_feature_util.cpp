@@ -26,12 +26,11 @@
 **
 */
 
-#include "decode/vulkan_feature_util.h"
+#include "graphics/vulkan_feature_util.h"
 
 #include "util/logging.h"
 
 GFXRECON_BEGIN_NAMESPACE(gfxrecon)
-GFXRECON_BEGIN_NAMESPACE(decode)
 GFXRECON_BEGIN_NAMESPACE(feature_util)
 
 void CheckUnsupportedFeatures(VkPhysicalDevice physicalDevice,
@@ -4474,5 +4473,4 @@ void CheckUnsupportedFeatures(VkPhysicalDevice physicalDevice,
 }
 
 GFXRECON_END_NAMESPACE(feature_util)
-GFXRECON_END_NAMESPACE(decode)
 GFXRECON_END_NAMESPACE(gfxrecon)

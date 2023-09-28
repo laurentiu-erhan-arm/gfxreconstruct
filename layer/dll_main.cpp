@@ -36,7 +36,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     {
         case DLL_PROCESS_ATTACH:
             gfxrecon::encode::VulkanCaptureManager::SetLayerFuncs(gfxrecon::dispatch_CreateInstance,
-                                                                  gfxrecon::dispatch_CreateDevice);
+                                                                  gfxrecon::dispatch_CreateDevice,
+                                                                  gfxrecon::EnumerateInstanceExtensionProperties);
             break;
         case DLL_PROCESS_DETACH:
             // TODO: We assume that lpvReserved will always be NULL, because FreeLibrary should be
@@ -60,7 +61,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 __attribute__((constructor)) static void create_trace_layer()
 {
     gfxrecon::encode::VulkanCaptureManager::SetLayerFuncs(gfxrecon::dispatch_CreateInstance,
-                                                          gfxrecon::dispatch_CreateDevice);
+                                                          gfxrecon::dispatch_CreateDevice,
+                                                          gfxrecon::EnumerateInstanceExtensionProperties);
 }
 
 __attribute__((destructor)) static void destroy_trace_layer()
