@@ -72,9 +72,11 @@ static void PrintUsage(const char* exe_name)
     GFXRECON_WRITE_CONSOLE(
         "  --file-per-frame\tCreates a new file for every frame processed. Frame number is added as a suffix");
     GFXRECON_WRITE_CONSOLE("                  \tto the output file name.");
+    GFXRECON_WRITE_CONSOLE("  --frame-range\t\tFrame ranges to be converted. In order to retrieve Trim Trace State, "
+                           "frame 0 has to be in frame range.");
     GFXRECON_WRITE_CONSOLE(
-        "  --frame-range\t\tFrame range to be converted. In order to retrieve Trim Trace State, frame 0 has "
-        "to be in frame range.");
+        "                    \tFrame ranges should be specified in ascending order and cannot overlap."
+        " Example: 0-5,15,20,25-50,51.");
 
 #if defined(WIN32) && defined(_DEBUG)
     GFXRECON_WRITE_CONSOLE("  --no-debug-popup\tDisable the 'Abort, Retry, Ignore' message box");
